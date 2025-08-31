@@ -1,0 +1,3497 @@
+[
+  {
+    "route_id": "bdb7be2b-68b4-49ee-91ba-d4aea76bbe95",
+    "route_name": "ALRODE",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "Alberton",
+        "position": 1,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "c3dc2130-83c8-4c2f-a7ae-a80e39396869",
+            "load_id": "b9e7d73f-b3a6-4dd7-8be6-4e0dafc573bf",
+            "load_items": [
+              {
+                "id": "2b86ad96-244f-4ee6-8706-7ae12f6093ff",
+                "length": "0",
+                "weight": 1930.153,
+                "ur_prod": null,
+                "quantity": 50,
+                "description": "SHS 1.60X1225X2450 SAE1008(SI,03%)",
+                "order_line_id": "7180301-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1930.153,
+            "customer_name": "LAZER LADZ (PTY) LTD",
+            "delivery_date": "2025-08-21",
+            "total_quantity": 50,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180301"
+          },
+          {
+            "id": "6ca0775a-47df-45ec-b47b-8eb1acf36c99",
+            "load_id": "5b8a6c27-b2f0-4c36-8aa2-ce3f956df4bc",
+            "load_items": [
+              {
+                "id": "3b334684-cab1-4955-a19e-16950d4ff6da",
+                "length": "0",
+                "weight": 23160,
+                "ur_prod": null,
+                "quantity": 23160,
+                "description": "CC 2.00X1500 CQ",
+                "order_line_id": "337489-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 23160,
+            "customer_name": "STOCK TRANSFER TO HEAD OFFICE",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 23160,
+            "dispatch_remarks": "",
+            "sales_order_number": "337489"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "ALRODE"
+      }
+    ]
+  },
+  {
+    "route_id": "b3ff875a-df4e-448b-9df3-f627881d7e89",
+    "route_name": "EAST RAND 01",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "Germiston",
+        "position": 1,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "db9f188f-8b9d-4301-88d0-b1420cbe4949",
+            "load_id": "ebd8441e-30cc-46b3-bf31-091d50084f77",
+            "load_items": [
+              {
+                "id": "3b0fa573-9692-468f-aee4-2011ca0ab12b",
+                "length": "0",
+                "weight": 2425.8,
+                "ur_prod": null,
+                "quantity": 6,
+                "description": "BM 254X146X31.1X13.000 S355",
+                "order_line_id": "337290-1"
+              },
+              {
+                "id": "55bcf2bb-63ec-4d67-9f8a-57fc666af686",
+                "length": "0",
+                "weight": 4513.6,
+                "ur_prod": null,
+                "quantity": 14,
+                "description": "BM 305X102X24.8X13.000 S355",
+                "order_line_id": "337290-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Delivery Note",
+            "total_weight": 6939.4,
+            "customer_name": "ACQUI 38 (PTY) LTD t/a GK STEEL & MINING - MIDDELBURG ACC",
+            "delivery_date": "2025-08-22",
+            "total_quantity": 20,
+            "dispatch_remarks": "",
+            "sales_order_number": "337290"
+          },
+          {
+            "id": "ec406b2b-971f-4dd8-a5dd-47f426d1e41a",
+            "load_id": "fdf9e93f-2983-427a-b08d-a79e7e27f50e",
+            "load_items": [
+              {
+                "id": "dbe9d792-06bd-438c-b7c9-e7de6339e93b",
+                "length": "0",
+                "weight": 942,
+                "ur_prod": null,
+                "quantity": 4,
+                "description": "HP 10.00X1200X2500 WEARPLATE-200",
+                "order_line_id": "337424-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Invoiced",
+            "total_weight": 942,
+            "customer_name": "ACQUI 38 (PTY) LTD t/a GK STEEL & MINING - MIDDELBURG ACC",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 4,
+            "dispatch_remarks": "",
+            "sales_order_number": "337424"
+          },
+          {
+            "id": "08a106b2-ceb3-4beb-bf61-9003c5df1842",
+            "load_id": "fdf9e93f-2983-427a-b08d-a79e7e27f50e",
+            "load_items": [
+              {
+                "id": "6ea40722-4258-42cc-b7ef-88c3d814f800",
+                "length": "0",
+                "weight": 3490.698,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "SHP 10.00X1925X11550 EN10025-2-S355JR+AR",
+                "order_line_id": "7180467-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 3490.698,
+            "customer_name": "CARBO FERRUM (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 2,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180467"
+          },
+          {
+            "id": "be5277cd-d45f-4161-b97a-ff2051748bee",
+            "load_id": "fdf9e93f-2983-427a-b08d-a79e7e27f50e",
+            "load_items": [
+              {
+                "id": "5323eae8-cafc-4bdb-bdfc-768da1339a3c",
+                "length": "0",
+                "weight": 1686.416,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "SHP 12.00X1925X4650 EN10025-2-S355JR+AR",
+                "order_line_id": "7180471-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 1686.416,
+            "customer_name": "CARBO FERRUM (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 2,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180471"
+          },
+          {
+            "id": "fb24c92f-c4f2-40b9-9a79-f29417177166",
+            "load_id": "87262b23-db5e-4145-bdab-7fbbde87d01b",
+            "load_items": [
+              {
+                "id": "7849e256-3d16-4c79-99ed-c3210cdb80ee",
+                "length": "0",
+                "weight": 19900,
+                "ur_prod": null,
+                "quantity": 19900,
+                "description": "HC 1.50X1225 SAE1008(SI,03%)",
+                "order_line_id": "336757-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 19900,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-21",
+            "total_quantity": 19900,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "336757"
+          },
+          {
+            "id": "d2d9dbb0-6e79-4aff-95a4-a00b561f40a6",
+            "load_id": "b950fcd1-3592-41a7-b98f-a4aca1ea715f",
+            "load_items": [
+              {
+                "id": "5cae2b4e-e4d9-4467-b183-258e6d3c8be9",
+                "length": "0",
+                "weight": 3014.4,
+                "ur_prod": null,
+                "quantity": 8,
+                "description": "HP 16.00X1200X2500 WEARPLATE-200",
+                "order_line_id": "337435-5"
+              },
+              {
+                "id": "82dfbd7b-7804-498f-a7bf-b19a8936adf8",
+                "length": "0",
+                "weight": 3014.4,
+                "ur_prod": null,
+                "quantity": 8,
+                "description": "HP 16.00X1200X2500 WEARPLATE-200",
+                "order_line_id": "337435-2"
+              },
+              {
+                "id": "9fccf6ea-93a2-4534-9dc6-01254f034758",
+                "length": "0",
+                "weight": 3014.4,
+                "ur_prod": null,
+                "quantity": 8,
+                "description": "HP 16.00X1200X2500 WEARPLATE-200",
+                "order_line_id": "337435-1"
+              },
+              {
+                "id": "a4ab78af-ed1b-4348-bf1f-696bf5e99bde",
+                "length": "0",
+                "weight": 3014.4,
+                "ur_prod": null,
+                "quantity": 8,
+                "description": "HP 16.00X1200X2500 WEARPLATE-200",
+                "order_line_id": "337435-4"
+              },
+              {
+                "id": "c968ee30-a982-401f-8ab4-d300f7041628",
+                "length": "0",
+                "weight": 3014.4,
+                "ur_prod": null,
+                "quantity": 8,
+                "description": "HP 16.00X1200X2500 WEARPLATE-200",
+                "order_line_id": "337435-3"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 15072,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 40,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "337435"
+          },
+          {
+            "id": "174aac6e-f16f-4e6a-9d67-75923b83aa39",
+            "load_id": "b950fcd1-3592-41a7-b98f-a4aca1ea715f",
+            "load_items": [
+              {
+                "id": "e252f652-69df-4f1e-b881-9ee7572c3b42",
+                "length": "0",
+                "weight": 1884,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "HP 40.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "337453-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1884,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 2,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "337453"
+          },
+          {
+            "id": "04479b26-7c08-4cea-8be1-b088fab18d04",
+            "load_id": "fdf9e93f-2983-427a-b08d-a79e7e27f50e",
+            "load_items": [
+              {
+                "id": "41cb800e-340e-461b-851f-22edeb3cf514",
+                "length": "0",
+                "weight": 4053.278,
+                "ur_prod": null,
+                "quantity": 140,
+                "description": "CS 1.20X1225X2450 CQ",
+                "order_line_id": "337526-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 4053.278,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 140,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "337526"
+          },
+          {
+            "id": "5236c708-4a49-44de-abe2-8140bb8fc4b6",
+            "load_id": "fdf9e93f-2983-427a-b08d-a79e7e27f50e",
+            "load_items": [
+              {
+                "id": "47d1787a-395e-433b-83f5-ef73eeb56831",
+                "length": "0",
+                "weight": 1930.203,
+                "ur_prod": null,
+                "quantity": 100,
+                "description": "CS 0.80X1225X2450 CQ",
+                "order_line_id": "337406-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1930.203,
+            "customer_name": "TEICHMANN STEEL (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 100,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "337406"
+          },
+          {
+            "id": "2310f981-87c1-4034-9b77-393d353e599a",
+            "load_id": "b950fcd1-3592-41a7-b98f-a4aca1ea715f",
+            "load_items": [
+              {
+                "id": "1f4f0487-7864-4069-ba2d-154cbd5756f5",
+                "length": "0",
+                "weight": 5955.886,
+                "ur_prod": null,
+                "quantity": 126,
+                "description": "GS 1.60X1225X3000 ISQ230/Z275",
+                "order_line_id": "337466-1"
+              },
+              {
+                "id": "8373bc4b-66bc-4bb7-9536-22e0083c1eb5",
+                "length": "0",
+                "weight": 6022.077,
+                "ur_prod": null,
+                "quantity": 156,
+                "description": "GS 1.60X1225X2450 ISQ230/Z275",
+                "order_line_id": "337466-3"
+              },
+              {
+                "id": "9b5dc7f4-aa99-46f5-8423-d5581d8a671f",
+                "length": "0",
+                "weight": 4032.735,
+                "ur_prod": null,
+                "quantity": 134,
+                "description": "GS 1.60X1225X1910 ISQ230/Z275",
+                "order_line_id": "337466-2"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Machine Allocation",
+            "total_weight": 16010.698,
+            "customer_name": "TEICHMANN STEEL (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 416,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "337466"
+          },
+          {
+            "id": "6543b031-59fa-497f-b2b5-ecb653b89c4d",
+            "load_id": "b950fcd1-3592-41a7-b98f-a4aca1ea715f",
+            "load_items": [
+              {
+                "id": "b6c342f7-fb5c-4d60-8c2e-8d4b30d60a62",
+                "length": "0",
+                "weight": 14326.248,
+                "ur_prod": null,
+                "quantity": 50,
+                "description": "SHP 5.00X1825X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180450-0"
+              },
+              {
+                "id": "f6129f05-fff1-44d3-8cd1-aa28f4507e1f",
+                "length": "0",
+                "weight": 6594,
+                "ur_prod": null,
+                "quantity": 28,
+                "description": "SHP 10.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180450-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 20920.248,
+            "customer_name": "TEICHMANN STEEL (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 78,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180450"
+          },
+          {
+            "id": "13c1dc2d-27a4-42da-b53f-b2217bc4a6a4",
+            "load_id": "fdf9e93f-2983-427a-b08d-a79e7e27f50e",
+            "load_items": [
+              {
+                "id": "0f0245d4-386d-4549-bece-8f8108e2b64f",
+                "length": "0",
+                "weight": 1978.2,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 8.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-11"
+              },
+              {
+                "id": "42bc4b82-e949-44c9-9a06-e9dde0150b3e",
+                "length": "0",
+                "weight": 1978.2,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 8.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-8"
+              },
+              {
+                "id": "612d5e28-9769-408d-a27d-100ed9b5368a",
+                "length": "0",
+                "weight": 1942.931,
+                "ur_prod": null,
+                "quantity": 11,
+                "description": "SHP 5.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-4"
+              },
+              {
+                "id": "64055434-0e60-4eee-989d-846c83e139a9",
+                "length": "0",
+                "weight": 1942.931,
+                "ur_prod": null,
+                "quantity": 11,
+                "description": "SHP 5.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-6"
+              },
+              {
+                "id": "846734ed-11ed-43ff-9453-d87ebdf19b97",
+                "length": "0",
+                "weight": 1942.931,
+                "ur_prod": null,
+                "quantity": 11,
+                "description": "SHP 5.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-0"
+              },
+              {
+                "id": "9ad2e04b-7382-409d-b35e-5b6933a396ad",
+                "length": "0",
+                "weight": 1942.931,
+                "ur_prod": null,
+                "quantity": 11,
+                "description": "SHP 5.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-2"
+              },
+              {
+                "id": "a0d954fa-d13b-4052-b253-1a5c451ae42a",
+                "length": "0",
+                "weight": 1978.2,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 8.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-10"
+              },
+              {
+                "id": "b098421c-50a1-45af-88a1-fa31bc072196",
+                "length": "0",
+                "weight": 1978.2,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 8.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-1"
+              },
+              {
+                "id": "b263cfaf-83bb-439a-9c44-f7fe917178d1",
+                "length": "0",
+                "weight": 1978.2,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 8.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-7"
+              },
+              {
+                "id": "cff2276d-2c94-4a3c-b400-8989a62f02bd",
+                "length": "0",
+                "weight": 1942.931,
+                "ur_prod": null,
+                "quantity": 11,
+                "description": "SHP 5.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180529-5"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 19605.655,
+            "customer_name": "TEICHMANN STEEL (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 90,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180529"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "3 KESWICK ROAD"
+      }
+    ]
+  },
+  {
+    "route_id": "6e107f81-b76f-425b-97b7-8463d7a80a69",
+    "route_name": "EAST RAND 02",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "Germiston",
+        "position": 2,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "0150aea2-b631-4c50-810e-4a960f50608b",
+            "load_id": "e28c4f37-b54f-4ba4-a8b0-7bf08a2a87e4",
+            "load_items": [
+              {
+                "id": "cd6e15b0-4ef1-4fb6-9826-021de001be45",
+                "length": "0",
+                "weight": 2099.101,
+                "ur_prod": null,
+                "quantity": 30,
+                "description": "SHS 2.90X1225X2450 CQ",
+                "order_line_id": "7180485-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 2099.101,
+            "customer_name": "BOERBOEL AIR & AUTOMOTIVE (PTY) LTD",
+            "delivery_date": "2025-08-22",
+            "total_quantity": 30,
+            "dispatch_remarks": "SMALL/SHORT TRUCK",
+            "sales_order_number": "7180485"
+          },
+          {
+            "id": "5b85d355-c89c-4c08-9942-35e8d4b5363f",
+            "load_id": "c6c3d161-6995-4255-879e-f3a1ab8e5332",
+            "load_items": [
+              {
+                "id": "df89a754-07bb-48e8-89f1-2191930cbfdc",
+                "length": "0",
+                "weight": 27959.1,
+                "ur_prod": null,
+                "quantity": 214,
+                "description": "IP 140X73X10.05X13.000 IPE-S355JR",
+                "order_line_id": "337506-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 27959.1,
+            "customer_name": "CHEMVET STEEL & FENCING",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 214,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "337506"
+          },
+          {
+            "id": "ab39b486-bacf-49e5-8bbf-23d67171688b",
+            "load_id": "c6c3d161-6995-4255-879e-f3a1ab8e5332",
+            "load_items": [
+              {
+                "id": "3c8cb7df-47b8-4d24-8123-e57edd8e8570",
+                "length": "0",
+                "weight": 12019.8,
+                "ur_prod": null,
+                "quantity": 92,
+                "description": "IP 140X73X10.05X13.000 IPE-S355JR",
+                "order_line_id": "337520-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 12019.8,
+            "customer_name": "CHEMVET STEEL & FENCING",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 92,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "337520"
+          },
+          {
+            "id": "0a53adbd-b986-4b3a-947b-2ca0f00216bc",
+            "load_id": "c6c3d161-6995-4255-879e-f3a1ab8e5332",
+            "load_items": [
+              {
+                "id": "dac3213d-0e98-40fb-a282-7b1329e5a6b2",
+                "length": "0",
+                "weight": 4239,
+                "ur_prod": null,
+                "quantity": 30,
+                "description": "SHP 6.00X1200X2500 CQ",
+                "order_line_id": "7180513-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 4239,
+            "customer_name": "DISC-O-SCAFF (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 30,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180513"
+          },
+          {
+            "id": "2a62fb89-36f9-4162-b6a5-95552581197f",
+            "load_id": "31337add-13ac-44be-b953-56dc32f7b73c",
+            "load_items": [
+              {
+                "id": "7b5302a2-d47f-4b40-8681-bd2f48ccabbb",
+                "length": "0",
+                "weight": 4329.643,
+                "ur_prod": null,
+                "quantity": 1200,
+                "description": "CS 0.76X1140X 518 CQ",
+                "order_line_id": "337405-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 4329.643,
+            "customer_name": "MULTITOOL ENGINEERING (PTY) LTD - SURETY",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 1200,
+            "dispatch_remarks": "",
+            "sales_order_number": "337405"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "ACTIVIA PARK"
+      }
+    ]
+  },
+  {
+    "route_id": "66a2ecc9-9562-474e-8ac3-1b0b031273d1",
+    "route_name": "EAST RAND 03",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "Boksburg",
+        "position": 6,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "942d7ab3-7773-4ae8-a628-5dfaa53f9bdc",
+            "load_id": "563351a4-9019-4115-9090-b0524e978564",
+            "load_items": [
+              {
+                "id": "1f55facf-295e-4e91-8807-25ee6e2407d6",
+                "length": "0",
+                "weight": 5652,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 30.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337267-2"
+              },
+              {
+                "id": "60d944cc-75eb-48e3-956e-a7d59e28b440",
+                "length": "0",
+                "weight": 5652,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 30.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337267-0"
+              },
+              {
+                "id": "6d76e311-838b-4a65-884c-1ae42a6f98b9",
+                "length": "0",
+                "weight": 5652,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 30.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337267-1"
+              },
+              {
+                "id": "d818f483-9b14-456f-9d7c-1f3d625eff73",
+                "length": "0",
+                "weight": 5652,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 30.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337267-3"
+              },
+              {
+                "id": "e7f70fc5-97b0-4a1f-a00d-588e405dbcdf",
+                "length": "0",
+                "weight": 5652,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 30.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337267-4"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 28260,
+            "customer_name": "BURGER & COMPANY (PTY) LTD",
+            "delivery_date": "2025-08-22",
+            "total_quantity": 5,
+            "dispatch_remarks": "CARBON 0.24% & BORON 0.0008% MAX",
+            "sales_order_number": "337267"
+          },
+          {
+            "id": "ec1839ac-1436-4046-9f10-31de97df375d",
+            "load_id": "1041852b-2daf-4575-8029-df32ffaa48bd",
+            "load_items": [
+              {
+                "id": "5229441d-09b0-48ff-85c2-12a671e2d155",
+                "length": "0",
+                "weight": 1450.8,
+                "ur_prod": null,
+                "quantity": 4,
+                "description": "BM 305X165X40.3X9.000 S355",
+                "order_line_id": "337439-1"
+              },
+              {
+                "id": "5f67b649-620f-4f24-b4e8-32c8ab00000a",
+                "length": "0",
+                "weight": 1352,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "CM 203X203X52X13.000 COLUMNS-S355",
+                "order_line_id": "337439-0"
+              },
+              {
+                "id": "9e0ef2e0-6f35-4466-a469-ddf0ed28cd14",
+                "length": "0",
+                "weight": 4212,
+                "ur_prod": null,
+                "quantity": 6,
+                "description": "BM 305X165X54X13.000 S355",
+                "order_line_id": "337439-2"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 7014.8,
+            "customer_name": "GEORGE STOTT STRUCTURAL FABRICATORS (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 12,
+            "dispatch_remarks": "",
+            "sales_order_number": "337439"
+          },
+          {
+            "id": "620a8e35-4947-407a-967d-faa1f932e080",
+            "load_id": "1041852b-2daf-4575-8029-df32ffaa48bd",
+            "load_items": [
+              {
+                "id": "5ef07e95-a44c-4b4e-9abc-362fcd8a554f",
+                "length": "0",
+                "weight": 299,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "CM 152X152X23X13.000 COLUMNS-S355",
+                "order_line_id": "337437-2"
+              },
+              {
+                "id": "c40f2b21-aa7c-473e-95b2-ef904b5a5ff2",
+                "length": "0",
+                "weight": 481,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "BM 254X146X37X13.000 S355",
+                "order_line_id": "337437-1"
+              },
+              {
+                "id": "e950bff7-a583-4022-93d7-74bb5cceb3fd",
+                "length": "0",
+                "weight": 225.9,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "BM 203X133X25.1X9.000 S355",
+                "order_line_id": "337437-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1005.9,
+            "customer_name": "RSB CONTRACTS (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 3,
+            "dispatch_remarks": "",
+            "sales_order_number": "337437"
+          },
+          {
+            "id": "b7dc6be1-0720-4859-b0fc-9ecd219dbeaa",
+            "load_id": "b09ac41c-5594-4139-b1b8-30f09eb02e7a",
+            "load_items": [
+              {
+                "id": "dba9151b-e125-4faa-b163-68557c2a48fe",
+                "length": "0",
+                "weight": 2026.639,
+                "ur_prod": null,
+                "quantity": 70,
+                "description": "CS 1.20X1225X2450 CQ",
+                "order_line_id": "336137-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Delivery Note",
+            "total_weight": 2026.639,
+            "customer_name": "STEEL & PIPES EAST RAND (PTY)LTD.",
+            "delivery_date": "2025-08-12",
+            "total_quantity": 70,
+            "dispatch_remarks": "",
+            "sales_order_number": "336137"
+          },
+          {
+            "id": "a6b54bab-3718-49c0-a040-8f9a2e46f843",
+            "load_id": "1041852b-2daf-4575-8029-df32ffaa48bd",
+            "load_items": [
+              {
+                "id": "5785a4c9-d933-4b0a-8406-efe561c091f4",
+                "length": "0",
+                "weight": 2026.639,
+                "ur_prod": null,
+                "quantity": 70,
+                "description": "CS 1.20X1225X2450 CQ",
+                "order_line_id": "337476-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Delivery Note",
+            "total_weight": 2026.639,
+            "customer_name": "STEEL & PIPES EAST RAND (PTY)LTD.",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 70,
+            "dispatch_remarks": "",
+            "sales_order_number": "337476"
+          },
+          {
+            "id": "21ab77c5-4136-414e-aef7-ec9edbcb18a5",
+            "load_id": "1041852b-2daf-4575-8029-df32ffaa48bd",
+            "load_items": [
+              {
+                "id": "8c07152c-260b-408b-833c-a00abd0175ef",
+                "length": "0",
+                "weight": 1130.4,
+                "ur_prod": null,
+                "quantity": 3,
+                "description": "HP 16.00X1200X2500 CQ-FLANGE-PLATE",
+                "order_line_id": "337462-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1130.4,
+            "customer_name": "STEEL & PIPES FOR AFRICA(GEORGE)",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 3,
+            "dispatch_remarks": "",
+            "sales_order_number": "337462"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "BOKSBURG"
+      }
+    ]
+  },
+  {
+    "route_id": "00eaba14-1775-49e7-beaa-66dc65b48d34",
+    "route_name": "EAST RAND 04",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "Germiston",
+        "position": 1,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "6b98929f-6c75-4c26-91a8-e970dcf79244",
+            "load_id": "d6aebf3b-e8f2-4451-8b6d-2f65b852b73f",
+            "load_items": [
+              {
+                "id": "e9368871-5dac-448f-a969-0b449e13c9f8",
+                "length": "0",
+                "weight": 6594,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 35.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337455-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 6594,
+            "customer_name": "PEGASUS STEEL PRODUCTS  (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 1,
+            "dispatch_remarks": "",
+            "sales_order_number": "337455"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "WADEVILLE"
+      },
+      {
+        "city": "Kempton Park",
+        "position": 10,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "2e7c5094-a9e2-4883-9b72-d5c23ff31473",
+            "load_id": "d6aebf3b-e8f2-4451-8b6d-2f65b852b73f",
+            "load_items": [
+              {
+                "id": "36e9588c-439e-49e0-9227-d67e165c17ee",
+                "length": "0",
+                "weight": 4050,
+                "ur_prod": null,
+                "quantity": 4050,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337456-5"
+              },
+              {
+                "id": "3b9eba91-b24e-44b2-9229-bf52f47f18b8",
+                "length": "0",
+                "weight": 4290,
+                "ur_prod": null,
+                "quantity": 4290,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337456-2"
+              },
+              {
+                "id": "4751f505-d580-4b12-a223-2212a3ddf2d4",
+                "length": "0",
+                "weight": 4105,
+                "ur_prod": null,
+                "quantity": 4105,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337456-4"
+              },
+              {
+                "id": "a1d64f85-2c09-4eef-bfe1-85f915d62feb",
+                "length": "0",
+                "weight": 4255,
+                "ur_prod": null,
+                "quantity": 4255,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337456-1"
+              },
+              {
+                "id": "ba8124c6-70b5-414a-aa00-ed9f1d5f5ea7",
+                "length": "0",
+                "weight": 4050,
+                "ur_prod": null,
+                "quantity": 4050,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337456-3"
+              },
+              {
+                "id": "d1b66b22-540f-457e-80b0-a61fb89b5804",
+                "length": "0",
+                "weight": 4240,
+                "ur_prod": null,
+                "quantity": 4240,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337456-6"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 24990,
+            "customer_name": "ARMCO SUPERLITE (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 24990,
+            "dispatch_remarks": "NO PRINTING ON SHEETS/PLATES",
+            "sales_order_number": "337456"
+          },
+          {
+            "id": "48ffa458-1acb-4b28-a2a3-91e23a55cf1f",
+            "load_id": "d6aebf3b-e8f2-4451-8b6d-2f65b852b73f",
+            "load_items": [
+              {
+                "id": "0e4a7e55-5496-4ef6-b512-38a6175a7002",
+                "length": "0",
+                "weight": 3970,
+                "ur_prod": null,
+                "quantity": 3970,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337464-7"
+              },
+              {
+                "id": "2dfaacb2-9052-4225-9e3c-61dea8f1ec67",
+                "length": "0",
+                "weight": 3955,
+                "ur_prod": null,
+                "quantity": 3955,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337464-5"
+              },
+              {
+                "id": "372d92c5-7c1d-4f49-a50c-7a64e3340a34",
+                "length": "0",
+                "weight": 3920,
+                "ur_prod": null,
+                "quantity": 3920,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337464-3"
+              },
+              {
+                "id": "4a9e2e16-77bd-4060-83dd-3cf7ff9505a2",
+                "length": "0",
+                "weight": 3890,
+                "ur_prod": null,
+                "quantity": 3890,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337464-4"
+              },
+              {
+                "id": "70b2b6ae-6257-4961-8af1-420cfe0702f2",
+                "length": "0",
+                "weight": 4035,
+                "ur_prod": null,
+                "quantity": 4035,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337464-2"
+              },
+              {
+                "id": "d796bd8b-c846-4a78-b7c3-228d908fe122",
+                "length": "0",
+                "weight": 3885,
+                "ur_prod": null,
+                "quantity": 3885,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337464-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 23655,
+            "customer_name": "ARMCO SUPERLITE (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 23655,
+            "dispatch_remarks": "NO PRINTING ON SHEETS/PLATES",
+            "sales_order_number": "337464"
+          },
+          {
+            "id": "ad556fb9-f9cd-4bb2-9501-deb7d11bc589",
+            "load_id": "790d5fe4-b0b2-4c92-a547-d7f27e73e2ac",
+            "load_items": [
+              {
+                "id": "207def35-8b27-4635-b0f3-3a2653b25f81",
+                "length": "0",
+                "weight": 4275,
+                "ur_prod": null,
+                "quantity": 4275,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337468-6"
+              },
+              {
+                "id": "51f7e137-15a3-4662-82f7-7697bc21c284",
+                "length": "0",
+                "weight": 4370,
+                "ur_prod": null,
+                "quantity": 4370,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337468-3"
+              },
+              {
+                "id": "7102d0e7-de46-46db-b573-10bf4e9cb81c",
+                "length": "0",
+                "weight": 4275,
+                "ur_prod": null,
+                "quantity": 4275,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337468-2"
+              },
+              {
+                "id": "9df73463-8323-4cf4-9a8b-c83a50b85e80",
+                "length": "0",
+                "weight": 4235,
+                "ur_prod": null,
+                "quantity": 4235,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337468-4"
+              },
+              {
+                "id": "bda8a9ba-7e7d-4b33-bb03-33dbb366233c",
+                "length": "0",
+                "weight": 4245,
+                "ur_prod": null,
+                "quantity": 4245,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337468-5"
+              },
+              {
+                "id": "f48552e9-c79e-439e-83eb-85f55c39ef1d",
+                "length": "0",
+                "weight": 4295,
+                "ur_prod": null,
+                "quantity": 4295,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337468-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 25695,
+            "customer_name": "ARMCO SUPERLITE (PTY) LTD",
+            "delivery_date": "2025-08-27",
+            "total_quantity": 25695,
+            "dispatch_remarks": "NO PRINTING ON SHEETS/PLATES",
+            "sales_order_number": "337468"
+          },
+          {
+            "id": "1a42d324-42ca-41e9-98d8-1880e67c1725",
+            "load_id": "790d5fe4-b0b2-4c92-a547-d7f27e73e2ac",
+            "load_items": [
+              {
+                "id": "465ba80c-9212-4eb5-8fdc-3fe151e86a01",
+                "length": "0",
+                "weight": 3360,
+                "ur_prod": null,
+                "quantity": 3360,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337474-2"
+              },
+              {
+                "id": "a1e05719-ce1c-4658-a779-30553a49cb4f",
+                "length": "0",
+                "weight": 3425,
+                "ur_prod": null,
+                "quantity": 3425,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337474-4"
+              },
+              {
+                "id": "ab8703a9-314a-43ae-9cf7-1f7967316256",
+                "length": "0",
+                "weight": 3475,
+                "ur_prod": null,
+                "quantity": 3475,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337474-3"
+              },
+              {
+                "id": "bbc58abe-0050-4bc0-85ed-34b0487d6cbb",
+                "length": "0",
+                "weight": 3310,
+                "ur_prod": null,
+                "quantity": 3310,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337474-5"
+              },
+              {
+                "id": "f1be9874-3203-4ab0-a9c1-5fea6645a3cf",
+                "length": "0",
+                "weight": 3315,
+                "ur_prod": null,
+                "quantity": 3315,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337474-6"
+              },
+              {
+                "id": "f3bf79d3-b346-4449-a829-5ac8b48b4e0a",
+                "length": "0",
+                "weight": 3435,
+                "ur_prod": null,
+                "quantity": 3435,
+                "description": "HL 2.60X 475 SANS1350",
+                "order_line_id": "337474-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 20320,
+            "customer_name": "ARMCO SUPERLITE (PTY) LTD",
+            "delivery_date": "2025-08-27",
+            "total_quantity": 20320,
+            "dispatch_remarks": "NO PRINTING ON SHEETS/PLATES",
+            "sales_order_number": "337474"
+          },
+          {
+            "id": "5ca32642-4761-4b85-8933-139b832c43cf",
+            "load_id": "07cd568e-3d4a-45f1-9cef-455275a1f87f",
+            "load_items": [
+              {
+                "id": "84bf6c42-8d72-4808-853a-9b8e4d335f5f",
+                "length": "0",
+                "weight": 1549.53,
+                "ur_prod": null,
+                "quantity": 48,
+                "description": "LC  2.0x100x50x20 CQ",
+                "order_line_id": "537952-0"
+              },
+              {
+                "id": "da6ce11d-f83c-41ef-a468-32f7aa7a65e1",
+                "length": "0",
+                "weight": 2033.269,
+                "ur_prod": null,
+                "quantity": 96,
+                "description": "LC  2.0x100x50x20 CQ",
+                "order_line_id": "537952-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 3582.799,
+            "customer_name": "CLAYMORE TRADING (PTY) LTD - ROLLFORMER",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 144,
+            "dispatch_remarks": "",
+            "sales_order_number": "537952"
+          },
+          {
+            "id": "cffa7b3a-b8c3-4b4b-96f1-7bfb2e872c2a",
+            "load_id": "07cd568e-3d4a-45f1-9cef-455275a1f87f",
+            "load_items": [
+              {
+                "id": "faf18b8a-7645-4c0d-b7f8-b895196897da",
+                "length": "0",
+                "weight": 933.117,
+                "ur_prod": null,
+                "quantity": 36,
+                "description": "LC  2.0x150x50x20 CQ",
+                "order_line_id": "537953-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 933.117,
+            "customer_name": "CLAYMORE TRADING (PTY) LTD - ROLLFORMER",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 36,
+            "dispatch_remarks": "",
+            "sales_order_number": "537953"
+          },
+          {
+            "id": "83822374-715e-4726-bbd4-f5f98e54dcf0",
+            "load_id": "baeb4c0f-5d44-47d7-ab1f-69ea38edd93b",
+            "load_items": [
+              {
+                "id": "05468071-fb2d-4720-b7a7-cdfb9b8ba767",
+                "length": "12m",
+                "weight": 360,
+                "ur_prod": null,
+                "quantity": 3,
+                "description": "H-Beam 200mm",
+                "order_line_id": "OL-T001-2"
+              },
+              {
+                "id": "6942e377-e86c-4f19-b78d-9b38e79007b7",
+                "length": "6m",
+                "weight": 250,
+                "ur_prod": null,
+                "quantity": 10,
+                "description": "Lip Channel 100mm",
+                "order_line_id": "OL-T001-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Ready for Delivery",
+            "total_weight": 610,
+            "customer_name": "Kemsteel Supplies",
+            "delivery_date": "2025-08-12",
+            "total_quantity": 13,
+            "dispatch_remarks": "Gate access code 4321",
+            "sales_order_number": "SO-TEST-001"
+          },
+          {
+            "id": "d8bce222-fd0d-4198-bee6-313b07a8ba23",
+            "load_id": "278e0d83-552f-4e17-971e-49be403cbc00",
+            "load_items": [
+              {
+                "id": "82c71f16-0ef1-4504-b744-99860ca932ae",
+                "length": "0",
+                "weight": 4810,
+                "ur_prod": null,
+                "quantity": 10,
+                "description": "CM 152X152X37X13.000 COLUMNS-S355",
+                "order_line_id": "337337-0"
+              },
+              {
+                "id": "e8518ab5-37ae-4ce0-aa36-d077b0819a9d",
+                "length": "0",
+                "weight": 2392,
+                "ur_prod": null,
+                "quantity": 4,
+                "description": "CM 203X203X46X13.000 COLUMNS-S355",
+                "order_line_id": "337337-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 7202,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-22",
+            "total_quantity": 14,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "337337"
+          },
+          {
+            "id": "6167d8da-74ff-4d4e-a975-6542b752c242",
+            "load_id": "d6aebf3b-e8f2-4451-8b6d-2f65b852b73f",
+            "load_items": [
+              {
+                "id": "b74b126f-acba-461c-b87d-eedcc1eafa8f",
+                "length": "0",
+                "weight": 923,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "CM 203X203X71X13.000 COLUMNS-S355",
+                "order_line_id": "337472-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 923,
+            "customer_name": "TIRAGATSO CONSOLIDATED WORKS PROPRIETARY LIMITED- CASH SALES",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 1,
+            "dispatch_remarks": "",
+            "sales_order_number": "337472"
+          },
+          {
+            "id": "3f2b23ad-37c2-4621-9bb9-1127a4c9a15e",
+            "load_id": "278e0d83-552f-4e17-971e-49be403cbc00",
+            "load_items": [
+              {
+                "id": "187d2f06-682d-47f5-b603-e4abdf2b1ed7",
+                "length": "0",
+                "weight": 1695.6,
+                "ur_prod": null,
+                "quantity": 3,
+                "description": "HP 16.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "337249-1"
+              },
+              {
+                "id": "6c697623-552d-4745-ac31-237199ed6ecb",
+                "length": "0",
+                "weight": 1884,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 10.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337249-5"
+              },
+              {
+                "id": "b4372f87-370a-4622-a471-d8780d2ba0d4",
+                "length": "0",
+                "weight": 4710,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 25.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337249-3"
+              },
+              {
+                "id": "bd97c4d7-b022-4ccc-bfec-24d0713ef74d",
+                "length": "0",
+                "weight": 4710,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 25.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337249-6"
+              },
+              {
+                "id": "c1342704-5a3a-4856-908f-4fd9ca92a0f4",
+                "length": "0",
+                "weight": 1413,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "HP 20.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "337249-2"
+              },
+              {
+                "id": "f949436f-d987-45ea-bf94-1650ccc9e2c0",
+                "length": "0",
+                "weight": 1884,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 10.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337249-4"
+              },
+              {
+                "id": "ff15722d-7b05-4af8-b6a6-aa9332530142",
+                "length": "0",
+                "weight": 1884,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 10.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337249-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 18180.6,
+            "customer_name": "VIVA ENGINEERING (PTY) LTD",
+            "delivery_date": "2025-08-22",
+            "total_quantity": 10,
+            "dispatch_remarks": "",
+            "sales_order_number": "337249"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "KEMPTON PARK"
+      },
+      {
+        "city": "BOKSBURG",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "20b61df7-c25d-4373-81b0-b9d1ab3fc0f1",
+            "load_id": "d6aebf3b-e8f2-4451-8b6d-2f65b852b73f",
+            "load_items": [
+              {
+                "id": "137b5801-303b-4d04-b432-fc9eb876d6c7",
+                "length": "0",
+                "weight": 1562.76,
+                "ur_prod": null,
+                "quantity": 9,
+                "description": "SHS 3.00X1800X4000 CQ",
+                "order_line_id": "7180504-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1562.76,
+            "customer_name": "TWR STEEL SERVICE CENTRE (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 9,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180504"
+          }
+        ],
+        "postal_code": "1459",
+        "suburb_name": "BOKSBURG"
+      },
+      {
+        "city": "JET PARK . BOKSBURG",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "e0c0d97e-9e21-478b-bef9-3b7da6d5474c",
+            "load_id": "07cd568e-3d4a-45f1-9cef-455275a1f87f",
+            "load_items": [
+              {
+                "id": "0a02df65-4efa-455c-a60d-a369b714a5a0",
+                "length": "0",
+                "weight": 1450.68,
+                "ur_prod": null,
+                "quantity": 3,
+                "description": "SHP 8.00X1925X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180448-1"
+              },
+              {
+                "id": "a347b012-76b5-4009-a09a-abe8ab3c0301",
+                "length": "0",
+                "weight": 1934.24,
+                "ur_prod": null,
+                "quantity": 4,
+                "description": "SHP 8.00X1925X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180448-2"
+              },
+              {
+                "id": "eba031cc-057b-4e74-8752-0d8eba72fbce",
+                "length": "0",
+                "weight": 967.12,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "SHP 8.00X1925X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180448-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 4352.04,
+            "customer_name": "P L STEEL FABRICATION (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 9,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180448"
+          }
+        ],
+        "postal_code": "1469",
+        "suburb_name": "JET PARK . BOKSBURG"
+      }
+    ]
+  },
+  {
+    "route_id": "ec6067d6-d142-4cf7-b5ac-6bf3c1afa8f5",
+    "route_name": "EAST RAND 05",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "",
+        "position": 7,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "2515f2c9-1c30-40bf-8818-8206e3c97633",
+            "load_id": "59bcb091-2ca7-41b3-9593-27f34f51efcf",
+            "load_items": [
+              {
+                "id": "3399aca8-b4f1-462f-96fe-04e5b6975717",
+                "length": "0",
+                "weight": 12010.5,
+                "ur_prod": null,
+                "quantity": 85,
+                "description": "SHP 6.00X1200X2500 CQ",
+                "order_line_id": "7180521-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 12010.5,
+            "customer_name": "CULLIN AFRICA (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 85,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180521"
+          },
+          {
+            "id": "70c99b7f-f448-49d7-97af-a3dae383688f",
+            "load_id": "59bcb091-2ca7-41b3-9593-27f34f51efcf",
+            "load_items": [
+              {
+                "id": "78f2cfe5-7de3-4fc3-b07e-30286ae22a23",
+                "length": "0",
+                "weight": 1749.251,
+                "ur_prod": null,
+                "quantity": 25,
+                "description": "SHS 2.90X1225X2450 CQ",
+                "order_line_id": "7180522-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1749.251,
+            "customer_name": "CULLIN AFRICA (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 25,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180522"
+          },
+          {
+            "id": "9b08935a-5ea9-42f0-b0ea-de9528386d37",
+            "load_id": "1f69a067-1ddf-4cdd-ac7b-893f3847a6df",
+            "load_items": [
+              {
+                "id": "491255fd-75e9-4301-b5fc-4dd90d384cda",
+                "length": "0",
+                "weight": 1749.251,
+                "ur_prod": null,
+                "quantity": 25,
+                "description": "SHS 2.90X1225X2450 CQ",
+                "order_line_id": "7180527-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1749.251,
+            "customer_name": "CULLIN AFRICA (PTY) LTD",
+            "delivery_date": "2025-09-01",
+            "total_quantity": 25,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180527"
+          },
+          {
+            "id": "5cd23a9c-0866-462a-9992-2b6d27cfa62d",
+            "load_id": "6ffebf7d-86fc-4749-b799-d7b4eece714e",
+            "load_items": [
+              {
+                "id": "4c0aa48d-dd50-4915-86a4-ce33b7cd6082",
+                "length": "0",
+                "weight": 2035,
+                "ur_prod": null,
+                "quantity": 2035,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337422-6"
+              },
+              {
+                "id": "66ee167a-04ac-4301-9b82-340b96d37237",
+                "length": "0",
+                "weight": 2055,
+                "ur_prod": null,
+                "quantity": 2055,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337422-4"
+              },
+              {
+                "id": "6d811c74-1914-4860-b4ad-37d4aa259aa9",
+                "length": "0",
+                "weight": 2030,
+                "ur_prod": null,
+                "quantity": 2030,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337422-7"
+              },
+              {
+                "id": "8d6c33ae-6ff1-4803-8d1c-a4284d2ba343",
+                "length": "0",
+                "weight": 2025,
+                "ur_prod": null,
+                "quantity": 2025,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337422-1"
+              },
+              {
+                "id": "bf249c99-98e1-49a8-89f1-5731979ede35",
+                "length": "0",
+                "weight": 2055,
+                "ur_prod": null,
+                "quantity": 2055,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337422-5"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 10200,
+            "customer_name": "EIGEN STEEL (PTY)  LTD",
+            "delivery_date": "2025-08-22",
+            "total_quantity": 10200,
+            "dispatch_remarks": "",
+            "sales_order_number": "337422"
+          },
+          {
+            "id": "c4190013-d791-4b16-963d-88e40a71b7df",
+            "load_id": "6ffebf7d-86fc-4749-b799-d7b4eece714e",
+            "load_items": [
+              {
+                "id": "25c4ac15-3731-448b-9873-7e29f406295b",
+                "length": "0",
+                "weight": 1528,
+                "ur_prod": null,
+                "quantity": 1528,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337499-4"
+              },
+              {
+                "id": "2ab4d251-efc7-4f27-b405-625dea93f38b",
+                "length": "0",
+                "weight": 1527,
+                "ur_prod": null,
+                "quantity": 1527,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337499-5"
+              },
+              {
+                "id": "488b7221-9445-4758-a84d-9e744a93136b",
+                "length": "0",
+                "weight": 1515,
+                "ur_prod": null,
+                "quantity": 1515,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337499-6"
+              },
+              {
+                "id": "a0eb3ef8-4b66-41c5-80af-9c6e51668dd7",
+                "length": "0",
+                "weight": 1527,
+                "ur_prod": null,
+                "quantity": 1527,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337499-1"
+              },
+              {
+                "id": "ad723c49-35a0-4d12-9803-515752b5e489",
+                "length": "0",
+                "weight": 1528,
+                "ur_prod": null,
+                "quantity": 1528,
+                "description": "GL 1.50X 248 EN10346/S550GD+CR/ZMA450",
+                "order_line_id": "337499-7"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 7625,
+            "customer_name": "EIGEN STEEL (PTY)  LTD",
+            "delivery_date": "2025-08-22",
+            "total_quantity": 7625,
+            "dispatch_remarks": "",
+            "sales_order_number": "337499"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "OLIFANTSFONTEIN"
+      }
+    ]
+  },
+  {
+    "route_id": "75a047af-9e84-4e69-82dd-4b2b03e0a83b",
+    "route_name": "EAST RAND 07",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "",
+        "position": 11,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "cc2bac22-bdf0-4815-ac1b-9047dec8eec3",
+            "load_id": "223219de-1df2-4247-94ec-c86aceee14bd",
+            "load_items": [
+              {
+                "id": "442b085f-d00a-477c-8a8a-2c0d4ba4b48d",
+                "length": "0",
+                "weight": 376.8,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 16.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "337394-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 376.8,
+            "customer_name": "B AND T STEEL CC",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 1,
+            "dispatch_remarks": "",
+            "sales_order_number": "337394"
+          },
+          {
+            "id": "43d41222-6e7f-473d-a98e-93d7d340be91",
+            "load_id": "223219de-1df2-4247-94ec-c86aceee14bd",
+            "load_items": [
+              {
+                "id": "5c693ac4-01b8-4435-8951-e2483ad4ba56",
+                "length": "0",
+                "weight": 376.8,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 16.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "337395-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 376.8,
+            "customer_name": "B AND T STEEL CC",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 1,
+            "dispatch_remarks": "",
+            "sales_order_number": "337395"
+          },
+          {
+            "id": "902beb80-cb33-40e5-a9e5-54d97f3f5c31",
+            "load_id": "223219de-1df2-4247-94ec-c86aceee14bd",
+            "load_items": [
+              {
+                "id": "1f9616a3-840b-48f4-9f9c-9bf46d27e73c",
+                "length": "0",
+                "weight": 188.4,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 8.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180457-1"
+              },
+              {
+                "id": "32bbc50d-cd17-422f-adec-1049bc642e4a",
+                "length": "0",
+                "weight": 235.5,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 10.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180457-2"
+              },
+              {
+                "id": "69137c1b-c9c2-45b5-adff-08d01d1faa38",
+                "length": "0",
+                "weight": 235.5,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "SHP 5.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180457-0"
+              },
+              {
+                "id": "c22ecb69-cabf-4bd2-80cb-97b87ef5c7e8",
+                "length": "0",
+                "weight": 282.6,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 12.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180457-3"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 942,
+            "customer_name": "B AND T STEEL CC",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 5,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180457"
+          },
+          {
+            "id": "11b72928-21ae-4a99-bbce-360834b4ba0f",
+            "load_id": "223219de-1df2-4247-94ec-c86aceee14bd",
+            "load_items": [
+              {
+                "id": "17f1504f-34f3-4ce7-b65d-eeddab363e47",
+                "length": "0",
+                "weight": 188.4,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 8.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180459-0"
+              },
+              {
+                "id": "2e6ac954-fb16-48c1-93f7-f9da9c5a89b6",
+                "length": "0",
+                "weight": 282.6,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 12.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180459-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 471,
+            "customer_name": "B AND T STEEL CC",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 2,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180459"
+          },
+          {
+            "id": "13b70b00-21ca-48a1-bac1-89471702d8e4",
+            "load_id": "223219de-1df2-4247-94ec-c86aceee14bd",
+            "load_items": [
+              {
+                "id": "fee0d804-02e1-4205-ad18-785eb7f62fa5",
+                "length": "0",
+                "weight": 376.8,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "SHP 8.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180477-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 376.8,
+            "customer_name": "B AND T STEEL CC",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 2,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180477"
+          },
+          {
+            "id": "c00f74d6-c16a-4134-b5b7-4efea1f126d3",
+            "load_id": "e119884c-4ffd-4641-9178-fbbe74dc37cc",
+            "load_items": [
+              {
+                "id": "11f94096-4a0b-429f-9f89-5165c41eb72b",
+                "length": "10,495",
+                "weight": 71.366,
+                "ur_prod": null,
+                "quantity": 71.366,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-4"
+              },
+              {
+                "id": "20455602-5ce4-46cc-9b9f-5e3452deb1b1",
+                "length": "10,495",
+                "weight": 71.366,
+                "ur_prod": null,
+                "quantity": 71.366,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-5"
+              },
+              {
+                "id": "2ac8c85d-21ea-4641-b130-d2311af3d23f",
+                "length": "10,495",
+                "weight": 71.366,
+                "ur_prod": null,
+                "quantity": 71.366,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-2"
+              },
+              {
+                "id": "310c7590-d968-4113-b4e9-65e529f85eee",
+                "length": "10,495",
+                "weight": 71.366,
+                "ur_prod": null,
+                "quantity": 71.366,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-1"
+              },
+              {
+                "id": "3639f5db-aff7-42cb-bffa-913fbb904271",
+                "length": "10,495",
+                "weight": 71.366,
+                "ur_prod": null,
+                "quantity": 71.366,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-3"
+              },
+              {
+                "id": "5178e6cc-fa34-4d70-9188-37c6beeee3fd",
+                "length": "8,37",
+                "weight": 170.748,
+                "ur_prod": null,
+                "quantity": 170.748,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-7"
+              },
+              {
+                "id": "839fa035-1ea7-46fc-b8f0-916ed5ac8108",
+                "length": "8,37",
+                "weight": 56.916,
+                "ur_prod": null,
+                "quantity": 56.916,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-10"
+              },
+              {
+                "id": "8caba520-227e-42cb-a591-08866171be06",
+                "length": "8,445",
+                "weight": 57.426,
+                "ur_prod": null,
+                "quantity": 57.426,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-6"
+              },
+              {
+                "id": "b04872da-4abc-4d8c-8286-efbff7254bc6",
+                "length": "8,37",
+                "weight": 56.916,
+                "ur_prod": null,
+                "quantity": 56.916,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-8"
+              },
+              {
+                "id": "d1bb7e0e-f8b3-418e-a363-de9281e6387b",
+                "length": "10,995",
+                "weight": 74.766,
+                "ur_prod": null,
+                "quantity": 74.766,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-0"
+              },
+              {
+                "id": "daf89bfc-4fcd-496a-a234-fd005977c868",
+                "length": "8,37",
+                "weight": 284.58,
+                "ur_prod": null,
+                "quantity": 284.58,
+                "description": "LCGP 2.5x175x75x20 Z275",
+                "order_line_id": "537946-9"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 1058.182,
+            "customer_name": "B AND T STEEL CC - ROLLFORMER",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 1058.182,
+            "dispatch_remarks": "",
+            "sales_order_number": "537946"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "DELMAS"
+      }
+    ]
+  },
+  {
+    "route_id": "b89cd99e-5cd7-4364-8b05-7e60bd14eb2d",
+    "route_name": "EAST RAND 10",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "",
+        "position": 1,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "343bb467-6c76-434a-8c8f-23524664fd05",
+            "load_id": "830089e7-a6f0-41f6-bb0a-5cc85bfc93f3",
+            "load_items": [
+              {
+                "id": "151a14bf-bb64-4516-91e8-54d7d3814303",
+                "length": "0",
+                "weight": 6782.4,
+                "ur_prod": null,
+                "quantity": 5,
+                "description": "HP 6.00X2400X12000 EN10025-2-S355JR+AR",
+                "order_line_id": "337522-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 6782.4,
+            "customer_name": "NJR STEEL BRITS (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 5,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "337522"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "BRAKPAN"
+      }
+    ]
+  },
+  {
+    "route_id": "4d146bc5-fae1-4f77-a733-ee1dc29427de",
+    "route_name": "EAST RAND 11",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "",
+        "position": 8,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "2fdd4c08-5024-4145-bd2c-f5783842d67a",
+            "load_id": "dc815fc0-17a0-4f7e-9398-bad8593d643d",
+            "load_items": [
+              {
+                "id": "32b0e067-67cb-4ece-9d63-9abd9290e91f",
+                "length": "0",
+                "weight": 438.03,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 6.00X1500X6200 SUPRAFORM-700MC/EN10149-2-S7000MC",
+                "order_line_id": "7180509-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 438.03,
+            "customer_name": "PARAMOUNT TRAILERS (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 1,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180509"
+          },
+          {
+            "id": "f7c9ccc8-74d4-43eb-ad74-0fee459e7f2a",
+            "load_id": "dc815fc0-17a0-4f7e-9398-bad8593d643d",
+            "load_items": [
+              {
+                "id": "caf2972d-fb25-42aa-abcc-d5ec386f7e79",
+                "length": "0",
+                "weight": 3014.4,
+                "ur_prod": null,
+                "quantity": 3,
+                "description": "HP 16.00X2000X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "337477-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 3014.4,
+            "customer_name": "SECANT FABRICATION & MANUFACTURING (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 3,
+            "dispatch_remarks": "",
+            "sales_order_number": "337477"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "SPRINGS"
+      }
+    ]
+  },
+  {
+    "route_id": "560f026e-e462-4175-bb70-d9de79db163a",
+    "route_name": "JHB SOUTH CENTRAL",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "JOHANNESBURG SOUTH",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "9a4e3ab6-5925-4cdd-a82e-648e8f038c4a",
+            "load_id": "595089c7-e386-41d7-8b59-96c4f8fb0bb5",
+            "load_items": [
+              {
+                "id": "4da3dc4a-f531-4499-acfa-eaf12f9671ac",
+                "length": "0",
+                "weight": 989.1,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 6.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180502-2"
+              },
+              {
+                "id": "a3c0d6c3-fcda-4fbb-9529-8ed07e522b14",
+                "length": "0",
+                "weight": 378.152,
+                "ur_prod": null,
+                "quantity": 8,
+                "description": "SHS 1.60X1225X3000 SAE1008(SI,03%)",
+                "order_line_id": "7180502-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1367.252,
+            "customer_name": "LASERFAB CC",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 15,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180502"
+          },
+          {
+            "id": "6840abe0-f41d-41d8-9912-05891ee72294",
+            "load_id": "595089c7-e386-41d7-8b59-96c4f8fb0bb5",
+            "load_items": [
+              {
+                "id": "381a6859-025f-4d9d-812e-8913e5763b8b",
+                "length": "0",
+                "weight": 565.2,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 16.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "337509-0"
+              },
+              {
+                "id": "3ca514f8-d55c-4723-9b37-da98d9fc9c51",
+                "length": "0",
+                "weight": 1570,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 25.00X2000X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "337509-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 2135.2,
+            "customer_name": "RULA BULK MATERIALS HANDLING (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 2,
+            "dispatch_remarks": "",
+            "sales_order_number": "337509"
+          }
+        ],
+        "postal_code": "2197",
+        "suburb_name": "JOHANNESBURG SOUTH"
+      }
+    ]
+  },
+  {
+    "route_id": "5a6bdac0-ae09-4ad1-b379-f66159c71a9c",
+    "route_name": "JHB SOUTH WEST",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "JOHANNESBURG",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "9fb6103d-4a11-41c2-bcfe-028e22879a1d",
+            "load_id": "91765c2c-058a-4955-a4c7-678919763693",
+            "load_items": [
+              {
+                "id": "2ba303b2-1dbb-4f49-82bd-acdcec729054",
+                "length": "0",
+                "weight": 2472.75,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 10.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7179495-1"
+              },
+              {
+                "id": "43a09ebf-4339-430b-ac5c-0b3bc2851b1c",
+                "length": "0",
+                "weight": 2472.75,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 10.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7179495-4"
+              },
+              {
+                "id": "5f12a509-aa16-43c6-ab49-cdc3674feece",
+                "length": "0",
+                "weight": 706.5,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "SHP 10.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7179495-2"
+              },
+              {
+                "id": "c458c2ea-b48d-40c8-ac3e-4273ac43c44a",
+                "length": "0",
+                "weight": 2472.75,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 10.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7179495-3"
+              },
+              {
+                "id": "ff1a00ba-c746-4310-a5e4-2759dae1de55",
+                "length": "0",
+                "weight": 2472.75,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 10.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7179495-5"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Delivery Note",
+            "total_weight": 10597.5,
+            "customer_name": "GENERAL PROFILING CC",
+            "delivery_date": "2025-08-21",
+            "total_quantity": 30,
+            "dispatch_remarks": "",
+            "sales_order_number": "7179495"
+          },
+          {
+            "id": "989a24e3-7e83-427f-a516-0027bc4bd1ff",
+            "load_id": "7e30c11a-0ae7-49f6-9a5a-4b73e51bf799",
+            "load_items": [
+              {
+                "id": "2d69977c-7aab-4cd5-8449-db41a7fbb3b3",
+                "length": "0",
+                "weight": 10738.8,
+                "ur_prod": null,
+                "quantity": 38,
+                "description": "SHP 8.00X1500X3000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180530-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Delivery Note",
+            "total_weight": 10738.8,
+            "customer_name": "GENERAL PROFILING CC",
+            "delivery_date": "2025-08-20",
+            "total_quantity": 38,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180530"
+          }
+        ],
+        "postal_code": "2092",
+        "suburb_name": "JOHANNESBURG"
+      },
+      {
+        "city": "JOHANNESBURG SOUTH",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "1b27a758-114b-425a-af49-e7ed8a1289c0",
+            "load_id": "d6a20e2c-7aac-4005-b496-8204271f83fd",
+            "load_items": [
+              {
+                "id": "ffebe88d-ec51-4b12-8a76-c7a8b898ed2b",
+                "length": "0",
+                "weight": 2062.801,
+                "ur_prod": null,
+                "quantity": 45,
+                "description": "GS 1.90X1225X2450 ISQ230/Z275",
+                "order_line_id": "337523-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 2062.801,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 45,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "337523"
+          },
+          {
+            "id": "4da296b3-ce1b-45cc-8af9-61c4fbc0e402",
+            "load_id": "d6a20e2c-7aac-4005-b496-8204271f83fd",
+            "load_items": [
+              {
+                "id": "7b377bd5-8264-4423-be0e-14bbf9448da8",
+                "length": "0",
+                "weight": 2062.801,
+                "ur_prod": null,
+                "quantity": 45,
+                "description": "GS 1.90X1225X2450 ISQ230/Z275",
+                "order_line_id": "337524-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 2062.801,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 45,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "337524"
+          },
+          {
+            "id": "cb6e2c34-5c2f-443d-8129-09ea6614cec5",
+            "load_id": "d6a20e2c-7aac-4005-b496-8204271f83fd",
+            "load_items": [
+              {
+                "id": "65b93175-1acb-4c82-8109-84543765665d",
+                "length": "0",
+                "weight": 2026.639,
+                "ur_prod": null,
+                "quantity": 70,
+                "description": "GS 1.20X1225X2450 ISQ230/Z200",
+                "order_line_id": "337525-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 2026.639,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 70,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "337525"
+          }
+        ],
+        "postal_code": "2197",
+        "suburb_name": "JOHANNESBURG SOUTH"
+      }
+    ]
+  },
+  {
+    "route_id": "e9ecd3e8-794c-4ade-a918-65d697822fe9",
+    "route_name": "PTA EAST",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "PRETORIA",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "c9f0129b-ccde-41ae-8bdd-7ca0aff3ae49",
+            "load_id": "dc07ce1c-197e-4a9a-bd30-aed99c04304a",
+            "load_items": [
+              {
+                "id": "60ed7e15-9981-40a3-a57c-98b0cc91c6c7",
+                "length": "0",
+                "weight": 376.8,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 16.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "337458-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 376.8,
+            "customer_name": "STEYN STEEL (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 1,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "337458"
+          },
+          {
+            "id": "9bdd7c91-81bd-48de-8a4b-9b39d47fe304",
+            "load_id": "dc07ce1c-197e-4a9a-bd30-aed99c04304a",
+            "load_items": [
+              {
+                "id": "3d3de3c3-2e7b-4b5d-827d-033d3e8095e2",
+                "length": "0",
+                "weight": 780.03,
+                "ur_prod": null,
+                "quantity": 10,
+                "description": "SHS 3.00X1200X2500 VASTRAP",
+                "order_line_id": "7180505-2"
+              },
+              {
+                "id": "4cf38c0b-1234-4ac5-988f-9c506ff5b0b2",
+                "length": "0",
+                "weight": 3436.653,
+                "ur_prod": null,
+                "quantity": 50,
+                "description": "SHS 1.90X1500X3000 SAE1008(SI,03%)",
+                "order_line_id": "7180505-0"
+              },
+              {
+                "id": "96623445-7404-4c5b-9d5b-96dc44e26904",
+                "length": "0",
+                "weight": 3255.812,
+                "ur_prod": null,
+                "quantity": 30,
+                "description": "SHS 3.00X1500X3000 CQ",
+                "order_line_id": "7180505-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 7472.495,
+            "customer_name": "STEYN STEEL (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 90,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180505"
+          },
+          {
+            "id": "3063ed7d-8772-4c34-a101-9a10392f6a1d",
+            "load_id": "ad3c4bb2-92a7-4f7e-a45f-515a54381335",
+            "load_items": [
+              {
+                "id": "c8979618-da58-46bb-baff-2f35b99a8121",
+                "length": "0",
+                "weight": 7352,
+                "ur_prod": null,
+                "quantity": 7352,
+                "description": "PL 2.60X1520 WSS-M1A367-A48(HR420LA)",
+                "order_line_id": "337449-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Machine Allocation",
+            "total_weight": 7352,
+            "customer_name": "THAI SUMMIT AUTOPART INDUSTRY SOUTH AFRICA CO (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 7352,
+            "dispatch_remarks": "ALL DETAILS TO CORRESPOND FROM LABEL TO DELIVERY NOTE TO TC - QC TO SIGN OFF - FULL COIL LABELS TO BE CHANGED",
+            "sales_order_number": "337449"
+          },
+          {
+            "id": "7fc88033-c965-4653-8579-960ec9b06939",
+            "load_id": "ad3c4bb2-92a7-4f7e-a45f-515a54381335",
+            "load_items": [
+              {
+                "id": "45f4a87f-1275-4c24-b99a-5cf768eb856c",
+                "length": "0",
+                "weight": 7030,
+                "ur_prod": null,
+                "quantity": 7030,
+                "description": "PL 2.60X 920 WSS-M1A367-A48(HR420LA)",
+                "order_line_id": "337471-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 7030,
+            "customer_name": "THAI SUMMIT AUTOPART INDUSTRY SOUTH AFRICA CO (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 7030,
+            "dispatch_remarks": "ALL DETAILS TO CORRESPOND FROM LABEL TO DELIVERY NOTE TO TC - QC TO SIGN OFF - FULL COIL LABELS TO BE CHANGED",
+            "sales_order_number": "337471"
+          }
+        ],
+        "postal_code": "0184",
+        "suburb_name": "PRETORIA"
+      }
+    ]
+  },
+  {
+    "route_id": "95312a9b-72e5-4b46-b09e-03e597d4bff5",
+    "route_name": "PTA FAR NORTH",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "HAMMANSKRAAL",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "1c0e6413-967a-40a3-9dab-3d2105a389b9",
+            "load_id": "e228dea1-c449-4ed1-a551-64aedeabc15c",
+            "load_items": [
+              {
+                "id": "4ebd9ef7-aff9-4694-9f41-fd7f31ba516b",
+                "length": "0",
+                "weight": 5652,
+                "ur_prod": null,
+                "quantity": 5,
+                "description": "HP 6.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337425-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 5652,
+            "customer_name": "FORGEWELD ENGINEERING (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 5,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "337425"
+          },
+          {
+            "id": "7b1e6842-d3ec-4fe5-9482-abb24ee6e6c8",
+            "load_id": "e228dea1-c449-4ed1-a551-64aedeabc15c",
+            "load_items": [
+              {
+                "id": "d3d46d5e-e7a7-4374-86c0-250456e998d2",
+                "length": "0",
+                "weight": 2417.8,
+                "ur_prod": null,
+                "quantity": 4,
+                "description": "SHP 10.00X1925X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180466-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 2417.8,
+            "customer_name": "FORGEWELD ENGINEERING (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 4,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180466"
+          },
+          {
+            "id": "54d9be0c-c141-4ff9-b1b4-caf106e517ad",
+            "load_id": "e228dea1-c449-4ed1-a551-64aedeabc15c",
+            "load_items": [
+              {
+                "id": "3b58d583-0d34-4509-8324-ebfa54b90a6f",
+                "length": "0",
+                "weight": 604.45,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 10.00X1925X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "7180469-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 604.45,
+            "customer_name": "FORGEWELD ENGINEERING (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 1,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180469"
+          },
+          {
+            "id": "15690621-b384-4699-9f56-bd221a11d90e",
+            "load_id": "e228dea1-c449-4ed1-a551-64aedeabc15c",
+            "load_items": [
+              {
+                "id": "a09519cc-26a9-4073-a48f-a62821739ae7",
+                "length": "0",
+                "weight": 9281.376,
+                "ur_prod": null,
+                "quantity": 12,
+                "description": "SHP 6.00X1800X9123 EN10025-2-S355JR+AR",
+                "order_line_id": "7180473-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 9281.376,
+            "customer_name": "FORGEWELD ENGINEERING (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 12,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180473"
+          },
+          {
+            "id": "efccccc4-1085-4ebd-9ed9-c132658d04fd",
+            "load_id": "e228dea1-c449-4ed1-a551-64aedeabc15c",
+            "load_items": [
+              {
+                "id": "ab7e141b-26e9-4d93-b82f-564871eee37d",
+                "length": "0",
+                "weight": 483.25,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 6.00X1800X5700 EN10025-2-S355JR+AR",
+                "order_line_id": "7180476-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 483.25,
+            "customer_name": "FORGEWELD ENGINEERING (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 1,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180476"
+          },
+          {
+            "id": "05b87f14-112c-4844-9799-619a5fb83543",
+            "load_id": "e228dea1-c449-4ed1-a551-64aedeabc15c",
+            "load_items": [
+              {
+                "id": "964bbfb0-4481-4ae4-b022-eb56d99a624e",
+                "length": "0",
+                "weight": 1933,
+                "ur_prod": null,
+                "quantity": 4,
+                "description": "SHP 6.00X1800X5700 EN10025-2-S355JR+AR",
+                "order_line_id": "7180479-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1933,
+            "customer_name": "FORGEWELD ENGINEERING (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 4,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180479"
+          }
+        ],
+        "postal_code": "0407",
+        "suburb_name": "HAMMANSKRAAL"
+      }
+    ]
+  },
+  {
+    "route_id": "9768de1f-b523-4891-9990-afc5102d7612",
+    "route_name": "SOUTH EAST 01",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "",
+        "position": 6,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "e12afa04-1208-474c-a7e8-eea7f30b8e5b",
+            "load_id": "8c7bf98d-f2cb-413a-b784-185310ec5016",
+            "load_items": [
+              {
+                "id": "2c198f14-85e7-426d-b8b0-83cb1dcfc551",
+                "length": "0",
+                "weight": 4095,
+                "ur_prod": null,
+                "quantity": 4095,
+                "description": "GL 1.80X 390 WSS-M1A367-A38(CR420LA GI50/50)",
+                "order_line_id": "337511-1"
+              },
+              {
+                "id": "f14aa33a-89f4-4d95-9320-c3b869cace45",
+                "length": "0",
+                "weight": 4060,
+                "ur_prod": null,
+                "quantity": 4060,
+                "description": "GL 1.80X 390 WSS-M1A367-A38(CR420LA GI50/50)",
+                "order_line_id": "337511-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 8155,
+            "customer_name": "MALBEN ENGINEERING (PTY) LTD -(P703)",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 8155,
+            "dispatch_remarks": "BLOCKS BETW NESTS FOR CHAIN&STRAP - ALL DETAIL TO CORRESPOND\r- QC TO SIGN OFF - FULL COIL MUST HAVE AS LABEL",
+            "sales_order_number": "337511"
+          },
+          {
+            "id": "14458702-382e-47f1-ac8c-16bdf27ae9cb",
+            "load_id": "8c7bf98d-f2cb-413a-b784-185310ec5016",
+            "load_items": [
+              {
+                "id": "cc5d4b8d-81b3-4748-8976-31702fb5835b",
+                "length": "0",
+                "weight": 29390.4,
+                "ur_prod": null,
+                "quantity": 13,
+                "description": "HP 12.00X2400X10000 CQ-FLANGE-PLATE",
+                "order_line_id": "337518-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 29390.4,
+            "customer_name": "MALBEN ENGINEERING (PTY) LTD -(P703)",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 13,
+            "dispatch_remarks": "BLOCKS BETW NESTS FOR CHAIN&STRAP - ALL DETAIL TO CORRESPOND\r- QC TO SIGN OFF - FULL COIL MUST HAVE AS LABEL",
+            "sales_order_number": "337518"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "NIGEL"
+      }
+    ]
+  },
+  {
+    "route_id": "39eb50c4-6986-4df4-b275-36199b947291",
+    "route_name": "VAAL 01",
+    "branch_id": "54335e52-2e9d-4942-a3a1-640ab7e5bf48",
+    "branch_name": "Allied Steelrode (Pty) Ltd Midvaal",
+    "suburbs": [
+      {
+        "city": "",
+        "position": 5,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "646a350d-7b6d-4cfc-a012-45cad25e8597",
+            "load_id": "d7b6679a-479a-474e-ac32-2959040a1f87",
+            "load_items": [
+              {
+                "id": "6e49db76-8e44-4687-912f-6bfe9946876f",
+                "length": "0",
+                "weight": 22115,
+                "ur_prod": null,
+                "quantity": 22115,
+                "description": "GC 2.40X1225 ISQ230/Z275",
+                "order_line_id": "337459-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 22115,
+            "customer_name": "BSI STEEL (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 22115,
+            "dispatch_remarks": "",
+            "sales_order_number": "337459"
+          },
+          {
+            "id": "4c979ed5-ff29-42ad-af5d-6806dbf0db9c",
+            "load_id": "92be4b29-3256-49f4-9ce1-9d6f0f17d004",
+            "load_items": [
+              {
+                "id": "801c3d5b-b865-40bf-a8e0-4976ec851908",
+                "length": "0",
+                "weight": 3436.653,
+                "ur_prod": null,
+                "quantity": 50,
+                "description": "SHS 1.90X1500X3000 SAE1008(SI,03%)",
+                "order_line_id": "7180496-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 3436.653,
+            "customer_name": "PARAMOUNT TRAILERS (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 50,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180496"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "KLIPRIVIER"
+      },
+      {
+        "city": "MIDVAAL",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "a6f382ac-84f6-41a6-b3d1-52a8d960f939",
+            "load_id": "92be4b29-3256-49f4-9ce1-9d6f0f17d004",
+            "load_items": [
+              {
+                "id": "4159deb4-7317-412e-ba1c-c0194dd80f98",
+                "length": "0",
+                "weight": 872.3,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "BM 457X191X67.1X13.000 S355",
+                "order_line_id": "337514-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 872.3,
+            "customer_name": "FABCON STEEL (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 1,
+            "dispatch_remarks": "",
+            "sales_order_number": "337514"
+          },
+          {
+            "id": "c6b91ea7-aad2-484c-8ec0-4c70873c98cc",
+            "load_id": "d7b6679a-479a-474e-ac32-2959040a1f87",
+            "load_items": [
+              {
+                "id": "9b7146c9-adfa-45b8-8ee8-88da8756cada",
+                "length": "0",
+                "weight": 23160,
+                "ur_prod": null,
+                "quantity": 23160,
+                "description": "HC 1.50X1225 SAE1008(SI,03%)",
+                "order_line_id": "337491-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 23160,
+            "customer_name": "STOCK TRANSFER TO ASSM",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 23160,
+            "dispatch_remarks": "",
+            "sales_order_number": "337491"
+          }
+        ],
+        "postal_code": "1914",
+        "suburb_name": "MIDVAAL"
+      }
+    ]
+  },
+  {
+    "route_id": "2392fee5-5657-4564-be46-a20659a21297",
+    "route_name": "VAAL 02",
+    "branch_id": "54335e52-2e9d-4942-a3a1-640ab7e5bf48",
+    "branch_name": "Allied Steelrode (Pty) Ltd Midvaal",
+    "suburbs": [
+      {
+        "city": "TEDDERFIELD, EIKENHOF",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "e2ab1322-fa0e-4200-8451-f197e5ec860a",
+            "load_id": "3ca5ae71-1e2c-4349-9f2a-c6cb805d7303",
+            "load_items": [
+              {
+                "id": "6bae7166-70db-40d8-8677-566046898fcc",
+                "length": "0",
+                "weight": 2026.639,
+                "ur_prod": null,
+                "quantity": 70,
+                "description": "CS 1.20X1225X2450 CQ",
+                "order_line_id": "337470-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 2026.639,
+            "customer_name": "LSP STEELWORKS",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 70,
+            "dispatch_remarks": "CRANE TRUCK - CHECKLIST",
+            "sales_order_number": "337470"
+          }
+        ],
+        "postal_code": "1961",
+        "suburb_name": "TEDDERFIELD, EIKENHOF"
+      }
+    ]
+  },
+  {
+    "route_id": "7a14b35f-0e43-4de1-865f-3e2f8df2870a",
+    "route_name": "VAAL 03",
+    "branch_id": "54335e52-2e9d-4942-a3a1-640ab7e5bf48",
+    "branch_name": "Allied Steelrode (Pty) Ltd Midvaal",
+    "suburbs": [
+      {
+        "city": "VEREENIGING",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "d6b9e571-6513-4807-b781-dc81ba829672",
+            "load_id": "4809bd0d-6650-4391-9ffd-3513cdba2c23",
+            "load_items": [
+              {
+                "id": "bad70b2d-efd7-4e28-aaa2-e5b644baeefd",
+                "length": "0",
+                "weight": 289.525,
+                "ur_prod": null,
+                "quantity": 5,
+                "description": "SHS 2.40X1225X2450 SAE1008(SI,03%)",
+                "order_line_id": "7180493-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 289.525,
+            "customer_name": "NJR STEEL (VEREENIGING) (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 5,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180493"
+          },
+          {
+            "id": "8510add7-c534-4964-8d9e-346a42b38105",
+            "load_id": "4809bd0d-6650-4391-9ffd-3513cdba2c23",
+            "load_items": [
+              {
+                "id": "b097c5f9-1efe-40f1-884f-c7a80a32bd3e",
+                "length": "0",
+                "weight": 3956.4,
+                "ur_prod": null,
+                "quantity": 28,
+                "description": "SHP 6.00X1200X2500 CQ",
+                "order_line_id": "7180515-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 3956.4,
+            "customer_name": "NJR STEEL (VEREENIGING) (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 28,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180515"
+          }
+        ],
+        "postal_code": "1939",
+        "suburb_name": "VEREENIGING"
+      }
+    ]
+  },
+  {
+    "route_id": "976f78d2-b9c5-4e17-9906-2875e3c67b6e",
+    "route_name": "VAAL 04",
+    "branch_id": "54335e52-2e9d-4942-a3a1-640ab7e5bf48",
+    "branch_name": "Allied Steelrode (Pty) Ltd Midvaal",
+    "suburbs": [
+      {
+        "city": "",
+        "position": 2,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "4c47c4e7-12ec-410b-a892-4be281118b3e",
+            "load_id": "5b5c2af6-9601-45e3-b6e1-017e0d728e64",
+            "load_items": [
+              {
+                "id": "129fd5b9-1b62-4590-b5be-97e411069c76",
+                "length": "0",
+                "weight": 4112.675,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 5.00X1200X12474 EN10025-2-S355JR+AR",
+                "order_line_id": "7180468-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 4112.675,
+            "customer_name": "STRUCTA TECHNOLOGY (PTY) LTD ( 60 DAYS)",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 7,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180468"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "CE6 VANDERBIJLPARK"
+      },
+      {
+        "city": "",
+        "position": 10,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "fe9f32d5-95b2-4dd4-b4fc-a3b0491136bd",
+            "load_id": "b3be45af-d450-4907-acd3-d2863c795f96",
+            "load_items": [
+              {
+                "id": "f1497841-e35d-46c2-be77-6dda58f77259",
+                "length": "0",
+                "weight": 989.1,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 6.00X1200X2500 WEARPLATE-200",
+                "order_line_id": "7180523-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 989.1,
+            "customer_name": "PA AGRIC (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 7,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180523"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "VANDERBIJLPARK"
+      }
+    ]
+  },
+  {
+    "route_id": "260826b8-8115-4f8a-89fe-d43c7010bc3c",
+    "route_name": "WEST 02",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "POTCHEFSTROOM",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "eea5045b-d473-44d1-8d17-44e7da402d26",
+            "load_id": "4ebde52b-52c6-423a-9345-2fb67ba44cba",
+            "load_items": [
+              {
+                "id": "4d69fe12-79b0-4dda-82ec-d2511596392e",
+                "length": "0",
+                "weight": 282.6,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "SHP 6.00X1200X2500 WEARPLATE-200",
+                "order_line_id": "7180039-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 282.6,
+            "customer_name": "NJR STEEL (POTCHEFSTROOM) (PTY) LTD",
+            "delivery_date": "2025-08-19",
+            "total_quantity": 2,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180039"
+          },
+          {
+            "id": "4a8ac493-fda5-4a57-be55-11ed96a02796",
+            "load_id": "2fbd82a9-ee47-4448-a0ad-d1bb88c92564",
+            "load_items": [
+              {
+                "id": "9cb7c461-4e0d-4da2-8b31-4971705e43d3",
+                "length": "0",
+                "weight": 2061.992,
+                "ur_prod": null,
+                "quantity": 30,
+                "description": "SHS 1.90X1500X3000 SAE1008(SI,03%)",
+                "order_line_id": "7180464-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 2061.992,
+            "customer_name": "NJR STEEL (POTCHEFSTROOM) (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 30,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180464"
+          },
+          {
+            "id": "b2d27d9f-4cd3-4605-82d5-4539d69f21a9",
+            "load_id": "0514a9ef-02aa-4da4-9d3a-ab6082dc240a",
+            "load_items": [
+              {
+                "id": "9ed9e193-85a6-4a6a-930a-38524337c15f",
+                "length": "10,3",
+                "weight": 3635.9,
+                "ur_prod": null,
+                "quantity": 3635.9,
+                "description": "LC  2.0x100x50x20 CQ",
+                "order_line_id": "537772-0"
+              },
+              {
+                "id": "e6c8b52d-d5dd-4241-acef-b4cdc97907d8",
+                "length": "10",
+                "weight": 1765,
+                "ur_prod": null,
+                "quantity": 1765,
+                "description": "LC  2.0x100x50x20 CQ",
+                "order_line_id": "537772-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Production Order Complete",
+            "total_weight": 5400.9,
+            "customer_name": "NJR STEEL (POTCHEFSTROOM) (PTY) LTD - ROLLFORMER",
+            "delivery_date": "2025-08-22",
+            "total_quantity": 5400.9,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "537772"
+          }
+        ],
+        "postal_code": "2531",
+        "suburb_name": "POTCHEFSTROOM"
+      }
+    ]
+  },
+  {
+    "route_id": "806f5a11-05fb-41e0-98ce-6dce60db46c5",
+    "route_name": "WEST RAND 02",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "KRUGERSDORP",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "49067395-65a2-441a-9c8f-792c5f942d51",
+            "load_id": "87a18a27-4beb-48bc-8bf2-e04834b274be",
+            "load_items": [
+              {
+                "id": "5b11b1e0-a70f-48f4-89a8-830b1b74e5fe",
+                "length": "0",
+                "weight": 1256,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 20.00X2000X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "335997-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 1256,
+            "customer_name": "STEEL & PIPES  FOR AFRICA (EASTERN CAPE)",
+            "delivery_date": "2025-08-18",
+            "total_quantity": 1,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "335997"
+          }
+        ],
+        "postal_code": "1731",
+        "suburb_name": "KRUGERSDORP"
+      },
+      {
+        "city": "ROODEPOORT",
+        "position": null,
+        "province": "",
+        "load_orders": [
+          {
+            "id": "5e901353-d053-4bad-9a82-336e50b2bb92",
+            "load_id": "055c9556-a2b6-4368-9c2f-f73506b56c4c",
+            "load_items": [
+              {
+                "id": "bfb5c0a8-955d-4fff-8c2b-6a26ccaebdd3",
+                "length": "0",
+                "weight": 588.75,
+                "ur_prod": null,
+                "quantity": 5,
+                "description": "SHP 5.00X1200X2500 CQ",
+                "order_line_id": "7180524-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 588.75,
+            "customer_name": "CLAP INVESTMENT GROUP (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 5,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180524"
+          },
+          {
+            "id": "c1b2b4b8-faa7-4b1c-9d1d-3739a7086043",
+            "load_id": "53fa7898-a481-4553-a5bf-950ba82e02a7",
+            "load_items": [
+              {
+                "id": "5e3adb79-fab7-425a-904e-d83ce7f067b4",
+                "length": "0",
+                "weight": 1930.203,
+                "ur_prod": null,
+                "quantity": 100,
+                "description": "GS 0.80X1225X2450 ISQ230/Z200",
+                "order_line_id": "337154-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 1930.203,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-21",
+            "total_quantity": 100,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "337154"
+          },
+          {
+            "id": "2825c394-657d-4520-a4bf-2c8b089b8a17",
+            "load_id": "690c8d50-9684-4c32-b923-1388a21d917a",
+            "load_items": [
+              {
+                "id": "1a25cdc3-42c5-426b-bb59-83aa01f18797",
+                "length": "0",
+                "weight": 1129.5,
+                "ur_prod": null,
+                "quantity": 5,
+                "description": "BM 203X133X25.1X9.000 S355",
+                "order_line_id": "337519-0"
+              },
+              {
+                "id": "7d96e63d-3b2f-46f7-91cb-3dc522a0a3fb",
+                "length": "0",
+                "weight": 1170,
+                "ur_prod": null,
+                "quantity": 3,
+                "description": "BM 203X133X30X13.000 S355",
+                "order_line_id": "337519-1"
+              },
+              {
+                "id": "a0029b29-79b0-4a4f-80a8-22b05b83d932",
+                "length": "0",
+                "weight": 2405,
+                "ur_prod": null,
+                "quantity": 5,
+                "description": "BM 254X146X37X13.000 S355",
+                "order_line_id": "337519-2"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Invoiced",
+            "total_weight": 4704.5,
+            "customer_name": "STEWARTS & LLOYDS HOLDINGS (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 13,
+            "dispatch_remarks": "PLEASE - INVOICE TO GO WITH DELIVERY",
+            "sales_order_number": "337519"
+          }
+        ],
+        "postal_code": "1709",
+        "suburb_name": "ROODEPOORT"
+      }
+    ]
+  },
+  {
+    "route_id": "5d0283c6-324e-4d4b-ab6f-cd6757c36ae6",
+    "route_name": "WEST RAND 06",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "",
+        "position": 3,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "09ebbc41-bce9-47c6-ae74-abbeedf4e07d",
+            "load_id": "c0f0614e-2477-4d42-b40f-383b88acec59",
+            "load_items": [
+              {
+                "id": "8aec9824-655a-4792-8968-d6cc66f229f8",
+                "length": "0",
+                "weight": 2260.8,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "HP 6.00X2400X10000 EN10025-2-S355JR+AR",
+                "order_line_id": "337443-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 2260.8,
+            "customer_name": "PRO INSTRUMENTATION CONSTRUCTION & MAINTENANCE (RANDFONTEIN) (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 2,
+            "dispatch_remarks": "",
+            "sales_order_number": "337443"
+          },
+          {
+            "id": "34f149ab-7711-44d9-8391-b706f6334853",
+            "load_id": "c0f0614e-2477-4d42-b40f-383b88acec59",
+            "load_items": [
+              {
+                "id": "cb896a23-c816-4d22-a9a7-302f1295c036",
+                "length": "0",
+                "weight": 2021.5,
+                "ur_prod": null,
+                "quantity": 5,
+                "description": "BM 254X146X31.1X13.000 S355",
+                "order_line_id": "337400-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 2021.5,
+            "customer_name": "S E STEEL FABRICATION PTY LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 5,
+            "dispatch_remarks": "SMALL/SHORT TRUCK",
+            "sales_order_number": "337400"
+          },
+          {
+            "id": "2927639c-9dc5-4492-bb3f-d6b44fa820a4",
+            "load_id": "c0f0614e-2477-4d42-b40f-383b88acec59",
+            "load_items": [
+              {
+                "id": "2a758229-c735-47de-8bec-00179d50a9a2",
+                "length": "0",
+                "weight": 188.4,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 8.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180461-1"
+              },
+              {
+                "id": "93c7f346-ce24-487e-9e77-510652d9604a",
+                "length": "0",
+                "weight": 282.6,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "SHP 6.00X1200X2500 EN10025-2-S355JR+AR",
+                "order_line_id": "7180461-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 471,
+            "customer_name": "S E STEEL FABRICATION PTY LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 3,
+            "dispatch_remarks": "SMALL/SHORT TRUCK",
+            "sales_order_number": "7180461"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "RANDFONTEIN"
+      }
+    ]
+  },
+  {
+    "route_id": "92c0a64f-9f53-4368-90fb-9868702275ae",
+    "route_name": "WEST RAND 07",
+    "branch_id": "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+    "branch_name": "Allied Steelrode (Pty) Ltd Head Office",
+    "suburbs": [
+      {
+        "city": "",
+        "position": 5,
+        "province": "Gauteng",
+        "load_orders": [
+          {
+            "id": "f2e4cd61-b245-4944-b083-5e81b8321944",
+            "load_id": "2dd38805-d244-4096-92f9-eafd30bc953e",
+            "load_items": [
+              {
+                "id": "02bc9668-9137-4c50-9f89-2e8b63a3c328",
+                "length": "0",
+                "weight": 6358.502,
+                "ur_prod": null,
+                "quantity": 30,
+                "description": "SHP 6.00X1500X3000 CQ",
+                "order_line_id": "7180484-2"
+              },
+              {
+                "id": "1495d06d-db6e-47f7-9336-72809aae5312",
+                "length": "0",
+                "weight": 226.8,
+                "ur_prod": null,
+                "quantity": 2,
+                "description": "SHP 4.50X1200X2500 VASTRAP",
+                "order_line_id": "7180484-0"
+              },
+              {
+                "id": "2df7e2cb-589c-4a6a-9671-08831b444379",
+                "length": "0",
+                "weight": 847.8,
+                "ur_prod": null,
+                "quantity": 3,
+                "description": "SHP 8.00X1500X3000 CQ",
+                "order_line_id": "7180484-4"
+              },
+              {
+                "id": "98a4af69-1919-402b-9526-714ee38a8979",
+                "length": "0",
+                "weight": 235.5,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "SHP 10.00X1200X2500 CQ",
+                "order_line_id": "7180484-5"
+              },
+              {
+                "id": "9ac68e77-e0bf-4eb4-9ce9-166cadaafebc",
+                "length": "0",
+                "weight": 1130.4,
+                "ur_prod": null,
+                "quantity": 6,
+                "description": "SHP 8.00X1200X2500 CQ",
+                "order_line_id": "7180484-3"
+              },
+              {
+                "id": "fcbe8ef0-39ca-4c6c-b258-91b6bc4fde66",
+                "length": "0",
+                "weight": 1040.508,
+                "ur_prod": null,
+                "quantity": 7,
+                "description": "SHP 6.00X1200X2500 VASTRAP",
+                "order_line_id": "7180484-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 9839.51,
+            "customer_name": "BLUE DOT PROPERTIES 68 (PTY) LTD",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 49,
+            "dispatch_remarks": "",
+            "sales_order_number": "7180484"
+          },
+          {
+            "id": "bccb6211-040c-4191-8f48-ae73bd693be8",
+            "load_id": "e7ac5195-983b-48d6-acd3-356683c7069e",
+            "load_items": [
+              {
+                "id": "000208d2-0ce3-49cb-8903-451fc98d09e8",
+                "length": "0",
+                "weight": 1004.8,
+                "ur_prod": null,
+                "quantity": 1,
+                "description": "HP 16.00X2000X4000 EN10025-2-S355JR+AR",
+                "order_line_id": "337390-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 1004.8,
+            "customer_name": "CGH (S A) (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 1,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "337390"
+          },
+          {
+            "id": "6061ac17-ef57-4a63-b6de-e453ca6e7e7b",
+            "load_id": "e7ac5195-983b-48d6-acd3-356683c7069e",
+            "load_items": [
+              {
+                "id": "04d1c222-b862-40f1-bf25-cdf6b5a95884",
+                "length": "0",
+                "weight": 409.764,
+                "ur_prod": null,
+                "quantity": 6,
+                "description": "HS 1.90X1225X3650 SAE-1008",
+                "order_line_id": "337391-0"
+              },
+              {
+                "id": "fe5b2c7d-ee9f-4655-877d-380f00fe6dd4",
+                "length": "0",
+                "weight": 275.046,
+                "ur_prod": null,
+                "quantity": 6,
+                "description": "SHS 1.90X1225X2450 SAE1008(SI,03%)",
+                "order_line_id": "337391-1"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 684.81,
+            "customer_name": "CGH (S A) (PTY) LTD",
+            "delivery_date": "2025-08-25",
+            "total_quantity": 12,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "337391"
+          },
+          {
+            "id": "dbaada0f-0ad7-4fb0-833b-6e53c9974a1b",
+            "load_id": "1d00bda6-f796-48f6-9f8b-320c6cba9197",
+            "load_items": [
+              {
+                "id": "589252b3-4f11-4f26-99ba-1439cbdaea8d",
+                "length": "0",
+                "weight": 978.12,
+                "ur_prod": null,
+                "quantity": 13,
+                "description": "IP 120X64X8.36X9.000 IPE-AA-S355JR",
+                "order_line_id": "336400-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Stock Item Ready to Load",
+            "total_weight": 978.12,
+            "customer_name": "STEEL & PIPES FOR AFRICA(WEST RAND)",
+            "delivery_date": "2025-08-14",
+            "total_quantity": 13,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "336400"
+          },
+          {
+            "id": "28971458-95c5-4d49-adf9-d6373b0f9460",
+            "load_id": "2dd38805-d244-4096-92f9-eafd30bc953e",
+            "load_items": [
+              {
+                "id": "94224fc4-7196-4adf-86e5-3786905b07f4",
+                "length": "0",
+                "weight": 1950.075,
+                "ur_prod": null,
+                "quantity": 25,
+                "description": "SHS 3.00X1200X2500 VASTRAP",
+                "order_line_id": "7180506-0"
+              }
+            ],
+            "customer_id": null,
+            "order_status": "Sales Order Open Printed",
+            "total_weight": 1950.075,
+            "customer_name": "STEEL & PIPES FOR AFRICA(WEST RAND)",
+            "delivery_date": "2025-08-26",
+            "total_quantity": 25,
+            "dispatch_remarks": "INVOICE TO GO WITH",
+            "sales_order_number": "7180506"
+          }
+        ],
+        "postal_code": "",
+        "suburb_name": "KRUGERSDORP"
+      }
+    ]
+  }
+]
