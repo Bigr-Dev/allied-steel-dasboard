@@ -5,11 +5,13 @@ export async function fetchServerData(url, method, data) {
   const cookieStore = await cookies()
   const token = cookieStore?.get('access_token')?.value
 
-  // Set up the options for the fetch request
+  // Set up the options for the fetch request //https://allied-steel-dasboard.vercel.app/
   const options = {
     method: method,
     headers: {
-      'Access-Control-Allow-Origin': 'http://localhost:3000',
+      // 'Access-Control-Allow-Origin': 'http://localhost:3000',
+      'Access-Control-Allow-Origin':
+        'https://allied-steel-dasboard.vercel.app/',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Content-Type': 'application/json',
       Authorization: token ? `Bearer ${token}` : '', // Correct Authorization header
