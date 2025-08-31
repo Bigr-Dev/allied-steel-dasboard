@@ -37,11 +37,11 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       const Routes = await fetchServerData('routes', 'GET')
       const Customers = await fetchServerData('customers', 'GET')
       const Drivers = await fetchServerData('drivers', 'GET')
-      // const Loads = await fetchServerData(
-      //   `loads?date=${'2025-09-01'}&includeItems=true`,
-      //   'GET'
-      // )
-      const Loads = await fetchServerData(`loads?includeItems=true`, 'GET')
+      const Loads = await fetchServerData(
+        `loads?date=${tomorrow}&includeItems=true`,
+        'GET'
+      )
+      // const Loads = await fetchServerData(`loads?includeItems=true`, 'GET')
       const Orders = await fetchServerData('orders', 'GET')
       const Users = await fetchServerData('users', 'GET')
       const Vehicles = await fetchServerData('vehicles', 'GET')
