@@ -28,7 +28,7 @@ const Dashboard = () => {
     setUnlockedVehicles((prev) => new Set([...prev, vehicleId]))
   }
 
-  // const test = load_assignment?.data?.[1]
+  const test = load_assignment?.data?.[1]
 
   // console.log('test :>> ', typeof test)
 
@@ -93,7 +93,7 @@ const Dashboard = () => {
     )
     .subscribe()
 
-  console.log('channels :>> ', channels)
+  //  console.log('channels :>> ', channels)
 
   const feed = [
     {
@@ -133,13 +133,17 @@ const Dashboard = () => {
                 return liveData
               }
             }
+
+            const test = vehicleData?.map((v) => v.loads)
+            const test2 = test?.filter((t) => t.branch_id)
+            console.log('test2 :>> ', test2)
             //  console.log('test_plate :>> ', test_plate()?.Geozone)
 
             return (
               <Card
                 key={vehicle?.vehicle_id}
                 className={` ${
-                  !vehicle_plate && 'display-none'
+                  !vehicle_plate && 'visibility-hidden'
                 } bg-gray-100 border-gray-300`}
               >
                 <CardHeader className="pb-3">
