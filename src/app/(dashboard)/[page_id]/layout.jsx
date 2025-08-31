@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Motion Live',
-  description: 'Motion Live Routing System',
+  title: 'Allied Steelrode',
+  description: 'Dashboard - Allied Steelrode Routing System',
 }
 const ArchivePageLayout = async ({ children, params }) => {
   const { page_id, id } = await params
