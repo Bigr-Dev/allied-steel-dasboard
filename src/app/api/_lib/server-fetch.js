@@ -38,26 +38,26 @@ export async function fetchServerData(url, method, data) {
       cookie.set('uid', user?.id, {
         // httpOnly: true,
         maxAge: expires_at, // Set the expiration time
-        secure: process.env.NODE_ENV === 'production', // Ensure secure cookies in production
+        // secure: process.env.NODE_ENV === 'production', // Ensure secure cookies in production
         path: '/', // Cookie available for the entire domain
       })
 
       cookie.set('access_token', access_token, {
         httpOnly: true,
         maxAge: expires_at, // Set the expiration time
-        secure: process.env.NODE_ENV === 'production', // Ensure secure cookies in production
+        // secure: process.env.NODE_ENV === 'production', // Ensure secure cookies in production
         path: '/', // Cookie available for the entire domain
       })
 
       cookie.set('refresh_token', refresh_token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Secure in production
+        //  secure: process.env.NODE_ENV === 'production', // Secure in production
         path: '/', // Cookie available for the entire domain
       })
 
       cookie.set('expires_at', expires_at, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        //   secure: process.env.NODE_ENV === 'production',
         path: '/', // Cookie available for the entire domain
       })
 
