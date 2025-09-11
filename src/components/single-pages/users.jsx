@@ -62,8 +62,8 @@ export default function UserPage({ id }) {
     lastLogin: 'Unknown',
     status: 'inactive',
   }
-  console.log('user :>> ', user)
-  console.log('branches?.data :>> ', branches?.data)
+  // console.log('user :>> ', user)
+  // console.log('branches?.data :>> ', branches?.data)
   const tabs = [
     {
       value: 'activity',
@@ -134,9 +134,9 @@ export default function UserPage({ id }) {
     },
   ]
 
-  const permissions =
-    user?.permissions &&
-    Object.entries(user.permissions).map(([name, access]) => ({ name, access }))
+  const permissions = user?.permissions
+  // &&
+  // Object.entries(user.permissions).map(([name, access]) => ({ name, access }))
 
   return (
     <div className="space-y-6">
@@ -205,10 +205,10 @@ export default function UserPage({ id }) {
               <div className="flex flex-wrap gap-2">
                 {user?.managed_branches && user.managed_branches.length > 0 ? (
                   user.managed_branches.map((branch) => {
-                    console.log(
-                      'branch :>> ',
-                      branches?.data?.filter((b) => b.id == branch)?.[0]?.name
-                    )
+                    // console.log(
+                    //   'branch :>> ',
+                    //   branches?.data?.filter((b) => b.id == branch)?.[0]?.name
+                    // )
                     return (
                       <Badge
                         key={branch}
@@ -340,3 +340,14 @@ export default function UserPage({ id }) {
     </div>
   )
 }
+
+// {
+//   "loads": "write",
+//   "users": "write",
+//   "orders": "write",
+//   "routes": "write",
+//   "drivers": "write",
+//   "branches": "write",
+//   "vehicles": "write",
+//   "customers": "write"
+// }

@@ -25,7 +25,7 @@ export default function AddressAutocomplete({
 
   useEffect(() => {
     const searchAddresses = async () => {
-      if (value.length < 3) {
+      if (value?.length < 3) {
         setSuggestions([])
         setShowSuggestions(false)
         return

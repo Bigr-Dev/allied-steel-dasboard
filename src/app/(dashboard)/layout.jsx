@@ -4,6 +4,7 @@ import { fetchServerData } from '../api/_lib/server-fetch'
 import { cookies } from 'next/headers'
 
 import { isExpired } from '@/lib/check-token'
+import Image from 'next/image'
 
 export const metadata = {
   title: 'Allied Steelrode',
@@ -90,9 +91,9 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       <GlobalProvider data={data}>
         <SidebarProvider>
           {sidebar}
-          <main className="bg-[#f3f3f3] dark:bg-gray-900 flex-1 min-h-screen ">
+          <main className=" flex-1 min-h-screen  ">
             {header}
-            <div className=" overflow-y-auto bg-[#f3f3f3] ">{children}</div>
+            <div className=" overflow-y-auto  ">{children}</div>
           </main>
         </SidebarProvider>
       </GlobalProvider>
@@ -101,3 +102,5 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
 }
 
 export default DashboardLayout
+//bg-[#f3f3f3] dark:bg-gray-900
+//bg-[#f3f3f3]

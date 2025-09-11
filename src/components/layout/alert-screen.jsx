@@ -19,59 +19,64 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
   const pathname = usePathname().slice(1)
   const screen = replaceHyphenWithUnderscore(pathname)
   const { toast } = useToast()
+
+  //       orders,
+  //       ordersDispatch,
+  //       deleteOrder,
+
   const {
-    cc_api,
-    costCentresDispatch,
-    c_api,
-    clientsDispatch,
-    u_api,
+    deleteBranch,
+    branchesDispatch,
+    deleteCustomer,
+    customersDispatch,
+    deleteUser,
     usersDispatch,
-    v_api,
+    deleteVehicle,
     vehiclesDispatch,
-    d_api,
+    deleteDriver,
     driversDispatch,
-    sp_api,
-    stopPointsDispatch,
-    t_api,
-    tripsDispatch,
+    deleteRoute,
+    routesDispatch,
+    deleteLoad,
+    loadsDispatch,
   } = useGlobalContext()
   let deleteItem = null
   let dispatch = null
 
   switch (screen) {
-    case 'cost_centres':
-      deleteItem = cc_api?.deleteCostCentre
-      dispatch = costCentresDispatch
+    case 'branches':
+      deleteItem = deleteBranch
+      dispatch = branchesDispatch
       break
 
-    case 'clients':
-      deleteItem = c_api?.deleteClient
-      dispatch = clientsDispatch
+    case 'customers':
+      deleteItem = deleteCustomer
+      dispatch = customersDispatch
       break
 
     case 'users':
-      deleteItem = u_api?.deleteUser
+      deleteItem = deleteUser
       dispatch = usersDispatch
       break
 
     case 'vehicles':
-      deleteItem = v_api?.deleteVehicle
+      deleteItem = deleteVehicle
       dispatch = vehiclesDispatch
       break
 
     case 'drivers':
-      deleteItem = d_api?.deleteDriver
+      deleteItem = deleteDriver
       dispatch = driversDispatch
       break
 
-    case 'stop_points':
-      deleteItem = sp_api?.deleteStopPoint
-      dispatch = stopPointsDispatch
+    case 'routes':
+      deleteItem = deleteRoute
+      dispatch = routesDispatch
       break
 
-    case 'trips':
-      deleteItem = t_api?.deleteTrip
-      dispatch = tripsDispatch
+    case 'loads':
+      deleteItem = deleteLoad
+      dispatch = loadsDispatch
       break
 
     default:
@@ -80,7 +85,7 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
   }
 
   const handleDelete = async () => {
-    const readableScreen = pathname.replace(/-/g, ' ')
+    const readableScreen = pathname?.replace(/-/g, ' ')
 
     if (!deleteItem || !dispatch) {
       toast({
@@ -98,7 +103,7 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
     } catch (error) {
       toast({
         title: `Error deleting ${readableScreen} ${id}`,
-        description: error.message,
+        description: error?.message,
       })
     }
   }

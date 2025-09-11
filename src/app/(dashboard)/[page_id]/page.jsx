@@ -9,7 +9,7 @@ import LoadsTableContainer from '@/components/layout/loads-table-container'
 
 const ArchivePage = async ({ params, title, statistics }) => {
   const { page_id } = await params
-  console.log('page_id :ArchivePage>> ', page_id)
+  //  console.log('page_id :ArchivePage>> ', page_id)
   return (
     <>
       <div className="flex flex-col md:flex-row justify-between items-end gap-4 p-1">

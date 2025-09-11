@@ -46,7 +46,7 @@ export const fetchCurrentUser = async (currentUserDispatch) => {
 
     // Handle new standardized response format
     console.log('response :>> ', response)
-    const responseData = response
+    const responseData = response?.message
     if (responseData && responseData !== undefined) {
       currentUserDispatch(auth_actions.fetchCurrentUserSuccess(responseData))
     } else {

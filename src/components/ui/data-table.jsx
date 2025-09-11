@@ -51,6 +51,7 @@ export function DataTable({
   columns,
   data,
   filterColumn,
+  url,
   filterPlaceholder = 'Filter...',
   showColumnToggle = true,
   csv_headers,
@@ -97,7 +98,7 @@ export function DataTable({
               placeholder={filterPlaceholder}
               value={table.getState().globalFilter ?? ''}
               onChange={(event) => table.setGlobalFilter(event.target.value)}
-              className="max-w-sm border-[#428bca]"
+              className="max-w-sm border-[#003e69]"
             />
           )}
         </div>
@@ -105,7 +106,7 @@ export function DataTable({
           {data?.length > 0 && csv_headers && csv_rows && (
             <Button
               variant="outline"
-              className="ml-auto border-[#428bca]"
+              className="ml-auto border-[#003e69]"
               onClick={() =>
                 downloadCSVFromTable({
                   headers: csv_headers,
@@ -120,7 +121,7 @@ export function DataTable({
           {showColumnToggle && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto border-[#428bca]">
+                <Button variant="outline" className="ml-auto border-[#003e69]">
                   Columns <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -147,13 +148,13 @@ export function DataTable({
           )}
         </div>
       </div>
-      <div className="rounded-md border overflow-hidden  border-[#428bca]">
+      <div className="rounded-md border overflow-hidden  border-[#003e69]">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
-                className=" bg-[#428bca] hover:bg-[#428bca]  "
+                className=" bg-[#003e69] hover:bg-[#428bca]  "
               >
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id} className=" mx-0 px-2 text-white">
@@ -175,39 +176,58 @@ export function DataTable({
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                   onClick={() => {
-                    //   console.log('row.original.id :>> ', row.original)
-                    if (row.original.route_id) {
-                      router.push(`${pathname}/${row.original.route_id}`)
-                    }
-                    if (row.original.id) {
-                      router.push(`${pathname}/${row.original.id}`)
+                    if (url) {
+                      switch (url) {
+                        case 'loads':
+                          router.replace(`/${url}/${row.original.route_id}`)
+                          break
 
-                      // if (row.original.id.includes('CC')) {
-                      //   // If the ID starts with "CC", navigate to the cost centre details page
-                      //   router.push(`/cost-centres/${row.original.id}`)
-                      // } else if (row.original.id.includes('USR')) {
-                      //   // If the ID starts with "USR", navigate to the user details page
-                      //   router.push(`/users/${row.original.id}`)
-                      // } else if (row.original.id.includes('CL')) {
-                      //   // If the ID starts with "CL", navigate to the client details page
-                      //   router.push(`/clients/${row.original.id}`)
-                      // } else if (row.original.id.includes('VEH')) {
-                      //   // If the ID starts with "VEH", navigate to the vehicle details page
-                      //   router.push(`/vehicles/${row.original.id}`)
-                      // } else if (row.original.id.includes('DRV')) {
-                      //   // If the ID starts with "DRV", navigate to the driver details page
-                      //   router.push(`/drivers/${row.original.id}`)
-                      // } else if (row.original.id.includes('STP')) {
-                      //   // If the ID starts with "STP", navigate to the stop details page
-                      //   router.push(`/stop-points/${row.original.id}`)
-                      // } else if (row.original.id.includes('TRP')) {
-                      //   // If the ID starts with "TRP", navigate to the trip details page
-                      //   router.push(`/trips/${row.original.id}`)
-                      // } else {
-                      //   // router.push(`${pathname}/${row.original.id}`)
-                      //   null
-                      // }
+                        case 'none':
+                          break
+
+                        default:
+                          router.replace(`/${url}/${row.original.id}`)
+
+                          break
+                      }
+                    } else if (row.original.id) {
+                      router.push(`${pathname}/${row.original.id}`)
                     }
+                    // if (url) {
+                    //   router.push(`${pathname}/${row.original.id}`)
+                    // }
+                    // if (row.original.route_id) {
+                    //   router.push(`${pathname}/${row.original.route_id}`)
+                    // }
+                    // if (row.original.id) {
+                    //   router.push(`${pathname}/${row.original.id}`)
+
+                    //   // if (row.original.id.includes('CC')) {
+                    //   //   // If the ID starts with "CC", navigate to the cost centre details page
+                    //   //   router.push(`/cost-centres/${row.original.id}`)
+                    //   // } else if (row.original.id.includes('USR')) {
+                    //   //   // If the ID starts with "USR", navigate to the user details page
+                    //   //   router.push(`/users/${row.original.id}`)
+                    //   // } else if (row.original.id.includes('CL')) {
+                    //   //   // If the ID starts with "CL", navigate to the client details page
+                    //   //   router.push(`/clients/${row.original.id}`)
+                    //   // } else if (row.original.id.includes('VEH')) {
+                    //   //   // If the ID starts with "VEH", navigate to the vehicle details page
+                    //   //   router.push(`/vehicles/${row.original.id}`)
+                    //   // } else if (row.original.id.includes('DRV')) {
+                    //   //   // If the ID starts with "DRV", navigate to the driver details page
+                    //   //   router.push(`/drivers/${row.original.id}`)
+                    //   // } else if (row.original.id.includes('STP')) {
+                    //   //   // If the ID starts with "STP", navigate to the stop details page
+                    //   //   router.push(`/stop-points/${row.original.id}`)
+                    //   // } else if (row.original.id.includes('TRP')) {
+                    //   //   // If the ID starts with "TRP", navigate to the trip details page
+                    //   //   router.push(`/trips/${row.original.id}`)
+                    //   // } else {
+                    //   //   // router.push(`${pathname}/${row.original.id}`)
+                    //   //   null
+                    //   // }
+                    // }
                   }}
                   className="cursor-pointer transition-colors hover:bg-muted/50"
                 >
@@ -260,6 +280,11 @@ export function DataTable({
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            className={
+              table.getCanPreviousPage()
+                ? 'text-white hover:text-white bg-[#003e69] hover:bg-[#428bca]'
+                : 'text-black border-[#003e69]'
+            }
           >
             Previous
           </Button>
@@ -268,6 +293,11 @@ export function DataTable({
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            className={
+              table.getCanNextPage()
+                ? 'text-white hover:text-white bg-[#003e69] hover:bg-[#428bca]'
+                : 'text-black border-[#003e69]'
+            }
           >
             Next
           </Button>

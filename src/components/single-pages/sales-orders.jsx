@@ -220,6 +220,7 @@ export default function SalesOrderPage({ id }) {
             columns={order_columns}
             data={orderData?.order_lines}
             filterColumn="model"
+            url="none"
             filterPlaceholder="Search vehicles..."
           />
         )}

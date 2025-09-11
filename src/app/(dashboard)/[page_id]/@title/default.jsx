@@ -34,7 +34,7 @@ const PageTitle = () => {
   const accessibleRoutes = getPermittedAccessRoutes(permissions)
   const canEdit = accessibleRoutes.filter((p) => p.href.includes(pathname))
 
-  //console.log('pathname :>> ', pathname)
+  //  console.log('accessibleRoutes :>> ', accessibleRoutes)
   if (pathname === '' || pathname.includes('dashboard')) {
     titleSection = dashboard?.titleSection
   } else if (pathname.includes('orders')) {
@@ -142,13 +142,15 @@ const PageTitle = () => {
     }
   }
 
+  //console.log('canEdit :>> ', canEdit)
+
   return (
     <>
       <div>
-        <h2 className="text-xl text-[#003e69]  font-bold tracking-tight uppercase">
+        <h2 className="text-xl text-[#003e69]   font-bold tracking-tight uppercase">
           {titleSection?.title}
         </h2>
-        <p className="text-[#428bca]">{titleSection?.description}</p>
+        <p className="text-[#fff]">{titleSection?.description}</p>
       </div>
       {titleSection?.button && (
         <Button

@@ -41,21 +41,15 @@ export default function SingleBranch({ id }) {
     activeTrips: 0,
   }
 
-  console.log('id :>> ', id)
+  //console.log('id :>> ', id)
   // Find users associated to this branch
-  const userStats = users?.data?.filter(
-    (u) => u.branch_id === dashboardState?.value
-  )
+  const userStats = users?.data?.filter((u) => u.branch_id === id)
 
   // Find vehicles associated with this branch
-  const vehicleStats = vehicles?.data?.filter(
-    (v) => v.branch_id === dashboardState?.value
-  )
+  const vehicleStats = vehicles?.data?.filter((v) => v.branch_id === id)
 
   // Find vehicles associated with this branch
-  const loadStats = loads?.data?.filter(
-    (l) => l.branch_id === dashboardState?.value
-  )
+  const loadStats = loads?.data?.filter((l) => l.branch_id === id)
   // console.log('trips :>> ', loadStats)
 
   // Column definitions for users table
@@ -379,6 +373,7 @@ export default function SingleBranch({ id }) {
               <DataTable
                 columns={userColumns}
                 data={userStats}
+                url="users"
                 filterColumn="name"
                 filterPlaceholder="Search users..."
               />
@@ -397,6 +392,7 @@ export default function SingleBranch({ id }) {
               <DataTable
                 columns={vehicleColumns}
                 data={vehicleStats}
+                url="vehicles"
                 filterColumn="model"
                 filterPlaceholder="Search vehicles..."
               />
@@ -415,6 +411,7 @@ export default function SingleBranch({ id }) {
               <DataTable
                 columns={tripColumns}
                 data={loadStats}
+                url="loads"
                 filterColumn="id"
                 filterPlaceholder="Search branches..."
               />

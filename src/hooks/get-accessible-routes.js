@@ -50,23 +50,69 @@ export const getAccessibleRoutes = (permissions) => {
   })
 }
 
+// export const getPermittedAccessRoutes = (permissions) => {
+//   return routes
+//     .map((route) => {
+//       //console.log('route :getPermittedAccessRoutes>> ', route)
+//       // If the route doesn't have a specific permission, default it to 'read'
+//       if (!route.permission) return { ...route, access: 'read' }
+
+//       // Check the user's permission for the route
+//       const userPermission = permissions[route.permission] // Accessing the permission directly from the object
+
+//       // If the user has the required permission, return the route with the appropriate access
+//       if (userPermission === 'read' || userPermission === 'write') {
+//         return { ...route, access: userPermission }
+//       }
+
+//       // If the user doesn't have access, return null
+//       return null
+//     })
+//     .filter(Boolean) // Remove null values (routes the user does not have access to)
+// }
+// Normalize permissions into a { [permissionName]: "read" | "write" } map
+const toPermissionMap = (permissions) => {
+  if (!permissions) return {}
+
+  // If already an object map, lower-case keys/values and return
+  if (!Array.isArray(permissions)) {
+    return Object.fromEntries(
+      Object.entries(permissions).map(([k, v]) => [
+        String(k).toLowerCase(),
+        String(v).toLowerCase(),
+      ])
+    )
+  }
+
+  // If it's an array of { name, access }, reduce to a map
+  return permissions.reduce((acc, item) => {
+    if (!item || !item.name) return acc
+    const name = String(item.name).toLowerCase()
+    const access = String(item.access || 'read').toLowerCase()
+    acc[name] = access
+    return acc
+  }, {})
+}
+
 export const getPermittedAccessRoutes = (permissions) => {
+  const permMap = toPermissionMap(permissions)
+
   return routes
     .map((route) => {
-      //console.log('route :getPermittedAccessRoutes>> ', route)
-      // If the route doesn't have a specific permission, default it to 'read'
+      // If the route doesn't declare a permission, default to 'read'
       if (!route.permission) return { ...route, access: 'read' }
 
-      // Check the user's permission for the route
-      const userPermission = permissions[route.permission] // Accessing the permission directly from the object
+      // Look up user's permission for this route
+      const key = String(route.permission).toLowerCase()
+      const userPermission = permMap[key]
 
-      // If the user has the required permission, return the route with the appropriate access
+      // Allow only 'read' or 'write'
       if (userPermission === 'read' || userPermission === 'write') {
         return { ...route, access: userPermission }
       }
 
-      // If the user doesn't have access, return null
+      // No access
       return null
     })
-    .filter(Boolean) // Remove null values (routes the user does not have access to)
+    .filter(Boolean)
 }

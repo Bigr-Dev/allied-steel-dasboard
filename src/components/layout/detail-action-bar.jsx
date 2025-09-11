@@ -37,7 +37,7 @@ const DetailActionBar = ({ id, title, description }) => {
           <h2 className="text-xl text-[#003e69]  font-bold tracking-tight capitalize">
             {title ? title : id}
           </h2>
-          <p className="text-muted-foreground">{description || null}</p>
+          <p className="text-[#428bca]">{description || null}</p>
         </div>
       </div>
 

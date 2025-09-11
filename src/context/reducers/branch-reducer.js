@@ -48,10 +48,10 @@ const branchReducer = (state, action) => {
               item.id === action.payload.id ? action.payload : item
             )
           : [action.payload],
-        currentBranch:
-          state.currentBranch?.id === action.payload.id
-            ? action.payload
-            : state.currentBranch,
+        // currentBranch:
+        //   state.currentBranch?.id === action.payload.id
+        //     ? action.payload
+        //     : state.currentBranch,
         loading: false,
       }
     case branches.DELETE_BRANCH:
@@ -60,10 +60,10 @@ const branchReducer = (state, action) => {
         data: Array.isArray(state.data)
           ? state.data.filter((item) => item.id !== action.payload)
           : [],
-        currentBranch:
-          state.currentBranch?.id === action.payload
-            ? null
-            : state.currentBranch,
+        // currentBranch:
+        //   state.currentBranch?.id === action.payload
+        //     ? null
+        //     : state.currentBranch,
         loading: false,
       }
     default:
@@ -72,3 +72,41 @@ const branchReducer = (state, action) => {
 }
 
 export default branchReducer
+
+// case branches.UPDATE_BRANCH: {
+//   const updated = action.payload
+//   return {
+//     ...state,
+//     data: state.data.map((b) => (b.id === updated.id ? updated : b)),
+//     currentBranch:
+//       state.currentBranch?.id === updated.id
+//         ? updated
+//         : state.currentBranch,
+//     loading: false,
+//   }
+// }
+
+// case branches.DELETE_BRANCH: {
+//   const id = action.payload
+//   const nextData = Array.isArray(state.data)
+//     ? state.data.filter((item) => item.id !== id)
+//     : []
+
+//   const stillExists = state.currentBranch
+//     ? nextData.some((b) => b.id === state.currentBranch.id)
+//     : false
+
+//   const nextCurrent =
+//     state.currentBranch?.id === id
+//       ? nextData[0] ?? null
+//       : stillExists
+//       ? state.currentBranch
+//       : nextData[0] ?? null
+
+//   return {
+//     ...state,
+//     data: nextData,
+//     currentBranch: nextCurrent,
+//     loading: false,
+//   }
+// }

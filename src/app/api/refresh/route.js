@@ -39,10 +39,20 @@ export async function POST(req) {
     // Your server returns the shape from refreshSupabaseSession:
     // { access_token, refresh_token, expires_at, token_type, user }
     if (!response || response.error) {
-      return NextResponse.json(
-        { error: response?.error || 'Refresh failed' },
+      const res = NextResponse.json(
+        { error: 'Refresh failed' },
         { status: 401 }
       )
+      res.cookies.delete('access_token')
+      res.cookies.delete('refresh_token')
+      res.cookies.delete('expires_at')
+      res.cookies.delete('uid')
+      return res
+
+      // return NextResponse.json(
+      //   { error: response?.error || 'Refresh failed' },
+      //   { status: 401 }
+      // )
     }
 
     const {

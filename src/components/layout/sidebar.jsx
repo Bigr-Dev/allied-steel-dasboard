@@ -36,7 +36,7 @@ import {
   ClipboardList,
   PackageOpen,
   Package,
-  PackagePlus
+  PackagePlus,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -126,6 +126,14 @@ const SideBar = () => {
   const { collapsed } = useSidebar()
   const { dashboardState, handleDashboardState, branches } = useGlobalContext()
 
+  let branch_list = [{ value: 'all', label: 'All' }]
+
+  branches &&
+    branches?.data?.map((cc) => {
+      branch_list.push({ value: cc.id, label: cc.name })
+    })
+
+  //console.log('branch_list :>> ', branch_list)
   const branch_inputs = [
     {
       type: 'select',
@@ -134,11 +142,7 @@ const SideBar = () => {
       placeholder: 'Select cost centre',
       value: dashboardState?.branch,
 
-      options: branches
-        ? branches?.data?.map((cc) => {
-            return { value: cc.id, label: cc.name }
-          })
-        : [],
+      options: branch_list,
     },
   ]
 
@@ -161,7 +165,7 @@ const SideBar = () => {
       item.href !== '/load-assignment'
   )
   return (
-    <Sidebar collapsible="icon" className="z-30 bg-[#f3f3f3] group ">
+    <Sidebar collapsible="icon" className="z-30 bg-white/40 group ">
       <SidebarHeader className=" h-16 justify-center  bg-[#003e69]  shadow-md ">
         <SidebarMenu className={''}>
           <SidebarMenuItem>
@@ -173,7 +177,7 @@ const SideBar = () => {
                   tooltip="Allied Steelrode Fleet Management"
                 >
                   <div className="flex aspect-square size-7 items-center justify-center rounded-lg  text-white">
-                    <Truck className="size-4" />
+                    <Truck className="h-6 w-6" />
                     {/* <Image src={allied_logo} /> */}
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
@@ -229,14 +233,18 @@ const SideBar = () => {
                   <SidebarMenuButton
                     asChild
                     className={
-                      isActive ? 'bg-[#428bca]' : 'hover:bg-[#428bca] '
+                      isActive
+                        ? 'bg-[#003e69] hover:bg-[#428bca] hover:text-white'
+                        : 'hover:bg-[#428bca] hover:text-white'
                     }
                   >
                     <Link href={item.href}>
-                      <Icon color={isActive ? '#fff' : '#333333'} />
+                      <Icon color={isActive ? '#fff ' : '#333333'} />
                       <span
                         className={
-                          isActive ? 'font-bold, text-white' : undefined
+                          isActive
+                            ? 'font-bold, text-white'
+                            : 'hover:text-white'
                         }
                       >
                         {item.label}
@@ -278,14 +286,18 @@ const SideBar = () => {
                         <SidebarMenuButton
                           asChild
                           className={
-                            isActive ? 'bg-[#428bca]' : 'hover:bg-[#428bca]'
+                            isActive
+                              ? 'bg-[#003e69] hover:bg-[#428bca] hover:text-white'
+                              : 'hover:bg-[#428bca] hover:text-white'
                           }
                         >
                           <Link href={item.href}>
-                            <Icon color={isActive ? '#fff' : '#333333'} />
+                            <Icon color={isActive ? '#fff ' : '#333333'} />
                             <span
                               className={
-                                isActive ? 'font-bold, text-white' : undefined
+                                isActive
+                                  ? 'font-bold, text-white'
+                                  : 'hover:text-white'
                               }
                             >
                               {item.label}
@@ -329,14 +341,25 @@ const SideBar = () => {
                           <SidebarMenuButton
                             asChild
                             className={
-                              isActive ? 'bg-[#428bca]' : 'hover:bg-[#428bca]'
+                              isActive
+                                ? 'bg-[#003e69] hover:bg-[#428bca] hover:text-white'
+                                : 'hover:bg-[#428bca] hover:text-white'
                             }
                           >
                             <Link href={item.href}>
-                              <Icon color={isActive ? '#fff' : '#333333'} />
+                              <Icon
+                                color={isActive ? '#fff ' : '#333333'}
+                                className={
+                                  isActive
+                                    ? ' text-white'
+                                    : 'hover:color-[white]'
+                                }
+                              />
                               <span
                                 className={
-                                  isActive ? 'font-bold, text-white' : undefined
+                                  isActive
+                                    ? 'font-bold text-white'
+                                    : 'hover:text-white'
                                 }
                               >
                                 {item.label}

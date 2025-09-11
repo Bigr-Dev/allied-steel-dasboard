@@ -146,17 +146,17 @@ const Statistics = () => {
         {
           title: 'Overdue Orders',
           value: overDueOrders?.length || 0,
-          icon: <Users className="h-6 w-6 text-pink-700" />,
+          icon: <Users className="h-6 w-6 text-violet-500 " />,
         },
         {
           title: "Today's Orders",
           value: TodaysOrders?.length,
-          icon: <Truck className="h-6 w-6 text-orange-500" />,
+          icon: <Truck className="h-6 w-6 text-pink-700 " />,
         },
         {
           title: "Tomorrow's Orders",
           value: tomorrowOrders?.length || 0,
-          icon: <Building2 className="h-6 w-6 text-violet-500" />,
+          icon: <Building2 className="h-6 w-6 text-orange-500" />,
         },
         {
           title: 'Upcoming Orders',
@@ -190,25 +190,25 @@ const Statistics = () => {
         {
           title: 'Active Routes',
           value: current_screen?.data?.length || 0,
-          icon: <Clock className="h-4 w-4 xl:h-7 xl:w-7 text-gray-500" />,
+          icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
         },
         {
           title: 'Total Suburbs',
           value: total_load_suburbs || 0,
-          icon: <Play className="h-4 w-4 xl:h-7 xl:w-7 text-blue-500" />,
+          icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
         {
           title: 'Total Customers',
           value: total_load_orders || 0,
           icon: (
-            <AlertTriangle className="h-4 w-4 xl:h-7 xl:w-7 text-red-500" />
+            <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
           ),
         },
         {
           title: 'Total Load Items',
           value: total_load_items || 0,
           icon: (
-            <CheckCircle className="h-4 w-4 xl:h-7 xl:w-7 text-green-500" />
+            <CheckCircle className="h-6 w-6 xl:h-7 xl:w-7 text-green-500" />
           ),
         },
       ]
@@ -219,22 +219,22 @@ const Statistics = () => {
         {
           title: 'Total Branches',
           value: current_screen?.data?.length || 0,
-          icon: <Building2 className="h-4 w-4 text-violet-500" />,
+          icon: <Building2 className="h-6 w-6 text-violet-500" />,
         },
         {
           title: 'Total Users',
           value: users?.data?.length || 0,
-          icon: <Users className="h-4 w-4 text-pink-700" />,
+          icon: <Users className="h-6 w-6 text-pink-700" />,
         },
         {
           title: 'Total Vehicles',
           value: vehicles?.data?.length || 0,
-          icon: <Truck className="h-4 w-4 text-orange-500" />,
+          icon: <Truck className="h-6 w-6 text-orange-500" />,
         },
         {
           title: 'Total Drivers',
           value: drivers?.data?.length || 0,
-          icon: <Route className="h-4 w-4 text-emerald-500" />,
+          icon: <UserCircle className="h-6 w-6 text-emerald-500" />,
         },
       ]
       // console.log('current_screen :Statistics>> ', path, current_screen?.data)
@@ -244,22 +244,22 @@ const Statistics = () => {
         {
           title: 'Total Users',
           value: users?.data?.length || 0,
-          icon: <Users className="h-4 w-4 text-gray-500" />,
+          icon: <Users className="h-6 w-6 text-gray-500" />,
         },
         {
           title: 'Admins',
           value: users?.data?.filter((u) => u.role === 'admin')?.length || 0,
-          icon: <ShieldCheck className="h-4 w-4 text-violet-500" />,
+          icon: <ShieldCheck className="h-6 w-6 text-violet-500" />,
         },
         {
           title: 'Controllers',
           value: users?.data?.filter((u) => u.role == 'controller') || 0,
-          icon: <ShieldAlert className="h-4 w-4 text-blue-500" />,
+          icon: <ShieldAlert className="h-6 w-6 text-blue-500" />,
         },
         {
           title: 'Managers',
           value: users?.data?.filter((u) => u.role == 'manager') || 0,
-          icon: <ShieldAlert className="h-4 w-4 text-blue-500" />,
+          icon: <ShieldAlert className="h-6 w-6 text-blue-500" />,
         },
       ]
 
@@ -276,22 +276,22 @@ const Statistics = () => {
         {
           title: 'Total Routes',
           value: current_screen?.data?.length || 0,
-          icon: <Building2 className="h-4 w-4 text-violet-500" />,
+          icon: <Building2 className="h-6 w-6 text-violet-500" />,
         },
         {
           title: 'Total Suburbs',
           value: total_route_suburbs || 0,
-          icon: <Users className="h-4 w-4 text-pink-700" />,
+          icon: <Users className="h-6 w-6 text-pink-700" />,
         },
         // {
         //   title: 'Total Vehicles',
         //   value: 0,
-        //   icon: <Truck className="h-4 w-4 text-orange-500" />,
+        //   icon: <Truck className="h-6 w-6 text-orange-500" />,
         // },
         // {
         //   title: 'Active Trips',
         //   value: 0,
-        //   icon: <Route className="h-4 w-4 text-emerald-500" />,
+        //   icon: <Route className="h-6 w-6 text-emerald-500" />,
         // },
       ]
       console.log('current_screen :Statistics>> ', path, current_screen?.data)
@@ -301,22 +301,22 @@ const Statistics = () => {
         {
           title: 'Total Customers',
           value: current_screen?.data?.length || 0,
-          icon: <Building2 className="h-4 w-4 text-violet-500" />,
+          icon: <Building2 className="h-6 w-6 text-violet-500" />,
         },
         // {
         //   title: 'unfulfilled Orders',
         //   value: 0,
-        //   icon: <Users className="h-4 w-4 text-pink-700" />,
+        //   icon: <Users className="h-6 w-6 text-pink-700" />,
         // },
         // {
         //   title: 'Fulfilled Orders',
         //   value: 0,
-        //   icon: <Truck className="h-4 w-4 text-orange-500" />,
+        //   icon: <Truck className="h-6 w-6 text-orange-500" />,
         // },
         // {
         //   title: 'Active Orders',
         //   value: 0,
-        //   icon: <Route className="h-4 w-4 text-emerald-500" />,
+        //   icon: <Route className="h-6 w-6 text-emerald-500" />,
         // },
       ]
       //  console.log('current_screen :Statistics>> ', path, current_screen?.data)
@@ -326,28 +326,28 @@ const Statistics = () => {
         {
           title: 'Total Vehicles',
           value: current_screen?.data?.length || 0,
-          icon: <Truck className="h-4 w-4 text-gray-500" />,
+          icon: <Truck className="h-6 w-6 text-gray-500" />,
         },
         {
           title: 'Trucks',
           value:
             current_screen?.data?.filter((v) => v.type == 'Trailer')?.length ||
             0,
-          icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+          icon: <CheckCircle className="h-6 w-6 text-green-500" />,
         },
         {
           title: 'Trailers',
           value:
             current_screen?.data?.filter((v) => v.type == 'Del Vehicle')
               ?.length || 0,
-          icon: <Truck className="h-4 w-4 text-blue-500" />,
+          icon: <Truck className="h-6 w-6 text-blue-500" />,
         },
         {
           title: 'Available',
           value:
             current_screen?.data?.filter((v) => v.status == 'available')
               ?.length || 0,
-          icon: <Wrench className="h-4 w-4 text-amber-500" />,
+          icon: <Wrench className="h-6 w-6 text-amber-500" />,
         },
       ]
 
@@ -358,17 +358,17 @@ const Statistics = () => {
         {
           title: 'Total Drivers',
           value: current_screen?.data?.length || 0,
-          icon: <UserCircle className="h-4 w-4 text-gray-500" />,
+          icon: <UserCircle className="h-6 w-6 text-gray-500" />,
         },
         // {
         //   title: 'Admins',
         //   value: 3,
-        //   icon: <ShieldCheck className="h-4 w-4 text-violet-500" />,
+        //   icon: <ShieldCheck className="h-6 w-6 text-violet-500" />,
         // },
         // {
         //   title: 'Managers',
         //   value: 8,
-        //   icon: <ShieldAlert className="h-4 w-4 text-blue-500" />,
+        //   icon: <ShieldAlert className="h-6 w-6 text-blue-500" />,
         // },
       ]
       //   console.log('current_screen :Statistics>> ', path, current_screen?.data)
@@ -402,30 +402,30 @@ const Statistics = () => {
         {
           title: 'Active Routes',
           value: current_screen?.data?.[0]?.length || 0,
-          icon: <Clock className="h-4 w-4 xl:h-7 xl:w-7 text-gray-500" />,
+          icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
         },
         {
           title: 'Total Suburbs',
           value: total_grouped_load_suburbs || 0,
-          icon: <Play className="h-4 w-4 xl:h-7 xl:w-7 text-blue-500" />,
+          icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
         {
           title: 'Assigned Vehicles',
           value: current_screen?.data?.[1]?.length || 0,
-          icon: <Play className="h-4 w-4 xl:h-7 xl:w-7 text-blue-500" />,
+          icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
         {
           title: 'Total Orders',
           value: total_grouped_load_orders || 0,
           icon: (
-            <AlertTriangle className="h-4 w-4 xl:h-7 xl:w-7 text-red-500" />
+            <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
           ),
         },
         // {
         //   title: 'Total Load Items',
         //   value: total_grouped_load_items || 0,
         //   icon: (
-        //     <CheckCircle className="h-4 w-4 xl:h-7 xl:w-7 text-green-500" />
+        //     <CheckCircle className="h-6 w-6 xl:h-7 xl:w-7 text-green-500" />
         //   ),
         // },
       ]
@@ -444,16 +444,21 @@ const Statistics = () => {
           <Card key={index}>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>{stat.title}</CardTitle>
-                {Icon}
+                <div className="flex items-center gap-3">
+                  {Icon}
+                  <CardTitle>{stat.title}</CardTitle>
+                </div>
+                <div className="text-2xl font-bold">
+                  <CountUp value={stat.value} />
+                </div>
               </div>
             </CardHeader>
 
-            <CardContent>
+            {/* <CardContent>
               <div className="text-2xl font-bold">
                 <CountUp value={stat.value} />
               </div>
-            </CardContent>
+            </CardContent> */}
           </Card>
         )
       })}

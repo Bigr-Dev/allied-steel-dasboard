@@ -135,3 +135,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* globals.css */
+@layer utilities {
+  .text-stroke {
+    -webkit-text-stroke: 0.5px #fff;
+  }
+  .text-stroke-white {
+    -webkit-text-stroke: 1px white;
+  }
+}

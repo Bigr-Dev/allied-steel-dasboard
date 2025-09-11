@@ -1,34 +1,70 @@
 'use client'
 
-import AlertScreen from '@/components/layout/alert-screen'
-import DialogScreen from '@/components/layout/dialog-screen'
+// react
+import { useEffect, useReducer, useState } from 'react'
+
+// icons
+
+// actions
+import * as branch_actions from '@/context/actions/branch-actions'
+
+import * as customer_actions from '@/context/actions/customer-actions'
+import * as driver_actions from '@/context/actions/driver-actions'
+import * as vehicle_actions from '@/context/actions/vehicle-actions'
+import * as user_actions from '@/context/actions/user-actions'
+
+// context
 import { GlobalContext, initialState } from './global-context'
-import { use, useEffect, useReducer, useState } from 'react'
+
+// reducers
 import branchReducer from './reducers/branch-reducer'
-import { fetchData } from '@/lib/fetch'
-import { fetchBranches, loadBranches } from './apis/branch-apis'
 import customerReducer from './reducers/customer-reducer'
-import { fetchCustomers, loadCustomers } from './apis/customer-apis'
 import userReducer from './reducers/user-reducer'
-import { fetchUsers, loadUsers } from './apis/user-apis'
 import loadReducer from './reducers/load-reducer'
-import { fetchLoads, loadLoads } from './apis/load-apis'
 import orderReducer from './reducers/order-reducer'
-import { fetchOrders, loadOrders } from './apis/order-apis'
 import vehicleReducer from './reducers/vehicle-apis'
-import { fetchVehicles, loadVehicles } from './apis/vehicle-apis'
 import driverReducer from './reducers/driver-reducer'
-import { fetchDrivers, loadDrivers } from './apis/driver-apis'
-import { useAuth } from './initial-states/auth-state'
-import { onCreate, onDelete, onEdit } from '@/hooks/use-modal'
 import routeReducer from './reducers/route-reducers'
-import { loadRoutes } from './apis/route-apis'
 import groupedLoadReducer from './reducers/grouped_load-reducer'
+
+// states
+import { useAuth } from './initial-states/auth-state'
+
+// api's
+import { deleteBranch, loadBranches, upsertBranch } from './apis/branch-apis'
+import {
+  deleteCustomer,
+  loadCustomers,
+  upsertCustomer,
+} from './apis/customer-apis'
+import { deleteUser, loadUsers, upsertUser } from './apis/user-apis'
+import { deleteLoad, loadLoads, upsertLoad } from './apis/load-apis'
+import { deleteOrder, loadOrders, upsertOrder } from './apis/order-apis'
+import { deleteVehicle, loadVehicles, upsertVehicle } from './apis/vehicle-apis'
+import { deleteDriver, loadDrivers, upsertDriver } from './apis/driver-apis'
+import { deleteRoute, loadRoutes, upsertRoute } from './apis/route-apis'
 import { loadGroupedLoads } from './apis/grouped-load-apis'
 
+// components
+import AlertScreen from '@/components/layout/alert-screen'
+import DialogScreen from '@/components/layout/dialog-screen'
+
+// hooks
+import { onCreate, onDelete, onEdit } from '@/hooks/use-modal'
+import { usePathname } from 'next/navigation'
+import { replaceHyphenWithUnderscore } from '@/hooks/replace-hyphen'
+
+// config
+import supabase from '@/config/supabase'
+
 const GlobalProvider = ({ children, data }) => {
-  //  console.log('data :>> ', data)
+  const pathname = usePathname().slice(1)
+  const screen = replaceHyphenWithUnderscore(pathname)
+
+  // auth
   const { current_user, currentUserDispatch } = useAuth()
+
+  // reducers
   const [branches, branchesDispatch] = useReducer(
     branchReducer,
     initialState.initialBranchesState
@@ -66,6 +102,7 @@ const GlobalProvider = ({ children, data }) => {
     initialState.initialRoutesState
   )
 
+  // local states
   const [dashboardRoutes, setDashboardRoutes] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
   const [alertOpen, setAlertOpen] = useState(false)
@@ -76,6 +113,7 @@ const GlobalProvider = ({ children, data }) => {
     label: current_user?.currentUser?.branch_name || '',
   })
 
+  // load data on initial render
   useEffect(() => {
     if (data) {
       if (!current_user?.currentUser?.id) return
@@ -86,6 +124,7 @@ const GlobalProvider = ({ children, data }) => {
     }
   }, [data, current_user])
 
+  // fetch data when user or current_user changes
   useEffect(() => {
     if (branches?.data?.length > 0 && current_user) {
       const user = current_user?.currentUser?.branch_id
@@ -100,6 +139,8 @@ const GlobalProvider = ({ children, data }) => {
   const handleDashboardState = (value) => {
     setDashboardState(value)
   }
+
+  // reset id and href when modal is closed
   useEffect(() => {
     if (!modalOpen) {
       setId(null)
@@ -107,49 +148,71 @@ const GlobalProvider = ({ children, data }) => {
     }
   }, [modalOpen])
 
+  // reset id when alert is closed
   useEffect(() => {
     if (!alertOpen) {
       setId(null)
     }
   }, [alertOpen])
 
+  // filter data based on dashboard state
   useEffect(() => {
     if (data) {
       if (!current_user?.currentUser?.id) return
 
       if (data?.users) {
-        loadUsers(
-          usersDispatch,
-          data?.users?.filter((u) => u.branch_id === dashboardState.value)
-        )
+        if (dashboardState.value == 'all') {
+          loadUsers(usersDispatch, data?.users)
+        } else {
+          loadUsers(
+            usersDispatch,
+            data?.users?.filter((u) => u.branch_id === dashboardState.value)
+          )
+        }
       }
 
       if (data?.loads) {
-        loadLoads(
-          loadsDispatch,
-          data?.loads?.filter((l) => l.branch_id === dashboardState.value)
-        )
+        if (dashboardState.value == 'all') {
+          loadLoads(loadsDispatch, data?.loads)
+        } else {
+          loadLoads(
+            loadsDispatch,
+            data?.loads?.filter((l) => l.branch_id === dashboardState.value)
+          )
+        }
       }
 
       if (data?.vehicles) {
-        loadVehicles(
-          vehiclesDispatch,
-          data?.vehicles?.filter((v) => v.branch_id === dashboardState.value)
-        )
+        if (dashboardState.value == 'all') {
+          loadVehicles(vehiclesDispatch, data?.vehicles)
+        } else {
+          loadVehicles(
+            vehiclesDispatch,
+            data?.vehicles?.filter((v) => v.branch_id === dashboardState.value)
+          )
+        }
       }
 
       if (data?.drivers) {
-        loadDrivers(
-          driversDispatch,
-          data?.drivers?.filter((d) => d.branch_id === dashboardState.value)
-        )
+        if (dashboardState.value == 'all') {
+          loadDrivers(driversDispatch, data?.drivers)
+        } else {
+          loadDrivers(
+            driversDispatch,
+            data?.drivers?.filter((d) => d.branch_id === dashboardState.value)
+          )
+        }
       }
 
       if (data?.routes) {
-        loadRoutes(
-          routesDispatch,
-          data?.routes?.filter((d) => d.branch_id === dashboardState.value)
-        )
+        if (dashboardState.value == 'all') {
+          loadRoutes(routesDispatch, data?.routes)
+        } else {
+          loadRoutes(
+            routesDispatch,
+            data?.routes?.filter((d) => d.branch_id === dashboardState.value)
+          )
+        }
       }
     }
     if (data?.assigned_loads && data?.assigned_vehicles) {
@@ -160,26 +223,104 @@ const GlobalProvider = ({ children, data }) => {
         })
       )
 
-      const assigned_loads = assigned_loads_data
-        ?.map((l) => l.data)
-        .filter((l) => l.branch_id === dashboardState.value)
-
       const assigned_vehicles = data?.assigned_vehicles
+      if (dashboardState.value == 'all') {
+        const assigned_loads = assigned_loads_data
+          ?.map((l) => l.data)
+          .filter((l) => l.branch_id === dashboardState.value)
+        loadGroupedLoads(groupedLoadsDispatch, [
+          assigned_loads,
+          assigned_vehicles,
+        ])
+      } else {
+        loadGroupedLoads(groupedLoadsDispatch, [
+          assigned_loads_data,
+          assigned_vehicles,
+        ])
+      }
 
-      loadGroupedLoads(groupedLoadsDispatch, [
-        assigned_loads,
-        assigned_vehicles,
-      ])
+      console.log('data :>> ', data)
     }
   }, [current_user, dashboardState])
 
-  //console.log('load_assignment :>> ', load_assignment)
+  const TABLES = [
+    {
+      table: 'branches',
+      onInsert: (r) => branchesDispatch(branch_actions.addBranchSuccess(r)),
+      onUpdate: (r) => branchesDispatch(branch_actions.updateBranchSuccess(r)),
+      onDelete: (o) =>
+        branchesDispatch(branch_actions.deleteBranchSuccess(o.id)),
+    },
+
+    {
+      table: 'customers',
+      onInsert: (r) =>
+        customersDispatch(customer_actions.addCustomerSuccess(r)),
+      onUpdate: (r) =>
+        customersDispatch(customer_actions.updateCustomerSuccess(r)),
+      onDelete: (o) =>
+        customersDispatch(customer_actions.deleteCustomerSuccess(o.id)),
+    },
+    {
+      table: 'drivers',
+      onInsert: (r) => driversDispatch(driver_actions.addDriverSuccess(r)),
+      onUpdate: (r) => driversDispatch(driver_actions.updateDriverSuccess(r)),
+      onDelete: (o) =>
+        driversDispatch(driver_actions.deleteDriverSuccess(o.id)),
+    },
+    {
+      table: 'users',
+      onInsert: (r) => usersDispatch(user_actions.addUserSuccess(r)),
+      onUpdate: (r) => usersDispatch(user_actions.updateUserSuccess(r)),
+      onDelete: (o) => usersDispatch(user_actions.deleteUserSuccess(o.id)),
+    },
+    {
+      table: 'vehicles',
+      onInsert: (r) => vehiclesDispatch(vehicle_actions.addVehicleSuccess(r)),
+      onUpdate: (r) =>
+        vehiclesDispatch(vehicle_actions.updateVehicleSuccess(r)),
+      onDelete: (o) =>
+        vehiclesDispatch(vehicle_actions.deleteVehicleSuccess(o.id)),
+    },
+  ]
+
+  //  realtime subscription
+  useEffect(() => {
+    const channels = TABLES.map(({ table, onInsert, onUpdate, onDelete }) => {
+      const ch = supabase
+        .channel(`${table}-rt`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table },
+          (p) => onInsert?.(p.new)
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table },
+          (p) => onUpdate?.(p.new)
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table },
+          (p) => onDelete?.(p.old)
+        )
+        .subscribe()
+
+      return ch
+    })
+
+    return () => {
+      channels.forEach((ch) => supabase.removeChannel(ch))
+    }
+  }, [])
+
   return (
     <GlobalContext.Provider
       value={{
         onCreate: onCreate(setModalOpen, modalOpen, setHref),
         onEdit: onEdit(setModalOpen, modalOpen, setId),
         onDelete: onDelete(setAlertOpen, alertOpen, setId),
+        setModalOpen,
         load_assignment,
         groupedLoadsDispatch,
         dashboardState,
@@ -187,20 +328,36 @@ const GlobalProvider = ({ children, data }) => {
         handleDashboardState,
         branches,
         branchesDispatch,
+        upsertBranch,
+        deleteBranch,
         customers,
         customersDispatch,
+        upsertCustomer,
+        deleteCustomer,
         users,
         usersDispatch,
+        upsertUser,
+        deleteUser,
         loads,
         loadsDispatch,
+        upsertLoad,
+        deleteLoad,
         orders,
         ordersDispatch,
+        upsertOrder,
+        deleteOrder,
         vehicles,
         vehiclesDispatch,
+        upsertVehicle,
+        deleteVehicle,
         drivers,
         driversDispatch,
+        upsertDriver,
+        deleteDriver,
         routes,
         routesDispatch,
+        upsertRoute,
+        deleteRoute,
       }}
     >
       {children}
@@ -221,3 +378,35 @@ const GlobalProvider = ({ children, data }) => {
   )
 }
 export default GlobalProvider
+
+// useEffect(() => {
+//   const branches_channel = supabase
+//     .channel('branches-realtime')
+//     .on(
+//       'postgres_changes',
+//       { event: '*', schema: 'public', table: 'branches' },
+//       (payload) => {
+//         switch (payload.eventType) {
+//           case 'INSERT':
+//             branchesDispatch(branch_actions.addBranchSuccess(payload.new))
+//             break
+//           case 'UPDATE':
+//             branchesDispatch(branch_actions.updateBranchSuccess(payload.new))
+//             break
+//           case 'DELETE':
+//             branchesDispatch(
+//               branch_actions.deleteBranchSuccess(payload.old.id)
+//             )
+//             break
+//           default:
+//             break
+//         }
+//         console.log('payload :>> ', payload, screen)
+//       }
+//     )
+//     .subscribe()
+
+//   return () => {
+//     supabase.removeChannel(branches_channel)
+//   }
+// }, [])

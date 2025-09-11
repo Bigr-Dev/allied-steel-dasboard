@@ -88,13 +88,13 @@ export const postApi = async ({
 
     // Handle new standardized response format
     const responseData = response
-    if (responseData && responseData !== undefined) {
-      dispatch(success(responseData))
-    } else {
-      // Fallback for old format
-      dispatch(success(responseData))
-    }
-
+    // if (responseData && responseData !== undefined) {
+    //   dispatch(success(responseData))
+    // } else {
+    //   // Fallback for old format
+    //   dispatch(success(responseData))
+    // }
+    console.log('url :>> ', url)
     toast({
       title: successMsg || 'Operation was successful',
       description: responseData?.message || '',
@@ -170,7 +170,7 @@ export const deleteApi = async ({
   errorMsg,
   url,
 }) => {
-  console.log('url :>> ', `${url}/${id}`)
+  //  console.log('url :>> ', `${url}/${id}`)
   dispatch(start())
   try {
     const uid = Cookies.get('uid')
@@ -182,12 +182,12 @@ export const deleteApi = async ({
 
     // Handle new standardized response format
     const responseData = response
-    if (responseData && responseData !== undefined) {
-      dispatch(success(responseData.data))
-    } else {
-      // Fallback for old format
-      dispatch(success(responseData))
-    }
+    // if (responseData && responseData !== undefined) {
+    //   dispatch(success(responseData))
+    // } else {
+    //   // Fallback for old format
+    //   dispatch(success(responseData))
+    // }
 
     toast({
       title: successMsg || 'Operation was successful',

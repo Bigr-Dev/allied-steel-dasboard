@@ -46,7 +46,7 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
   )
 
   switch (screen) {
-    case 'cost_centres':
+    case 'branches':
       return (
         <Modal>
           <BranchForm
@@ -58,7 +58,7 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
         </Modal>
       )
 
-    case 'clients':
+    case 'customers':
       return (
         <Modal>
           <CustomerForm

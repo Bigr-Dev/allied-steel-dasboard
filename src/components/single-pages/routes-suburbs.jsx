@@ -216,11 +216,12 @@ export default function RoutesPage({ id }) {
       {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"></div> */}
 
       {/* Order Lines Table */}
-      <DetailCard title={'Order Lines'}>
+      <DetailCard title={'Route Suburbs'}>
         {routesData?.route_suburbs && (
           <DataTable
             columns={order_columns}
             data={routesData?.route_suburbs}
+            url="none"
             filterColumn="model"
             filterPlaceholder="Search vehicles..."
           />

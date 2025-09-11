@@ -83,6 +83,48 @@ export async function fetchServerData(url, method, data) {
   }
 }
 
+export async function refreshServerSession() {
+  const cookieStore = await cookies()
+  const rt = cookieStore.get('refresh_token')?.value
+
+  if (!rt) {
+    // Nothing to refresh with
+    return { ok: false, error: 'No refresh token' }
+  }
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: rt }),
+  })
+
+  if (!res.ok) {
+    return { ok: false, error: 'Refresh failed', status: res.status }
+  }
+
+  const data = await res.json()
+
+  // Expected response shape: { access_token, refresh_token?, expires_at, user? }
+  const { access_token, refresh_token, expires_at, user } = data
+
+  // Update cookies
+  // Note: here we mirror your login cookie behavior
+  cookieStore.set('uid', user?.id ?? '', { path: '/' })
+  cookieStore.set('access_token', access_token, { httpOnly: true, path: '/' })
+  if (refresh_token) {
+    cookieStore.set('refresh_token', refresh_token, {
+      httpOnly: true,
+      path: '/',
+    })
+  }
+  cookieStore.set('expires_at', String(expires_at), {
+    httpOnly: true,
+    path: '/',
+  })
+
+  return { ok: true, ...data }
+}
+
 export async function serverLogout({ global = true } = {}) {
   const cookieStore = await cookies()
   const rt = cookieStore.get('refresh_token')?.value

@@ -38,6 +38,8 @@ import {
 
 // context
 import { useGlobalContext } from '@/context/global-context'
+import DetailCard from '../ui/detail-card'
+import DynamicInput from '../ui/dynamic-input'
 
 // Function to get role badge for preview
 const getRoleBadge = (role) => {
@@ -74,31 +76,33 @@ const getRoleBadge = (role) => {
 const UserForm = ({ onCancel, id }) => {
   const {
     users,
-    u_api,
+    upsertUser,
     users: { loading, error },
     usersDispatch,
-    cost_centres,
+    branches,
   } = useGlobalContext()
   const user = users.data.find((u) => u.id === id)
+  //console.log('user :>> ', user)
   const [formData, setFormData] = useState({
-    id: user?.id || '',
+    //  id: user?.id || '',
     name: user?.name || '',
-    lastName: user?.lastName || '',
+    last_name: user?.last_name || '',
     email: user?.email || '',
     role: user?.role || 'user',
-    costCentre: user?.costCentre || '',
+    //costCentre: user?.costCentre || '',
+    branch_id: user?.branch_id || '',
     status: user?.status || 'active',
     phone: user?.phone || '',
     department: user?.department || '',
     position: user?.position || '',
-    joinDate: user?.joinDate || '',
+    join_date: user?.join_date || '',
     permissions: user?.permissions || [],
-    managedCostCentres: user?.managedCostCentres || [],
+    managed_branches: user?.managed_branches || [],
   })
   const [currentTab, setCurrentTab] = useState(0)
 
   const tabs = [
-    { name: 'Basic Information', value: 'basic' },
+    { name: 'User Information', value: 'basic' },
     { name: 'Permissions & Access', value: 'permissions' },
   ]
 
@@ -114,19 +118,19 @@ const UserForm = ({ onCancel, id }) => {
     }
   }
 
-  const paginationButtons = [
-    {
-      type: 'button',
-      variant: 'outline',
-      onClick: (index) => prevStep(index),
-      name: 'Back',
-    },
-    {
-      type: 'button',
-      onClick: (index) => nextStep(index),
-      name: 'Next',
-    },
-  ]
+  // const paginationButtons = [
+  //   {
+  //     type: 'button',
+  //     variant: 'outline',
+  //     onClick: (index) => prevStep(index),
+  //     name: 'Back',
+  //   },
+  //   {
+  //     type: 'button',
+  //     onClick: (index) => nextStep(index),
+  //     name: 'Next',
+  //   },
+  // ]
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -143,52 +147,36 @@ const UserForm = ({ onCancel, id }) => {
     }))
   }
 
-  const handleCostCentreChange = (centre) => {
+  const handleBranchChange = (centre) => {
     setFormData((prev) => {
-      const centres = [...prev.managedCostCentres]
+      const centres = [...prev.managed_branches]
       if (centres.includes(centre)) {
         return {
           ...prev,
-          managedCostCentres: centres.filter((c) => c !== centre),
+          managed_branches: centres.filter((c) => c !== centre),
         }
       } else {
         return {
           ...prev,
-          managedCostCentres: [...centres, centre],
+          managed_branches: [...centres, centre],
         }
       }
     })
   }
 
-  const onSubmit = async (data) => {
-    setCurrentTab(0)
-
-    u_api.upsertUser(id, data, usersDispatch)
-
-    onCancel()
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
-
   const availablePermissions = [
-    { name: 'manage_cost_centres', access: 'none' },
-    { name: 'manage_users', access: 'none' },
-    { name: 'manage_clients', access: 'none' },
-    { name: 'manage_vehicles', access: 'none' },
-    { name: 'manage_drivers', access: 'none' },
-    { name: 'manage_stop_points', access: 'none' },
-    { name: 'manage_trips', access: 'none' },
-    { name: 'manage_financials', access: 'none' },
-    { name: 'manage_operations', access: 'none' },
-    { name: 'view_reports', access: 'none' },
-    { name: 'edit_settings', access: 'none' },
+    { name: 'loads', access: 'none' },
+    { name: 'users', access: 'none' },
+    { name: 'orders', access: 'none' },
+    { name: 'routes', access: 'none' },
+    { name: 'drivers', access: 'none' },
+    { name: 'branches', access: 'none' },
+    { name: 'vehicles', access: 'none' },
+    { name: 'customers', access: 'none' },
   ]
 
   const getPermissionAccess = (name) => {
-    return formData.permissions.find((p) => p.name === name)?.access || ''
+    return formData?.permissions?.find((p) => p.name === name)?.access || ''
   }
 
   const handlePermissionChange = (name, access) => {
@@ -218,36 +206,136 @@ const UserForm = ({ onCancel, id }) => {
     })
   }
 
-  //console.log('formData permissions :>> ', formData.permissions)
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setCurrentTab(0)
+    //  console.log('formData :>> ', formData)
+    upsertUser(id, formData, usersDispatch)
+    onCancel()
+  }
 
-  const defaultCostCentres = [
-    'Gauteng Region',
-    'Western Cape Region',
-    'KwaZulu-Natal Region',
-    'Eastern Cape Region',
-    'Limpopo Region',
+  // {
+
+  //     "status": "active",
+
+  //     "permissions": {
+  //         "loads": "write",
+  //         "users": "write",
+  //         "orders": "write",
+  //         "routes": "write",
+  //         "drivers": "write",
+  //         "branches": "write",
+  //         "vehicles": "write",
+  //         "customers": "write"
+  //     },
+  //     "managed_branches": [
+  //         "dd6bc80f-d3ef-408d-9992-ee0da9b04355",
+  //         "63abebd7-7a55-40de-a877-4ba021f8102a",
+  //         "54335e52-2e9d-4942-a3a1-640ab7e5bf48"
+  //     ],
+  //     "recent_activities": [],
+  //     "created_at": "2025-08-03T16:54:22.596034+00:00",
+  //     "updated_at": "2025-08-03T16:54:22.596034+00:00",
+  //     "branch_name": "Allied Steelrode (Pty) Ltd Head Office"
+  // }
+
+  const user_information = [
+    {
+      htmlFor: 'name',
+      label: 'Name',
+      value: formData.name,
+      placeholder: 'e.g., Joe',
+      required: true,
+    },
+    {
+      htmlFor: 'last_name',
+      label: 'Last Name',
+      value: formData.last_name,
+      placeholder: 'e.g., Soap',
+      required: true,
+    },
+    {
+      htmlFor: 'email',
+      label: 'Email',
+      value: formData.email,
+      placeholder: 'e.g., example@Allied.co.za',
+      required: true,
+    },
+    {
+      htmlFor: 'phone',
+      label: 'Phone',
+      value: formData.phone,
+      placeholder: 'e.g., +27 12 345 6789',
+      required: true,
+    },
+    {
+      htmlFor: 'department',
+      label: 'Department',
+      value: formData.department,
+      placeholder: 'e.g., Operations',
+      required: true,
+    },
+    {
+      htmlFor: 'position',
+      label: 'Position',
+      value: formData.position,
+      placeholder: 'e.g., Fleet Manager',
+      required: true,
+    },
+    {
+      type: 'select',
+      htmlFor: 'branch_id',
+      label: 'Branch Name *',
+      placeholder: 'Select branch',
+      value: formData.branch_id,
+      required: true,
+      options: branches?.data?.map((b) => {
+        return { value: b.id, label: b.name }
+      }),
+    },
+    {
+      type: 'select',
+      htmlFor: 'role',
+      label: 'Role *',
+      value: formData.role,
+      placeholder: 'select user role',
+      required: true,
+      options: [
+        { value: 'admin', label: 'Admin' },
+        { value: 'user', label: 'User' },
+        { value: 'manager', label: 'Manager' },
+      ],
+    },
+    {
+      type: 'date',
+      htmlFor: 'join_date',
+      label: 'Join Date',
+      value: formData.join_date,
+      placeholder: 'Select date of employment',
+    },
+    {
+      type: 'select',
+      htmlFor: 'status',
+      label: 'Status',
+      value: formData.status,
+      required: true,
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
   ]
-
-  const displayCostCentres =
-    cost_centres?.length > 0 ? cost_centres : defaultCostCentres
-  //  console.log('displayCostCentres :>> ', displayCostCentres)
-
-  // console.log(
-  //   'formData.permissions.length < 0 :>> ',
-  //   formData.permissions.length <= 0
-  // )
-
-  //console.log('name :>> ', !formData?.email?.includes('@'))
+  //join_date
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="space-y-6">
+      <div className="grid gap-4  grid-cols-1">
         <div className="flex items-center gap-2">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">
-              {user?.id ? `Edit User` : 'Add New User'}
+            <h2 className="text-lg text-[#003e69]  font-bold tracking-tight uppercase">
+              {user?.id ? `Edit User` : 'Create User'}
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-[#428bca]">
               {user?.id ? user.name : 'Enter user details'}
             </p>
           </div>
@@ -278,334 +366,170 @@ const UserForm = ({ onCancel, id }) => {
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Information</CardTitle>
-                <CardDescription>
-                  Basic information about this user
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {user?.id && (
-                    <div className="space-y-2">
-                      <Label htmlFor="id">ID</Label>
-                      <Input
-                        id="id"
-                        name="id"
-                        value={formData.id}
-                        onChange={handleChange}
-                        readOnly
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name *</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="e.g., John"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      placeholder="e.g., Smith"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="john.smith@company.com"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="+27 82 123 4567"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="department">Department</Label>
-                    <Input
-                      id="department"
-                      name="department"
-                      value={formData.department}
-                      onChange={handleChange}
-                      placeholder="e.g., Operations"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="position">Position</Label>
-                    <Input
-                      id="position"
-                      name="position"
-                      value={formData.position}
-                      onChange={handleChange}
-                      placeholder="e.g., Fleet Manager"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="costCentre">Cost Centre</Label>
-                    <Select
-                      value={formData.costCentre}
-                      onValueChange={(value) =>
-                        handleSelectChange('costCentre', value)
-                      }
-                    >
-                      <SelectTrigger id="costCentre" className={'w-full'}>
-                        <SelectValue placeholder="Select cost centre" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cost_centres?.data?.map((centre) => {
-                          //  console.log('centre :>> ', centre)
-                          return (
-                            <SelectItem key={centre.id} value={centre.name}>
-                              {centre.name}
-                            </SelectItem>
-                          )
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) =>
-                        handleSelectChange('status', value)
-                      }
-                    >
-                      <SelectTrigger id="status" className={'w-full'}>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="joinDate">Join Date</Label>
-                    <Input
-                      id="joinDate"
-                      name="joinDate"
-                      type="date"
-                      value={formData.joinDate}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select
-                      value={formData.role}
-                      onValueChange={(value) =>
-                        handleSelectChange('role', value)
-                      }
-                    >
-                      <SelectTrigger id="role" className={'w-full'}>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="user">User</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="mt-2">{getRoleBadge(formData.role)}</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <DetailCard
+              title={'User Information'}
+              description={'Basic information about this user'}
+            >
+              <DynamicInput
+                inputs={user_information}
+                handleSelectChange={handleSelectChange}
+                handleChange={handleChange}
+              />
+            </DetailCard>
           </TabsContent>
 
           <TabsContent value="permissions" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Permissions</CardTitle>
-                <CardDescription>
-                  Set user permissions and access control
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Select All Buttons */}
-                  <div className="mb-4 flex gap-2 flex-wrap">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const updatedPermissions = availablePermissions.map(
-                          (p) => ({ name: p.name, access: 'read' })
-                        )
-                        setFormData((prev) => ({
-                          ...prev,
-                          permissions: updatedPermissions,
-                        }))
-                      }}
-                    >
-                      Select All Read
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const updatedPermissions = availablePermissions.map(
-                          (p) => ({ name: p.name, access: 'write' })
-                        )
-                        setFormData((prev) => ({
-                          ...prev,
-                          permissions: updatedPermissions,
-                        }))
-                      }}
-                    >
-                      Select All Write
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setFormData((prev) => ({ ...prev, permissions: [] }))
-                      }}
-                    >
-                      Clear All
-                    </Button>
-                  </div>
+            <DetailCard
+              title={'Permissions'}
+              description={'Set user permissions and access control'}
+            >
+              <div className="space-y-4">
+                {/* Select All Buttons */}
+                <div className="mb-4 flex gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const updatedPermissions = availablePermissions.map(
+                        (p) => ({ name: p.name, access: 'read' })
+                      )
+                      setFormData((prev) => ({
+                        ...prev,
+                        permissions: updatedPermissions,
+                      }))
+                    }}
+                  >
+                    Select All Read
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const updatedPermissions = availablePermissions.map(
+                        (p) => ({ name: p.name, access: 'write' })
+                      )
+                      setFormData((prev) => ({
+                        ...prev,
+                        permissions: updatedPermissions,
+                      }))
+                    }}
+                  >
+                    Select All Write
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, permissions: [] }))
+                    }}
+                  >
+                    Clear All
+                  </Button>
+                </div>
 
-                  {/* Headers */}
-                  <div className="grid grid-cols-12 gap-2 mb-3 pb-2 border-b">
-                    <h4 className="col-span-9 text-sm font-medium text-gray-500">
-                      Permissions
-                    </h4>
-                    <div className="col-span-3 grid grid-cols-3 gap-2">
-                      <span className="text-xs text-center font-medium text-gray-500">
-                        View
-                      </span>
-                      <span className="text-xs text-center font-medium text-gray-500">
-                        Edit
-                      </span>
-                      <span className="text-xs text-center font-medium text-gray-500">
-                        None
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Permissions Grid */}
-                  <div className="space-y-3">
-                    {availablePermissions.map((permission) => (
-                      <div
-                        key={permission.name}
-                        className="grid grid-cols-12 gap-2 items-center py-2 hover:bg-gray-50 rounded-md px-2"
-                      >
-                        <div className="col-span-9">
-                          <span className="capitalize text-sm font-medium">
-                            {permission.name.replace(/_/g, ' ')}
-                          </span>
-                        </div>
-
-                        <div className="col-span-3 grid grid-cols-3 gap-2">
-                          {/* View (Read) */}
-                          <div className="flex justify-center">
-                            <Checkbox
-                              checked={
-                                getPermissionAccess(permission.name) === 'read'
-                              }
-                              onCheckedChange={() =>
-                                handlePermissionChange(permission.name, 'read')
-                              }
-                            />
-                          </div>
-
-                          {/* Edit (Write) */}
-                          <div className="flex justify-center">
-                            <Checkbox
-                              checked={
-                                getPermissionAccess(permission.name) === 'write'
-                              }
-                              onCheckedChange={() =>
-                                handlePermissionChange(permission.name, 'write')
-                              }
-                            />
-                          </div>
-
-                          {/* None */}
-                          <div className="flex justify-center">
-                            <Checkbox
-                              checked={
-                                getPermissionAccess(permission.name) === ''
-                              }
-                              onCheckedChange={() =>
-                                handlePermissionChange(permission.name, '')
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                {/* Headers */}
+                <div className="grid grid-cols-12 gap-2 mb-3 pb-2 border-b">
+                  <h4 className="col-span-9 text-sm font-medium text-gray-500">
+                    Permissions
+                  </h4>
+                  <div className="col-span-3 grid grid-cols-3 gap-2">
+                    <span className="text-xs text-center font-medium text-gray-500">
+                      View
+                    </span>
+                    <span className="text-xs text-center font-medium text-gray-500">
+                      Edit
+                    </span>
+                    <span className="text-xs text-center font-medium text-gray-500">
+                      None
+                    </span>
                   </div>
                 </div>
 
-                <Separator />
+                {/* Permissions Grid */}
+                <div className="space-y-3">
+                  {availablePermissions.map((permission) => (
+                    <div
+                      key={permission.name}
+                      className="grid grid-cols-12 gap-2 items-center py-2 hover:bg-gray-50 rounded-md px-2"
+                    >
+                      <div className="col-span-9">
+                        <span className="capitalize text-sm font-medium">
+                          {permission.name.replace(/_/g, ' ')}
+                        </span>
+                      </div>
 
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">
-                    Managed Cost Centres
-                  </h4>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {cost_centres?.data?.map((centre) => {
-                      return (
-                        <div
-                          key={centre.id}
-                          className="flex items-center space-x-2"
-                        >
+                      <div className="col-span-3 grid grid-cols-3 gap-2">
+                        {/* View (Read) */}
+                        <div className="flex justify-center">
                           <Checkbox
-                            id={centre.id}
-                            checked={formData.managedCostCentres.includes(
-                              centre.name
-                            )}
+                            checked={
+                              getPermissionAccess(permission.name) === 'read'
+                            }
                             onCheckedChange={() =>
-                              handleCostCentreChange(centre.name)
+                              handlePermissionChange(permission.name, 'read')
                             }
                           />
-                          <Label htmlFor={centre.id}>{centre.name}</Label>
                         </div>
-                      )
-                    })}
-                  </div>
+
+                        {/* Edit (Write) */}
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={
+                              getPermissionAccess(permission.name) === 'write'
+                            }
+                            onCheckedChange={() =>
+                              handlePermissionChange(permission.name, 'write')
+                            }
+                          />
+                        </div>
+
+                        {/* None */}
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={
+                              getPermissionAccess(permission.name) === ''
+                            }
+                            onCheckedChange={() =>
+                              handlePermissionChange(permission.name, '')
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              <Separator className={'my-4'} />
+
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-2">
+                  Managed Cost Centres
+                </h4>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {branches?.data?.map((centre) => {
+                    return (
+                      <div
+                        key={centre.id}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={centre.id}
+                          checked={formData?.managed_branches?.includes(
+                            centre.id
+                          )}
+                          onCheckedChange={() => handleBranchChange(centre.id)}
+                        />
+                        <Label htmlFor={centre.id}>{centre.name}</Label>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </DetailCard>
           </TabsContent>
         </Tabs>
 
@@ -642,7 +566,7 @@ const UserForm = ({ onCancel, id }) => {
               formData.email.length < 6 ||
               !formData?.email?.includes('@') ||
               formData.permissions.length <= 0 ||
-              formData.managedCostCentres.length <= 0
+              formData.managed_branches.length <= 0
             }
           >
             <Save className="mr-2 h-4 w-4" /> Save User

@@ -33,7 +33,7 @@ export async function fetchData(url, method, data = null) {
 
     // If not a login request, check if the response is okay
     if (!response.ok) {
-      const errorData = await response.json() // Get the error details from the response
+      const errorData = await response?.json() // Get the error details from the response
       throw new Error(
         `Error: ${response.statusText} - ${
           errorData?.message || 'Unknown error'
