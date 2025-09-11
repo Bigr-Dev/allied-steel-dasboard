@@ -116,6 +116,8 @@ const Dashboard = () => {
   const vehicleData = load_assignment?.data?.[1] || []
   //  const test = vehicleData?.filter((v) => v.loads)
   // console.log('test :>> ', test)
+
+  console.log('vehicleData :>> ', vehicleData)
   return (
     <div className="space-y-6 p-4 md:p-6 ">
       <div className="flex flex-col md:flex-row justify-between items-end gap-4">

@@ -1,3 +1,837 @@
+'use client'
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Truck,
+  User,
+  Weight,
+  MapPin,
+  Unlock,
+  Package,
+  WeightIcon,
+  CheckCircle2,
+  TrendingUp,
+  Calendar,
+  Clock,
+} from 'lucide-react'
+import { useState } from 'react'
+import { useGlobalContext } from '@/context/global-context'
+import DetailActionBar from '../layout/detail-action-bar'
+import DetailCard from '../ui/detail-card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Progress } from '../ui/progress'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@radix-ui/react-accordion'
+
+// Sample data based on the provided structure
+const routingData = [
+  {
+    route_id: 'bdb7be2b-68b4-49ee-91ba-d4aea76bbe95',
+    route_name: 'ALRODE',
+    branch_name: 'Allied Steelrode (Pty) Ltd Head Office',
+    suburbs: [
+      {
+        city: 'Alberton',
+        position: 1,
+        province: 'Gauteng',
+        load_orders: [
+          {
+            id: 'c3dc2130-83c8-4c2f-a7ae-a80e39396869',
+            load_id: 'b9e7d73f-b3a6-4dd7-8be6-4e0dafc573bf',
+            total_weight: 1930.153,
+            customer_name: 'LAZER LADZ (PTY) LTD',
+            delivery_date: '2025-08-21',
+            total_quantity: 50,
+            sales_order_number: '7180301',
+            order_status: 'Sales Order Open Printed',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    route_id: 'b3ff875a-df4e-448b-9df3-f627881d7e89',
+    route_name: 'EAST RAND 01',
+    branch_name: 'Allied Steelrode (Pty) Ltd Head Office',
+    suburbs: [
+      {
+        city: 'Germiston',
+        position: 1,
+        province: 'Gauteng',
+        load_orders: [
+          {
+            id: 'db9f188f-8b9d-4301-88d0-b1420cbe4949',
+            load_id: 'ebd8441e-30cc-46b3-bf31-091d50084f77',
+            total_weight: 6939.4,
+            customer_name: 'ACQUI 38 (PTY) LTD t/a GK STEEL & MINING',
+            delivery_date: '2025-08-22',
+            total_quantity: 20,
+            sales_order_number: '337290',
+            order_status: 'Delivery Note',
+          },
+        ],
+      },
+    ],
+  },
+]
+
+// Mock vehicle data to simulate the routing view
+
+export default function CurrentRoutingView({ id }) {
+  const {
+    onEdit,
+    onDelete,
+    loads: { data },
+    // loads: { data: loads_data },
+  } = useGlobalContext()
+  const routeData = data?.find((r) => r.route_id === id)
+  //  console.log('routeData :>> ', routeData)
+
+  const [selectedView, setSelectedView] = useState('overview')
+
+  // Calculate totals
+  const totalOrders = routeData?.suburbs.reduce(
+    (sum, suburb) => sum + suburb.load_orders.length,
+    0
+  )
+  const totalWeight = routeData?.suburbs.reduce(
+    (sum, suburb) =>
+      sum +
+      suburb.load_orders.reduce(
+        (orderSum, order) => orderSum + order.total_weight,
+        0
+      ),
+    0
+  )
+  const totalQuantity = routeData?.suburbs.reduce(
+    (sum, suburb) =>
+      sum +
+      suburb.load_orders.reduce(
+        (orderSum, order) => orderSum + order.total_quantity,
+        0
+      ),
+    0
+  )
+
+  const readyOrders = routeData?.suburbs.reduce(
+    (sum, suburb) =>
+      sum +
+      suburb.load_orders.filter(
+        (order) => order.order_status === 'Stock Item Ready to Load'
+      ).length,
+    0
+  )
+
+  const tabs = [
+    { value: 'overview', label: 'Overview' },
+    { value: 'timeline', label: 'Timeline' },
+    { value: 'capacity', label: 'Capacity' },
+    { value: 'status', label: 'Status' },
+  ]
+
+  const screen_stats = [
+    //  {
+    //       title: 'Total Branches',
+    //       icon: <Building2 className="h-6 w-6 text-violet-500" />,
+    //       value: current_screen?.data?.length || 0,
+    //     },
+  ]
+
+  return (
+    <div className="min-h-screen space-y-6">
+      <DetailActionBar
+        id={id}
+        title={routeData?.route_name}
+        description={'Route Summary'}
+      />
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <Package className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalOrders}</div>
+            <p className="text-xs text-gray-600 mt-1">
+              Across {routeData?.suburbs?.length} location(s)
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Weight</CardTitle>
+            <WeightIcon className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(totalWeight / 1000).toFixed(1)}t
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              {totalWeight?.toLocaleString()} kg total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ready to Load</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{readyOrders}</div>
+            <p className="text-xs text-gray-600 mt-1">
+              {Math.round((readyOrders / totalOrders) * 100)}% completion
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Items</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalQuantity}</div>
+            <p className="text-xs text-gray-600 mt-1">Total pieces</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue={tabs?.[0]?.value} className="w-full">
+        <TabsList className={`grid w-full grid-cols-${tabs.length} gap-6`}>
+          {tabs.map((trigger, index) => {
+            return (
+              <TabsTrigger key={index} value={trigger.value}>
+                <h6 className="capitalize font-bold">{trigger.label}</h6>
+              </TabsTrigger>
+            )
+          })}
+        </TabsList>
+        {/* Location Cards */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-6">
+            {routeData?.suburbs.map((suburb, index) => (
+              <Card key={index} className="overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-blue-100 p-2 rounded-full">
+                        <MapPin className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">
+                          {suburb.suburb_name}
+                        </CardTitle>
+                        <p className="text-sm text-gray-600">
+                          {suburb.province} • Position {suburb.position}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="secondary">
+                      {suburb.load_orders.length} orders
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="p-0 ">
+                  <Accordion type="multiple" className="w-full">
+                    {suburb.load_orders.map((order, orderIndex) => (
+                      <AccordionItem
+                        key={order.id}
+                        value={order.id}
+                        className="w-full border-b last:border-b-0"
+                      >
+                        <AccordionTrigger className="px-4 py-4 hover:bg-gray-50 [&[data-state=open]]:bg-gray-50">
+                          <div className="flex items-center justify-between w-full ">
+                            <div className="flex items-center space-x-3">
+                              <div className="bg-gray-100 p-1.5 rounded">
+                                <User className="h-4 w-4 text-gray-600" />
+                              </div>
+                              <div className="text-left">
+                                <h4 className="font-medium text-gray-900 leading-tight">
+                                  {order.customer_name}
+                                </h4>
+                                <p className="text-sm text-gray-600">
+                                  Order #{order.sales_order_number}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center space-x-4">
+                              <div className="text-right">
+                                <p className="text-sm font-medium">
+                                  {order.total_weight.toLocaleString()} kg
+                                </p>
+                                <p className="text-xs text-gray-600">
+                                  {order.total_quantity} items
+                                </p>
+                              </div>
+                              <Badge
+                                variant={
+                                  order.order_status ===
+                                  'Stock Item Ready to Load'
+                                    ? 'default'
+                                    : 'secondary'
+                                }
+                                className="text-xs"
+                              >
+                                {order.order_status ===
+                                'Stock Item Ready to Load'
+                                  ? 'Ready'
+                                  : 'Pending'}
+                              </Badge>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+
+                        <AccordionContent className="px-4 pb-4">
+                          <div className="space-y-4">
+                            {/* Order Summary */}
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm">
+                                  Delivery:{' '}
+                                  {new Date(
+                                    order.delivery_date
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Weight className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm">
+                                  Total: {order.total_weight.toLocaleString()}{' '}
+                                  kg
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Package className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm">
+                                  Items: {order.total_quantity}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Detailed Order Items */}
+                            <div className="space-y-2">
+                              <h5 className="font-medium text-gray-900 mb-3">
+                                Order Items
+                              </h5>
+                              <div className="space-y-2">
+                                {order.order_items?.map((item, itemIndex) => (
+                                  <div
+                                    key={itemIndex}
+                                    className="flex items-center justify-between p-3 border rounded-lg bg-white"
+                                  >
+                                    <div className="flex-1">
+                                      <div className="flex items-center space-x-3">
+                                        <div className="bg-blue-50 px-2 py-1 rounded text-xs font-mono text-blue-700">
+                                          {item.item_code}
+                                        </div>
+                                        <div>
+                                          <p className="font-medium text-gray-900">
+                                            {item.description}
+                                          </p>
+                                          <p className="text-sm text-gray-600">
+                                            Qty: {item.quantity} {item.unit} •
+                                            Weight:{' '}
+                                            {item.weight.toLocaleString()} kg
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-sm font-medium">
+                                        {item.weight.toLocaleString()} kg
+                                      </p>
+                                      <p className="text-xs text-gray-600">
+                                        {item.quantity} {item.unit}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Dispatch Remarks */}
+                            {order.dispatch_remarks && (
+                              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <div className="flex items-start space-x-2">
+                                  <div className="bg-yellow-100 p-1 rounded">
+                                    <Clock className="h-3 w-3 text-yellow-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-yellow-800">
+                                      Dispatch Note
+                                    </p>
+                                    <p className="text-sm text-yellow-700">
+                                      {order.dispatch_remarks}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Timeline View */}
+        <TabsContent value="timeline" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Delivery Timeline</CardTitle>
+              <p className="text-sm text-gray-600">
+                Orders organized by delivery sequence with detailed items
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="multiple" className="w-full space-y-4">
+                {routeData?.suburbs.map((suburb) =>
+                  suburb.load_orders.map((order, index) => (
+                    <AccordionItem
+                      key={order.id}
+                      value={order.id}
+                      className="border rounded-lg"
+                    >
+                      <AccordionTrigger className="px-4 py-4 hover:bg-gray-50 [&[data-state=open]]:bg-gray-50">
+                        <div className="flex items-center space-x-4 w-full mr-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-blue-600">
+                                {index + 1}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <div className="text-left">
+                                <p className="font-medium text-gray-900 truncate">
+                                  {order.customer_name}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {suburb.suburb_name} •{' '}
+                                  {order.total_weight.toLocaleString()}kg •{' '}
+                                  {order.total_quantity} items
+                                </p>
+                              </div>
+                              <Badge
+                                variant={
+                                  order.order_status ===
+                                  'Stock Item Ready to Load'
+                                    ? 'default'
+                                    : 'secondary'
+                                }
+                              >
+                                {order.order_status ===
+                                'Stock Item Ready to Load'
+                                  ? 'Ready'
+                                  : 'Pending'}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+
+                      <AccordionContent className="px-4 pb-4">
+                        <div className="ml-12 space-y-4">
+                          {/* Order Summary */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-gray-50 rounded-lg">
+                            <div>
+                              <p className="text-xs text-gray-600 uppercase tracking-wide">
+                                Order Number
+                              </p>
+                              <p className="font-medium">
+                                #{order.sales_order_number}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600 uppercase tracking-wide">
+                                Delivery Date
+                              </p>
+                              <p className="font-medium">
+                                {new Date(
+                                  order.delivery_date
+                                ).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600 uppercase tracking-wide">
+                                Status
+                              </p>
+                              <p className="font-medium">
+                                {order.order_status}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Detailed Items */}
+                          <div className="space-y-2">
+                            <h6 className="font-medium text-gray-900">
+                              Items to Load
+                            </h6>
+                            <div className="space-y-2">
+                              {order.order_items?.map((item, itemIndex) => (
+                                <div
+                                  key={itemIndex}
+                                  className="flex items-center justify-between p-2 border rounded bg-white"
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <span className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">
+                                      {item.item_code}
+                                    </span>
+                                    <div>
+                                      <p className="text-sm font-medium">
+                                        {item.description}
+                                      </p>
+                                      <p className="text-xs text-gray-600">
+                                        {item.quantity} {item.unit}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <span className="text-sm font-medium">
+                                    {item.weight.toLocaleString()} kg
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {order.dispatch_remarks && (
+                            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                              <p className="text-sm">
+                                <strong>Note:</strong> {order.dispatch_remarks}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))
+                )}
+              </Accordion>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Capacity Planning */}
+        <TabsContent value="capacity" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Weight Distribution</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {routeData?.suburbs.map((suburb) =>
+                  suburb.load_orders.map((order) => (
+                    <div key={order.id} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="truncate">{order.customer_name}</span>
+                        <span className="font-medium">
+                          {order.total_weight}kg
+                        </span>
+                      </div>
+                      <Progress
+                        value={(order.total_weight / totalWeight) * 100}
+                        className="h-2"
+                      />
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Load Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-blue-50 rounded">
+                    <span className="font-medium">Total Capacity Needed</span>
+                    <span className="text-lg font-bold text-blue-600">
+                      {(totalWeight / 1000).toFixed(1)}t
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-green-50 rounded">
+                    <span className="font-medium">Ready Orders</span>
+                    <span className="text-lg font-bold text-green-600">
+                      {readyOrders}/{totalOrders}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-purple-50 rounded">
+                    <span className="font-medium">Total Items</span>
+                    <span className="text-lg font-bold text-purple-600">
+                      {totalQuantity}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Status Board */}
+        <TabsContent value="status" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {routeData?.suburbs.map((suburb) =>
+              suburb.load_orders.map((order) => (
+                <Card key={order.id} className="relative overflow-hidden">
+                  <div
+                    className={`absolute top-0 left-0 w-1 h-full ${
+                      order.order_status === 'Stock Item Ready to Load'
+                        ? 'bg-green-500'
+                        : 'bg-yellow-500'
+                    }`}
+                  />
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-sm font-medium leading-tight">
+                          {order.customer_name}
+                        </CardTitle>
+                        <p className="text-xs text-gray-600 mt-1">
+                          #{order.sales_order_number}
+                        </p>
+                      </div>
+                      {order.order_status === 'Stock Item Ready to Load' ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <Clock className="h-5 w-5 text-yellow-500" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Weight:</span>
+                      <span className="font-medium">
+                        {order.total_weight}kg
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Items:</span>
+                      <span className="font-medium">
+                        {order.total_quantity}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Location:</span>
+                      <span className="font-medium">{suburb.suburb_name}</span>
+                    </div>
+                    <Badge
+                      variant={
+                        order.order_status === 'Stock Item Ready to Load'
+                          ? 'default'
+                          : 'secondary'
+                      }
+                      className="w-full justify-center mt-2"
+                    >
+                      {order.order_status === 'Stock Item Ready to Load'
+                        ? 'Ready to Load'
+                        : 'Preparing'}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+{
+  /* <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {load?.suburbs?.map((suburb, index) => (
+          <DetailCard
+            key={index}
+            title={suburb.suburb_name}
+            description={suburb.city}
+          >
+            <div key={index} className="mb-4">
+              <div className="flex items-center space-x-2 mb-2">
+                <MapPin className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">
+                  {suburb.suburb_name}, {suburb.city}
+                </span>
+              </div>
+
+              {suburb.load_orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="ml-6 p-2 bg-gray-50 rounded text-xs space-y-1"
+                >
+                  <div className="font-medium">{order.customer_name}</div>
+                  <div className="text-gray-600">
+                    Order: {order.sales_order_number}
+                  </div>
+                  <div className="text-gray-600">
+                    Weight: {order.total_weight.toFixed(1)} kg
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {order.order_status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </DetailCard>
+        ))}
+      </div> */
+}
+
+// const [unlockedVehicles, setUnlockedVehicles] = useState(new Set())
+
+// const handleUnlock = (vehicleId) => {
+//   setUnlockedVehicles((prev) => new Set([...prev, vehicleId]))
+// }
+
+{
+  /* Print Section */
+}
+{
+  /* <div className="p-4"> */
+}
+{
+  /* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {vehicleData.map((vehicle) => (
+            <Card
+              key={vehicle.vehicle_id}
+              className="bg-gray-100 border-gray-300"
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <Truck className="h-5 w-5 text-gray-600" />
+                  <CardTitle className="text-sm font-semibold text-gray-800">
+                    {vehicle.vehicle_id}
+                  </CardTitle>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+           
+                <div className="flex items-center space-x-2">
+                  <User className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-700">
+                    {vehicle.driver_name}
+                  </span>
+                </div>
+
+               
+                <div className="flex items-center space-x-2">
+                  <Weight className="h-4 w-4 text-gray-500" />
+                  <div className="text-sm text-gray-700">
+                    <div>{vehicle.capacity} -</div>
+                    <div>{vehicle.current_load}</div>
+                  </div>
+                </div>
+
+            
+                <div className="flex items-center space-x-2">
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <span className="text-xs text-gray-600">{vehicle.route}</span>
+                </div>
+
+           
+                <div className="text-sm text-gray-600 py-2">
+                  {vehicle.status}
+                </div>
+
+           
+                <Button
+                  onClick={() => handleUnlock(vehicle.vehicle_id)}
+                  disabled={unlockedVehicles.has(vehicle.vehicle_id)}
+                  className={`w-full ${
+                    unlockedVehicles.has(vehicle.vehicle_id)
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700'
+                  } text-white text-sm`}
+                >
+                  <Unlock className="h-4 w-4 mr-2" />
+                  {unlockedVehicles.has(vehicle.vehicle_id)
+                    ? 'Unlocked'
+                    : 'Click to unlock'}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div> */
+}
+
+{
+  /* Route Summary Cards */
+}
+{
+  /* <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Route Summary
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {routingData.map((route) => (
+              <Card key={route.route_id} className="border-gray-200">
+                <CardHeader>
+                  <CardTitle className="text-base font-semibold text-blue-600">
+                    {route.route_name}
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">{route.branch_name}</p>
+                </CardHeader>
+
+                <CardContent>
+                  {route.suburbs.map((suburb, index) => (
+                    <div key={index} className="mb-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {suburb.suburb_name}, {suburb.city}
+                        </span>
+                      </div>
+
+                      {suburb.load_orders.map((order) => (
+                        <div
+                          key={order.id}
+                          className="ml-6 p-2 bg-gray-50 rounded text-xs space-y-1"
+                        >
+                          <div className="font-medium">
+                            {order.customer_name}
+                          </div>
+                          <div className="text-gray-600">
+                            Order: {order.sales_order_number}
+                          </div>
+                          <div className="text-gray-600">
+                            Weight: {order.total_weight.toFixed(1)} kg
+                          </div>
+                          <Badge variant="secondary" className="text-xs">
+                            {order.order_status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div> */
+}
+{
+  /* </div> */
+}
+
 // 'use client'
 
 // import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -252,287 +1086,3 @@
 //     </div>
 //   )
 // }
-'use client'
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Truck, User, Weight, MapPin, Unlock } from 'lucide-react'
-import { useState } from 'react'
-
-// Sample data based on the provided structure
-const routingData = [
-  {
-    route_id: 'bdb7be2b-68b4-49ee-91ba-d4aea76bbe95',
-    route_name: 'ALRODE',
-    branch_name: 'Allied Steelrode (Pty) Ltd Head Office',
-    suburbs: [
-      {
-        city: 'Alberton',
-        position: 1,
-        province: 'Gauteng',
-        load_orders: [
-          {
-            id: 'c3dc2130-83c8-4c2f-a7ae-a80e39396869',
-            load_id: 'b9e7d73f-b3a6-4dd7-8be6-4e0dafc573bf',
-            total_weight: 1930.153,
-            customer_name: 'LAZER LADZ (PTY) LTD',
-            delivery_date: '2025-08-21',
-            total_quantity: 50,
-            sales_order_number: '7180301',
-            order_status: 'Sales Order Open Printed',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    route_id: 'b3ff875a-df4e-448b-9df3-f627881d7e89',
-    route_name: 'EAST RAND 01',
-    branch_name: 'Allied Steelrode (Pty) Ltd Head Office',
-    suburbs: [
-      {
-        city: 'Germiston',
-        position: 1,
-        province: 'Gauteng',
-        load_orders: [
-          {
-            id: 'db9f188f-8b9d-4301-88d0-b1420cbe4949',
-            load_id: 'ebd8441e-30cc-46b3-bf31-091d50084f77',
-            total_weight: 6939.4,
-            customer_name: 'ACQUI 38 (PTY) LTD t/a GK STEEL & MINING',
-            delivery_date: '2025-08-22',
-            total_quantity: 20,
-            sales_order_number: '337290',
-            order_status: 'Delivery Note',
-          },
-        ],
-      },
-    ],
-  },
-]
-
-// Mock vehicle data to simulate the routing view
-const vehicleData = [
-  {
-    vehicle_id: 'JP33CFGP',
-    driver_name: 'Patrick M',
-    capacity: '8.00 Tons',
-    current_load: '8.00 M',
-    status: '0 B - 0%',
-    route: 'ALRODE',
-  },
-  {
-    vehicle_id: 'FG24FJGP',
-    driver_name: 'TBA1 TB',
-    capacity: '8.00 Tons',
-    current_load: '7.00 M',
-    status: '0 B - 0%',
-    route: 'EAST RAND 01',
-  },
-  {
-    vehicle_id: 'KH82LZGP',
-    driver_name: 'TBA1 TB',
-    capacity: '13.00 Tons',
-    current_load: '5.80 M',
-    status: '0 B - 0%',
-    route: 'EAST RAND 02',
-  },
-  {
-    vehicle_id: 'DN32BSGP',
-    driver_name: 'Jabulani',
-    capacity: '13.00 Tons',
-    current_load: '9.00 M',
-    status: '0 B - 0%',
-    route: 'WEST RAND',
-  },
-  {
-    vehicle_id: 'JZ32NHGP',
-    driver_name: 'Ronald E',
-    capacity: '20.00 Tons',
-    current_load: '13.00 M',
-    status: '0 B - 0%',
-    route: 'NORTH RAND',
-  },
-  {
-    vehicle_id: 'DX17CYGP',
-    driver_name: 'SACKY S',
-    capacity: '13.00 Tons',
-    current_load: '13.20 M',
-    status: '0 B - 0%',
-    route: 'SOUTH RAND',
-  },
-]
-
-export default function CurrentRoutingView() {
-  const [unlockedVehicles, setUnlockedVehicles] = useState(new Set())
-
-  const handleUnlock = (vehicleId) => {
-    setUnlockedVehicles((prev) => new Set([...prev, vehicleId]))
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-blue-500 text-white p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="bg-blue-600 p-2 rounded">
-              <Truck className="h-6 w-6" />
-            </div>
-            <h1 className="text-xl font-semibold">Current Routing View</h1>
-          </div>
-          <div className="text-sm">Good evening, Shanton Ferndale</div>
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="flex space-x-8 px-4">
-          <button className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-            Upload Sap File
-          </button>
-          <button className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-            Create Load
-          </button>
-          <button className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-            Assignment
-          </button>
-          <button className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-            Create Adhoc Load
-          </button>
-          <button className="py-3 px-1 border-b-2 border-blue-500 text-blue-600 font-medium">
-            Current Routing View
-          </button>
-        </div>
-      </div>
-
-      {/* Print Section */}
-      <div className="p-4">
-        <div className="flex items-center space-x-4 mb-6">
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-            Print
-          </Button>
-          <span className="text-sm text-gray-600">0 B</span>
-        </div>
-
-        {/* Vehicle Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {vehicleData.map((vehicle) => (
-            <Card
-              key={vehicle.vehicle_id}
-              className="bg-gray-100 border-gray-300"
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <Truck className="h-5 w-5 text-gray-600" />
-                  <CardTitle className="text-sm font-semibold text-gray-800">
-                    {vehicle.vehicle_id}
-                  </CardTitle>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-3">
-                {/* Driver */}
-                <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">
-                    {vehicle.driver_name}
-                  </span>
-                </div>
-
-                {/* Weight Info */}
-                <div className="flex items-center space-x-2">
-                  <Weight className="h-4 w-4 text-gray-500" />
-                  <div className="text-sm text-gray-700">
-                    <div>{vehicle.capacity} -</div>
-                    <div>{vehicle.current_load}</div>
-                  </div>
-                </div>
-
-                {/* Route */}
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-gray-500" />
-                  <span className="text-xs text-gray-600">{vehicle.route}</span>
-                </div>
-
-                {/* Status */}
-                <div className="text-sm text-gray-600 py-2">
-                  {vehicle.status}
-                </div>
-
-                {/* Unlock Button */}
-                <Button
-                  onClick={() => handleUnlock(vehicle.vehicle_id)}
-                  disabled={unlockedVehicles.has(vehicle.vehicle_id)}
-                  className={`w-full ${
-                    unlockedVehicles.has(vehicle.vehicle_id)
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-green-600 hover:bg-green-700'
-                  } text-white text-sm`}
-                >
-                  <Unlock className="h-4 w-4 mr-2" />
-                  {unlockedVehicles.has(vehicle.vehicle_id)
-                    ? 'Unlocked'
-                    : 'Click to unlock'}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Route Summary Cards */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Route Summary
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {routingData.map((route) => (
-              <Card key={route.route_id} className="border-gray-200">
-                <CardHeader>
-                  <CardTitle className="text-base font-semibold text-blue-600">
-                    {route.route_name}
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">{route.branch_name}</p>
-                </CardHeader>
-
-                <CardContent>
-                  {route.suburbs.map((suburb, index) => (
-                    <div key={index} className="mb-4">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <MapPin className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700">
-                          {suburb.suburb_name}, {suburb.city}
-                        </span>
-                      </div>
-
-                      {suburb.load_orders.map((order) => (
-                        <div
-                          key={order.id}
-                          className="ml-6 p-2 bg-gray-50 rounded text-xs space-y-1"
-                        >
-                          <div className="font-medium">
-                            {order.customer_name}
-                          </div>
-                          <div className="text-gray-600">
-                            Order: {order.sales_order_number}
-                          </div>
-                          <div className="text-gray-600">
-                            Weight: {order.total_weight.toFixed(1)} kg
-                          </div>
-                          <Badge variant="secondary" className="text-xs">
-                            {order.order_status}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}

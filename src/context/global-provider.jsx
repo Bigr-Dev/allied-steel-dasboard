@@ -239,7 +239,7 @@ const GlobalProvider = ({ children, data }) => {
         ])
       }
 
-      console.log('data :>> ', data)
+      //  console.log('data :>> ', data)
     }
   }, [current_user, dashboardState])
 

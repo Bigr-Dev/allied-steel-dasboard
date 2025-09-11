@@ -43,7 +43,7 @@ const DetailActionBar = ({ id, title, description }) => {
 
       <div className="flex gap-2">
         <Button
-          variant="outline"
+          // variant="outline"
           onClick={() => onEdit({ id })}
           disabled={canEdit[0]?.access !== 'write'}
           className={'bg-[#003e69] hover:bg-[#428bca] text-white capitalize'}

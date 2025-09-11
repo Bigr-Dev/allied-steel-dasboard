@@ -179,8 +179,13 @@ export function DataTable({
                     if (url) {
                       switch (url) {
                         case 'loads':
+                          console.log('row.original.id :>> ', row.original)
                           router.replace(`/${url}/${row.original.route_id}`)
                           break
+
+                        // case 'route_id':
+                        //  router.replace(`/${url}/${row.original.route_id}`)
+                        // break
 
                         case 'none':
                           break
@@ -192,6 +197,8 @@ export function DataTable({
                       }
                     } else if (row.original.id) {
                       router.push(`${pathname}/${row.original.id}`)
+                    } else if (row.original.route_id) {
+                      router.push(`${pathname}/${row.original.route_id}`)
                     }
                     // if (url) {
                     //   router.push(`${pathname}/${row.original.id}`)
