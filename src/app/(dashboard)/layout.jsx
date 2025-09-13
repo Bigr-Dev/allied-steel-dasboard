@@ -46,7 +46,7 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       const Orders = await fetchServerData('orders', 'GET')
       const Users = await fetchServerData('users', 'GET')
       const Vehicles = await fetchServerData('vehicles', 'GET')
-
+      // console.log('tomorrow :>> ', tomorrow)
       let AssignedLoads = {}
       if (Users?.message) {
         const load_params = {

@@ -16,7 +16,7 @@ import { Bell } from 'lucide-react'
 // components
 import { SidebarTrigger } from '@/components/ui/sidebar-provider'
 import Image from 'next/image'
-import allied_logo from '@/assets/Allied-logo.png'
+import allied_logo from '@/assets/steel_logo.png'
 import bg_img from '@/assets/Allied-Steelrode-Background-1.jpg'
 import {
   Sheet,
@@ -31,6 +31,8 @@ import {
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
+
+import header_bg from '@/assets/Allied-Steelrode-Background-1.jpg'
 
 const Header = () => {
   const {
@@ -55,13 +57,10 @@ const Header = () => {
   return (
     <div className="sticky  h-16 top-0 z-10 px-4  md:px-6 bg-gray-100 dark:bg-gray-900 backdrop-blur supports-[backdrop-filter]:bg-[#003e69] dark:supports-[backdrop-filter]:bg-gray-900/60 flex shrink-0 justify-between items-center shadow-lg ">
       <div className="flex flex-col flex-1/3 ">
-        <h2 className="text-l text-white font-bold tracking-tight capitalize">
-          {dashboardState?.label.slice(27)}
-        </h2>
-        <p className="text-white text-sm">{getGreeting(name)}</p>
+        <SidebarTrigger className={'text-white'} />
       </div>
 
-      <div className="flex  aspect-square size-13 self-center items-center justify-center bg-white rounded-[50%]">
+      <div className="flex  aspect-square size-14 self-center items-center justify-center ">
         {/* <Truck className="size-4" /> */}
         <Image
           src={allied_logo}
@@ -70,12 +69,12 @@ const Header = () => {
         />
       </div>
 
-      <div className=" flex flex-1/3  justify-end space-x-4 items-center z-10">
+      <div className=" flex flex-col flex-1/3  items-end space-x-4 items-center z-10">
         {/* <h2 className="text-l font-bold text-white tracking-tight capitalize">
    
           {getGreeting(name)}
         </h2> */}
-        <Sheet>
+        {/* <Sheet>
           <SheetTrigger asChild>
             <Bell size={20} color="#fff" />
           </SheetTrigger>
@@ -104,23 +103,22 @@ const Header = () => {
               </SheetClose>
             </SheetFooter>
           </SheetContent>
-        </Sheet>
-
-        <SidebarTrigger className={'text-white'} />
+        </Sheet> */}
+        <h2 className="text-l text-white font-bold tracking-tight capitalize">
+          {dashboardState?.label.slice(27)}
+        </h2>
+        <p className="text-white text-sm">{getGreeting(name)}</p>
       </div>
-      {/* <Image
-        alt="motion-live-bg"
-        src={bg_img}
-        placeholder="blur"
-        quality={100}
-        fill
-        sizes="100%"
-        style={{
-          objectFit: 'cover',
-          zIndex: -1,
-        }}
-      /> */}
-      {/* <div className="absolute top-0 right-0 h-full w-full bg-black/40 z-0"></div> */}
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <Image
+          src={header_bg}
+          alt="motion-live-bg"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
     </div>
   )
 }

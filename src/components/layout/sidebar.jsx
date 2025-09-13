@@ -166,17 +166,17 @@ const SideBar = () => {
   )
   return (
     <Sidebar collapsible="icon" className="z-30 bg-white/40 group ">
-      <SidebarHeader className=" h-16 justify-center  bg-[#003e69]  shadow-md ">
+      <SidebarHeader className=" h-16 justify-center  bg-[#101a27]  shadow-md ">
         <SidebarMenu className={''}>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  // className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:bg-[#428bca]"
                   tooltip="Allied Steelrode Fleet Management"
                 >
-                  <div className="flex aspect-square size-7 items-center justify-center rounded-lg  text-white">
+                  <div className="flex aspect-square size-7 items-center justify-center rounded-lg  text-white ">
                     <Truck className="h-6 w-6" />
                     {/* <Image src={allied_logo} /> */}
                   </div>
@@ -235,8 +235,9 @@ const SideBar = () => {
                     className={
                       isActive
                         ? 'bg-[#003e69] hover:bg-[#428bca] hover:text-white'
-                        : 'hover:bg-[#428bca] hover:text-white'
+                        : 'hover:bg-[#7a7877] hover:text-white'
                     }
+                    tooltip={item.label}
                   >
                     <Link href={item.href}>
                       <Icon color={isActive ? '#fff ' : '#333333'} />
@@ -288,8 +289,9 @@ const SideBar = () => {
                           className={
                             isActive
                               ? 'bg-[#003e69] hover:bg-[#428bca] hover:text-white'
-                              : 'hover:bg-[#428bca] hover:text-white'
+                              : 'hover:bg-[#7a7877] hover:text-white'
                           }
+                          tooltip={item.label}
                         >
                           <Link href={item.href}>
                             <Icon color={isActive ? '#fff ' : '#333333'} />
@@ -343,8 +345,9 @@ const SideBar = () => {
                             className={
                               isActive
                                 ? 'bg-[#003e69] hover:bg-[#428bca] hover:text-white'
-                                : 'hover:bg-[#428bca] hover:text-white'
+                                : 'hover:bg-[#7a7877] hover:text-white'
                             }
+                            tooltip={item.label}
                           >
                             <Link href={item.href}>
                               <Icon

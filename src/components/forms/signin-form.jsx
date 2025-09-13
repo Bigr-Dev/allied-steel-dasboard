@@ -20,7 +20,7 @@ import Image from 'next/image'
 // import { useAuth } from '@/context/auth-context/context'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/initial-states/auth-state'
-import allied_logo from '@/assets/Allied-logo.png'
+import allied_logo from '@/assets/steel_logo.png'
 import { Eye, EyeOff } from 'lucide-react'
 import PageLoader from '../ui/loader'
 
