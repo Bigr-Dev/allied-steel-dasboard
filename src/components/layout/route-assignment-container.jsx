@@ -210,206 +210,230 @@ const RouteAssignment = () => {
     setSelectedVehicle(updatedSelected || null)
   }
 
-  // if (selectedVehicle) {
-  //   const utilization = getVehicleUtilization(selectedVehicle)
-  //   const capacity = selectedVehicle.capacity_kg || 40000
-  //   const availableCapacity = capacity - selectedVehicle.total_assigned_kg
+  if (selectedVehicle) {
+    //console.log('selectedVehicle :>> ', selectedVehicle)
+    const utilization = getVehicleUtilization(selectedVehicle)
+    const capacity = selectedVehicle.capacity_kg || 40000
+    const availableCapacity = capacity - selectedVehicle.total_assigned_kg
+    const vehicle = data?.filter((v) => v.id == selectedVehicle.vehicle_id)?.[0]
+    // console.log('selectedVehicle :>> ', vehicle?.license_plate)
+    return (
+      <div className="min-h-screen ">
+        <Card>
+          <CardHeader>
+            <div className="   py-4">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedVehicle(null)}
+                  className="p-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                {/* <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>Vehicles</span>
+                  <span>/</span>
+                  <span>
+                    {vehicle?.license_plate ||
+                      selectedVehicle.vehicle_id.slice(0, 8)}
+                  </span>
+                </div> */}
+                <div className="mt-2">
+                  <h1 className="text-xl font-semibold">
+                    Vehicle{' - '}
+                    {vehicle?.license_plate ||
+                      selectedVehicle.vehicle_id.slice(0, 8)}{' '}
+                    -{' '}
+                    {selectedVehicle.loads[0]?.route_name || 'Multiple Routes'}
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    {selectedVehicle.loads[0]?.branch_name}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
 
-  //   return (
-  //     <div className="min-h-screen bg-gray-50">
-  //       <div className="bg-white border-b px-6 py-4">
-  //         <div className="flex items-center gap-4">
-  //           <Button
-  //             variant="ghost"
-  //             size="sm"
-  //             onClick={() => setSelectedVehicle(null)}
-  //             className="p-2"
-  //           >
-  //             <ArrowLeft className="w-4 h-4" />
-  //           </Button>
-  //           <div className="flex items-center gap-2 text-sm text-gray-600">
-  //             <span>Vehicles</span>
-  //             <span>/</span>
-  //             <span>{selectedVehicle.vehicle_id.slice(0, 8)}</span>
-  //           </div>
-  //         </div>
-  //         <div className="mt-2">
-  //           <h1 className="text-xl font-semibold">
-  //             Vehicle {selectedVehicle.vehicle_id.slice(0, 8)} -{' '}
-  //             {selectedVehicle.loads[0]?.route_name || 'Multiple Routes'}
-  //           </h1>
-  //           <p className="text-sm text-gray-600">
-  //             {selectedVehicle.loads[0]?.branch_name}
-  //           </p>
-  //         </div>
-  //       </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Vehicle Load</h2>
+                  <div className="text-2xl font-bold text-orange-500">
+                    {utilization}%
+                  </div>
+                </div>
 
-  //       <div className="p-6">
-  //         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-  //           <div>
-  //             <div className="flex items-center justify-between mb-4">
-  //               <h2 className="text-lg font-semibold">Vehicle Load</h2>
-  //               <div className="text-2xl font-bold text-orange-500">
-  //                 {utilization}%
-  //               </div>
-  //             </div>
+                <Card className="p-6">
+                  <div className="text-center mb-6">
+                    <p className="text-sm text-gray-600 mb-2">Available, kg</p>
+                    <p className="text-2xl font-bold">
+                      {availableCapacity.toFixed(0)}/{capacity.toFixed(0)}
+                    </p>
+                  </div>
 
-  //             <Card className="p-6">
-  //               <div className="text-center mb-6">
-  //                 <p className="text-sm text-gray-600 mb-2">Available, kg</p>
-  //                 <p className="text-2xl font-bold">
-  //                   {availableCapacity.toFixed(0)}/{capacity.toFixed(0)}
-  //                 </p>
-  //               </div>
+                  <div className="relative mb-8">
+                    <div className="flex items-end justify-center">
+                      <div className="relative">
+                        <Truck className="w-32 h-20 text-gray-400" />
+                        <div
+                          className={`absolute top-2 left-8 w-16 h-12 ${getUtilizationColor(
+                            utilization
+                          )} rounded`}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
 
-  //               <div className="relative mb-8">
-  //                 <div className="flex items-end justify-center">
-  //                   <div className="relative">
-  //                     <Truck className="w-32 h-20 text-gray-400" />
-  //                     <div
-  //                       className={`absolute top-2 left-8 w-16 h-12 ${getUtilizationColor(
-  //                         utilization
-  //                       )} rounded`}
-  //                     ></div>
-  //                   </div>
-  //                 </div>
-  //               </div>
+                  <div
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center min-h-[120px] flex items-center justify-center"
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
+                    <div className="text-gray-500">
+                      <Truck className="w-8 h-8 mx-auto mb-2" />
+                      <p className="text-sm">Drop items here to load vehicle</p>
+                      <p className="text-xs mt-1">
+                        Available capacity: {availableCapacity.toFixed(1)} kg
+                      </p>
+                    </div>
+                  </div>
 
-  //               <div
-  //                 className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center min-h-[120px] flex items-center justify-center"
-  //                 onDragOver={handleDragOver}
-  //                 onDrop={handleDrop}
-  //               >
-  //                 <div className="text-gray-500">
-  //                   <Truck className="w-8 h-8 mx-auto mb-2" />
-  //                   <p className="text-sm">Drop items here to load vehicle</p>
-  //                   <p className="text-xs mt-1">
-  //                     Available capacity: {availableCapacity.toFixed(1)} kg
-  //                   </p>
-  //                 </div>
-  //               </div>
+                  <div className="mt-6 space-y-4">
+                    <h3 className="font-medium">Currently Loaded Items:</h3>
+                    <div className="max-h-64 overflow-y-auto space-y-2">
+                      {selectedVehicle.loads.map((load) =>
+                        load.orders.map((order) =>
+                          order.items.map((item, index) => (
+                            <div
+                              key={index}
+                              draggable
+                              onDragStart={(e) =>
+                                handleVehicleItemDragStart(e, item)
+                              }
+                              className="bg-blue-50 border border-blue-200 p-3 rounded cursor-move hover:bg-blue-100 transition-colors"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm">
+                                    {item.description}
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    Qty: {item.quantity} | Weight: {item.weight}
+                                    kg | Order: {order.sales_order_number}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {order.customer_name}
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleRemoveItemFromVehicle(
+                                      item,
+                                      order.order_id,
+                                      load.load_id
+                                    )
+                                  }
+                                  className="p-1 h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )
+                      )}
+                      {selectedVehicle.loads.every((load) =>
+                        load.orders.every((order) => order.items.length === 0)
+                      ) && (
+                        <div className="text-center text-gray-500 py-4">
+                          <p className="text-sm">No items loaded</p>
+                          <p className="text-xs">
+                            Drag items from the right panel to load them
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-  //               <div className="mt-6 space-y-4">
-  //                 <h3 className="font-medium">Currently Loaded Items:</h3>
-  //                 <div className="max-h-64 overflow-y-auto space-y-2">
-  //                   {selectedVehicle.loads.map((load) =>
-  //                     load.orders.map((order) =>
-  //                       order.items.map((item) => (
-  //                         <div
-  //                           key={`${order.order_id}-${item.id}`}
-  //                           draggable
-  //                           onDragStart={(e) =>
-  //                             handleVehicleItemDragStart(e, item)
-  //                           }
-  //                           className="bg-blue-50 border border-blue-200 p-3 rounded cursor-move hover:bg-blue-100 transition-colors"
-  //                         >
-  //                           <div className="flex items-center justify-between">
-  //                             <div className="flex-1">
-  //                               <div className="font-medium text-sm">
-  //                                 {item.description}
-  //                               </div>
-  //                               <div className="text-xs text-gray-600">
-  //                                 Qty: {item.quantity} | Weight: {item.weight}kg
-  //                                 | Order: {order.sales_order_number}
-  //                               </div>
-  //                               <div className="text-xs text-gray-500">
-  //                                 {order.customer_name}
-  //                               </div>
-  //                             </div>
-  //                             <Button
-  //                               variant="ghost"
-  //                               size="sm"
-  //                               onClick={() =>
-  //                                 handleRemoveItemFromVehicle(
-  //                                   item,
-  //                                   order.order_id,
-  //                                   load.load_id
-  //                                 )
-  //                               }
-  //                               className="p-1 h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
-  //                             >
-  //                               <X className="w-3 h-3" />
-  //                             </Button>
-  //                           </div>
-  //                         </div>
-  //                       ))
-  //                     )
-  //                   )}
-  //                   {selectedVehicle.loads.every((load) =>
-  //                     load.orders.every((order) => order.items.length === 0)
-  //                   ) && (
-  //                     <div className="text-center text-gray-500 py-4">
-  //                       <p className="text-sm">No items loaded</p>
-  //                       <p className="text-xs">
-  //                         Drag items from the right panel to load them
-  //                       </p>
-  //                     </div>
-  //                   )}
-  //                 </div>
-  //               </div>
+                  <div className="mt-6 space-y-4">
+                    <h3 className="font-medium">Load Summary:</h3>
+                    {selectedVehicle.loads.map((load) => {
+                      // console.log('load :>> ', load)
+                      return (
+                        <div
+                          key={load.load_id}
+                          className="bg-gray-50 p-3 rounded"
+                        >
+                          <div className="font-medium text-sm">
+                            {load.route_name}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {load.required_kg.toFixed(1)} kg
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {load.orders.length} orders
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Card>
+              </div>
 
-  //               <div className="mt-6 space-y-4">
-  //                 <h3 className="font-medium">Load Summary:</h3>
-  //                 {selectedVehicle.loads.map((load) => (
-  //                   <div key={load.load_id} className="bg-gray-50 p-3 rounded">
-  //                     <div className="font-medium text-sm">
-  //                       {load.route_name}
-  //                     </div>
-  //                     <div className="text-xs text-gray-600">
-  //                       {load.required_kg.toFixed(1)} kg
-  //                     </div>
-  //                     <div className="text-xs text-gray-500">
-  //                       {load.orders.length} orders
-  //                     </div>
-  //                   </div>
-  //                 ))}
-  //               </div>
-  //             </Card>
-  //           </div>
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Available Items</h2>
+                  <div className="text-sm text-gray-600">
+                    Total items: {availableItems.length}
+                  </div>
+                </div>
 
-  //           <div>
-  //             <div className="flex items-center justify-between mb-4">
-  //               <h2 className="text-lg font-semibold">Available Items</h2>
-  //               <div className="text-sm text-gray-600">
-  //                 Total items: {availableItems.length}
-  //               </div>
-  //             </div>
-
-  //             <Card>
-  //               <CardHeader className="pb-3">
-  //                 <div className="grid grid-cols-4 gap-4 text-xs font-medium text-gray-600 uppercase">
-  //                   <div>Description</div>
-  //                   <div>Quantity</div>
-  //                   <div>Weight (kg)</div>
-  //                   <div>Length (mm)</div>
-  //                 </div>
-  //               </CardHeader>
-  //               <CardContent className="pt-0">
-  //                 <div className="space-y-2 max-h-96 overflow-y-auto">
-  //                   {availableItems.map((item) => (
-  //                     <div
-  //                       key={item.id}
-  //                       draggable
-  //                       onDragStart={(e) => handleDragStart(e, item)}
-  //                       className="grid grid-cols-4 gap-4 items-center py-3 px-2 hover:bg-gray-50 rounded cursor-move border border-transparent hover:border-gray-200"
-  //                     >
-  //                       <div className="text-sm font-medium">
-  //                         {item.description}
-  //                       </div>
-  //                       <div className="text-sm">{item.quantity}</div>
-  //                       <div className="text-sm font-medium">{item.weight}</div>
-  //                       <div className="text-sm">{item.length}</div>
-  //                     </div>
-  //                   ))}
-  //                 </div>
-  //               </CardContent>
-  //             </Card>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   )
-  // }
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="grid grid-cols-4 gap-4 text-xs font-medium text-gray-600 uppercase">
+                      <div>Description</div>
+                      <div>Quantity</div>
+                      <div>Weight (kg)</div>
+                      <div>Length (mm)</div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {availableItems.length > 0 &&
+                        availableItems?.map((item) => {
+                          //    console.log('item :>> ', item)
+                          return (
+                            <div
+                              key={item.vehicle_id}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, item)}
+                              className="grid grid-cols-4 gap-4 items-center py-3 px-2 hover:bg-gray-50 rounded cursor-move border border-transparent hover:border-gray-200"
+                            >
+                              <div className="text-sm font-medium">
+                                {item.description}
+                              </div>
+                              <div className="text-sm">{item.quantity}</div>
+                              <div className="text-sm font-medium">
+                                {item.weight}
+                              </div>
+                              <div className="text-sm">{item.length}</div>
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="flex">
@@ -452,7 +476,7 @@ const RouteAssignment = () => {
             //   console.log('capacity :>> ', Number(_vehicle?.[0]?.capacity) > 0)
             // )
             const availableCapacity = capacity - vehicle.total_assigned_kg
-            console.log('vehicle :>> ', _vehicle?.[0]?.license_plate)
+            //   console.log('vehicle :>> ', _vehicle?.[0]?.license_plate)
             return (
               <Card
                 key={vehicle.vehicle_id}

@@ -16,6 +16,7 @@ import {
 // assets
 import Image from 'next/image'
 import Contact_bg from '@/assets/contact.jpg'
+import DetailCard from '@/components/ui/detail-card'
 
 const NotFound = () => {
   return (
@@ -29,27 +30,26 @@ const NotFound = () => {
         </p>
       </div>
 
-      <div className="z-10">
-        <Card className="min-w-[500px]">
-          <CardHeader>
-            <CardTitle className="text-xl">404 - Not Found</CardTitle>
-            <CardDescription>
-              The dashboard page you're looking for could not be found. It may
-              have been moved, deleted, or you entered the wrong URL.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <div className="z-10 min-w-[50vw]">
+        <DetailCard
+          className="min-w-[60vw]"
+          title={'404 - Not Found'}
+          description={
+            "The dashboard page you're looking for could not be found. It may have been moved, deleted, or you entered the wrong URL."
+          }
+        >
+          {/* <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Please check the URL and try again, or navigate back to the
               dashboard.
             </p>
           </CardContent>
-          <CardContent className="flex justify-center">
-            <Button asChild className="w-full">
-              <Link href="/">Back to Dashboard</Link>
-            </Button>
-          </CardContent>
-        </Card>
+          <CardContent className="flex justify-center"> */}
+          <Button asChild className="w-full bg-[#003e69] hover:bg-[#428bca]">
+            <Link href="/">Back to Dashboard</Link>
+          </Button>
+          {/* </CardContent> */}
+        </DetailCard>
       </div>
 
       <Image

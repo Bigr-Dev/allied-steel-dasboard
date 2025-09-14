@@ -142,7 +142,7 @@ export default function CurrentRoutingView({ id }) {
     //       value: current_screen?.data?.length || 0,
     //     },
   ]
-
+  // console.log('routeData :>> ', routeData)
   return (
     <div className="min-h-screen space-y-6">
       <DetailActionBar
@@ -220,37 +220,22 @@ export default function CurrentRoutingView({ id }) {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6">
             {routeData?.suburbs.map((suburb, index) => (
-              <Card key={index} className="overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-blue-100 p-2 rounded-full">
-                        <MapPin className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">
-                          {suburb.suburb_name}
-                        </CardTitle>
-                        <p className="text-sm text-gray-600">
-                          {suburb.province} • Position {suburb.position}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant="secondary">
-                      {suburb.load_orders.length} orders
-                    </Badge>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="p-0 ">
-                  <Accordion type="multiple" className="w-full">
-                    {suburb.load_orders.map((order, orderIndex) => (
+              <DetailCard
+                key={index}
+                className="overflow-hidden"
+                title={suburb.suburb_name}
+                description={`${suburb.province} • Position ${suburb.position}`}
+              >
+                <Accordion type="multiple" className="w-full space-y-4">
+                  {suburb.load_orders.map((order, orderIndex) => {
+                    console.log('order :>> ', order)
+                    return (
                       <AccordionItem
                         key={order.id}
                         value={order.id}
-                        className="w-full border-b last:border-b-0"
+                        className="border rounded-lg"
                       >
-                        <AccordionTrigger className="px-4 py-4 hover:bg-gray-50 [&[data-state=open]]:bg-gray-50">
+                        <AccordionTrigger className="px-4 py-4 hover:bg-gray-50 [&[data-state=open]]:bg-gray-50 w-full">
                           <div className="flex items-center justify-between w-full ">
                             <div className="flex items-center space-x-3">
                               <div className="bg-gray-100 p-1.5 rounded">
@@ -327,38 +312,41 @@ export default function CurrentRoutingView({ id }) {
                                 Order Items
                               </h5>
                               <div className="space-y-2">
-                                {order.order_items?.map((item, itemIndex) => (
-                                  <div
-                                    key={itemIndex}
-                                    className="flex items-center justify-between p-3 border rounded-lg bg-white"
-                                  >
-                                    <div className="flex-1">
-                                      <div className="flex items-center space-x-3">
-                                        <div className="bg-blue-50 px-2 py-1 rounded text-xs font-mono text-blue-700">
-                                          {item.item_code}
-                                        </div>
-                                        <div>
-                                          <p className="font-medium text-gray-900">
-                                            {item.description}
-                                          </p>
-                                          <p className="text-sm text-gray-600">
-                                            Qty: {item.quantity} {item.unit} •
-                                            Weight:{' '}
-                                            {item.weight.toLocaleString()} kg
-                                          </p>
+                                {order.load_items?.map((item, itemIndex) => {
+                                  console.log('item :>> ', item)
+                                  return (
+                                    <div
+                                      key={itemIndex}
+                                      className="flex items-center justify-between p-3 border rounded-lg bg-white"
+                                    >
+                                      <div className="flex-1">
+                                        <div className="flex items-center space-x-3">
+                                          <div className="bg-blue-50 px-2 py-1 rounded text-xs font-mono text-blue-700">
+                                            {item.item_code}
+                                          </div>
+                                          <div>
+                                            <p className="font-medium text-gray-900">
+                                              {item.description}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                              Qty: {item.quantity} {item.unit} •
+                                              Weight:{' '}
+                                              {item.weight.toLocaleString()} kg
+                                            </p>
+                                          </div>
                                         </div>
                                       </div>
+                                      <div className="text-right">
+                                        <p className="text-sm font-medium">
+                                          {item.weight.toLocaleString()} kg
+                                        </p>
+                                        <p className="text-xs text-gray-600">
+                                          {item.quantity} {item.unit}
+                                        </p>
+                                      </div>
                                     </div>
-                                    <div className="text-right">
-                                      <p className="text-sm font-medium">
-                                        {item.weight.toLocaleString()} kg
-                                      </p>
-                                      <p className="text-xs text-gray-600">
-                                        {item.quantity} {item.unit}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
+                                  )
+                                })}
                               </div>
                             </div>
 
@@ -383,10 +371,10 @@ export default function CurrentRoutingView({ id }) {
                           </div>
                         </AccordionContent>
                       </AccordionItem>
-                    ))}
-                  </Accordion>
-                </CardContent>
-              </Card>
+                    )
+                  })}
+                </Accordion>
+              </DetailCard>
             ))}
           </div>
         </TabsContent>

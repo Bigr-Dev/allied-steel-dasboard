@@ -453,12 +453,6 @@ const Statistics = () => {
                 </div>
               </div>
             </CardHeader>
-
-            {/* <CardContent>
-              <div className="text-2xl font-bold">
-                <CountUp value={stat.value} />
-              </div>
-            </CardContent> */}
           </Card>
         )
       })}

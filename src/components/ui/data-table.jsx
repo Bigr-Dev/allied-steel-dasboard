@@ -179,7 +179,7 @@ export function DataTable({
                     if (url) {
                       switch (url) {
                         case 'loads':
-                          console.log('row.original.id :>> ', row.original)
+                          //console.log('row.original.id :>> ', row.original)
                           router.replace(`/${url}/${row.original.route_id}`)
                           break
 
