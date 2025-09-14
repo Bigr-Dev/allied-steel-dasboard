@@ -15,6 +15,8 @@ import {
   TrendingUp,
   Calendar,
   Clock,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useGlobalContext } from '@/context/global-context'
@@ -28,6 +30,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@radix-ui/react-accordion'
+import CountUp from '../ui/count-up'
 
 // Sample data based on the provided structure
 const routingData = [
@@ -93,7 +96,7 @@ export default function CurrentRoutingView({ id }) {
   const routeData = data?.find((r) => r.route_id === id)
   //  console.log('routeData :>> ', routeData)
 
-  const [selectedView, setSelectedView] = useState('overview')
+  const [selectedView, setSelectedView] = useState(null)
 
   // Calculate totals
   const totalOrders = routeData?.suburbs.reduce(
@@ -130,17 +133,36 @@ export default function CurrentRoutingView({ id }) {
 
   const tabs = [
     { value: 'overview', label: 'Overview' },
-    { value: 'timeline', label: 'Timeline' },
+    // { value: 'timeline', label: 'Timeline' },
     { value: 'capacity', label: 'Capacity' },
     { value: 'status', label: 'Status' },
   ]
 
   const screen_stats = [
-    //  {
-    //       title: 'Total Branches',
-    //       icon: <Building2 className="h-6 w-6 text-violet-500" />,
-    //       value: current_screen?.data?.length || 0,
-    //     },
+    {
+      title: 'Total Orders',
+      icon: <Package className="h-6 w-6 text-blue-600" />,
+      value: totalOrders || 0,
+      description: ` Across ${routeData?.suburbs?.length} location(s)`,
+    },
+    {
+      title: 'Total Weight',
+      icon: <WeightIcon className="h-6 w-6 text-green-600" />,
+      value: `${(totalWeight / 1000)?.toFixed(1)}` || 0,
+      description: `${totalWeight?.toLocaleString()} kg`,
+    },
+    {
+      title: 'Ready to Load',
+      icon: <CheckCircle2 className="h-6 w-6 text-emerald-600" />,
+      value: readyOrders || 0,
+      description: `${Math.round((readyOrders / totalOrders) * 100)}% complete`,
+    },
+    {
+      title: 'Items',
+      icon: <TrendingUp className="h-6 w-6 text-purple-600" />,
+      value: totalQuantity || 0,
+      description: 'Total pieces',
+    },
   ]
   // console.log('routeData :>> ', routeData)
   return (
@@ -153,57 +175,25 @@ export default function CurrentRoutingView({ id }) {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <Package className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalOrders}</div>
-            <p className="text-xs text-gray-600 mt-1">
-              Across {routeData?.suburbs?.length} location(s)
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Weight</CardTitle>
-            <WeightIcon className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(totalWeight / 1000).toFixed(1)}t
-            </div>
-            <p className="text-xs text-gray-600 mt-1">
-              {totalWeight?.toLocaleString()} kg total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ready to Load</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{readyOrders}</div>
-            <p className="text-xs text-gray-600 mt-1">
-              {Math.round((readyOrders / totalOrders) * 100)}% completion
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Items</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalQuantity}</div>
-            <p className="text-xs text-gray-600 mt-1">Total pieces</p>
-          </CardContent>
-        </Card>
+        {screen_stats.map((stat, index) => (
+          <Card key={index}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {stat.icon}
+                  <CardTitle>{stat.title}</CardTitle>
+                </div>
+                <div className="text-2xl font-bold flex  justify-end items-center gap-2">
+                  <div>
+                    <CountUp value={stat.value} />
+                    {stat.title === 'Total Weight' && 't'}
+                  </div>
+                  <p className="text-xs text-gray-600 ">{stat.description}</p>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        ))}
       </div>
 
       <Tabs defaultValue={tabs?.[0]?.value} className="w-full">
@@ -233,19 +223,22 @@ export default function CurrentRoutingView({ id }) {
                       <AccordionItem
                         key={order.id}
                         value={order.id}
-                        className="border rounded-lg"
+                        className="border rounded-lg border-[#003e69] overflow-hidden"
                       >
-                        <AccordionTrigger className="px-4 py-4 hover:bg-gray-50 [&[data-state=open]]:bg-gray-50 w-full">
+                        <AccordionTrigger
+                          onClick={() => setSelectedView(order.id)}
+                          className="p-4 hover:bg-[#7a7877] hover:text-white [&[data-state=open]]:bg-[#003e69] [&[data-state=open]]:text-white w-full"
+                        >
                           <div className="flex items-center justify-between w-full ">
                             <div className="flex items-center space-x-3">
                               <div className="bg-gray-100 p-1.5 rounded">
                                 <User className="h-4 w-4 text-gray-600" />
                               </div>
                               <div className="text-left">
-                                <h4 className="font-medium text-gray-900 leading-tight">
+                                <h4 className="font-medium  leading-tight">
                                   {order.customer_name}
                                 </h4>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm ">
                                   Order #{order.sales_order_number}
                                 </p>
                               </div>
@@ -256,7 +249,7 @@ export default function CurrentRoutingView({ id }) {
                                 <p className="text-sm font-medium">
                                   {order.total_weight.toLocaleString()} kg
                                 </p>
-                                <p className="text-xs text-gray-600">
+                                <p className="text-xs ">
                                   {order.total_quantity} items
                                 </p>
                               </div>
@@ -274,14 +267,21 @@ export default function CurrentRoutingView({ id }) {
                                   ? 'Ready'
                                   : 'Pending'}
                               </Badge>
+                              {/* <div>
+                                {selectedView == order.id ? (
+                                  <ChevronDown />
+                                ) : (
+                                  <ChevronRight />
+                                )}
+                              </div> */}
                             </div>
                           </div>
                         </AccordionTrigger>
 
-                        <AccordionContent className="px-4 pb-4">
-                          <div className="space-y-4">
+                        <AccordionContent className="">
+                          <div className="w-full space-y-4">
                             {/* Order Summary */}
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-3 bg-gray-50 rounded-lg">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                               <div className="flex items-center space-x-2">
                                 <Calendar className="h-4 w-4 text-gray-400" />
                                 <span className="text-sm">
@@ -307,17 +307,17 @@ export default function CurrentRoutingView({ id }) {
                             </div>
 
                             {/* Detailed Order Items */}
-                            <div className="space-y-2">
+                            <div className="px-4 mb-4 space-y-2">
                               <h5 className="font-medium text-gray-900 mb-3">
                                 Order Items
                               </h5>
                               <div className="space-y-2">
                                 {order.load_items?.map((item, itemIndex) => {
-                                  console.log('item :>> ', item)
+                                  // console.log('item :>> ', item)
                                   return (
                                     <div
                                       key={itemIndex}
-                                      className="flex items-center justify-between p-3 border rounded-lg bg-white"
+                                      className="flex items-center justify-between p-3 border rounded-lg bg-white border-[#428bca]"
                                     >
                                       <div className="flex-1">
                                         <div className="flex items-center space-x-3">
@@ -352,7 +352,7 @@ export default function CurrentRoutingView({ id }) {
 
                             {/* Dispatch Remarks */}
                             {order.dispatch_remarks && (
-                              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                              <div className="p-4 bg-yellow-50 border border-yellow-200 ">
                                 <div className="flex items-start space-x-2">
                                   <div className="bg-yellow-100 p-1 rounded">
                                     <Clock className="h-3 w-3 text-yellow-600" />
@@ -384,7 +384,7 @@ export default function CurrentRoutingView({ id }) {
           <Card>
             <CardHeader>
               <CardTitle>Delivery Timeline</CardTitle>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[#428bca]">
                 Orders organized by delivery sequence with detailed items
               </p>
             </CardHeader>
@@ -395,10 +395,10 @@ export default function CurrentRoutingView({ id }) {
                     <AccordionItem
                       key={order.id}
                       value={order.id}
-                      className="border rounded-lg"
+                      className="border rounded-lg border-[#003e69] overflow-hidden"
                     >
-                      <AccordionTrigger className="px-4 py-4 hover:bg-gray-50 [&[data-state=open]]:bg-gray-50">
-                        <div className="flex items-center space-x-4 w-full mr-4">
+                      <AccordionTrigger className="p-4 hover:bg-[#7a7877] hover:text-white [&[data-state=open]]:bg-[#003e69] [&[data-state=open]]:text-white w-full">
+                        <div className="flex items-center space-x-4 w-full mr-4 ">
                           <div className="flex-shrink-0">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                               <span className="text-sm font-medium text-blue-600">
@@ -409,10 +409,10 @@ export default function CurrentRoutingView({ id }) {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <div className="text-left">
-                                <p className="font-medium text-gray-900 truncate">
+                                <p className="font-medium  ">
                                   {order.customer_name}
                                 </p>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm  ">
                                   {suburb.suburb_name} •{' '}
                                   {order.total_weight.toLocaleString()}kg •{' '}
                                   {order.total_quantity} items
@@ -436,10 +436,10 @@ export default function CurrentRoutingView({ id }) {
                         </div>
                       </AccordionTrigger>
 
-                      <AccordionContent className="px-4 pb-4">
-                        <div className="ml-12 space-y-4">
+                      <AccordionContent className="pb-4 ">
+                        <div className="w-full space-y-4 ">
                           {/* Order Summary */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-gray-50 rounded-lg">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                             <div>
                               <p className="text-xs text-gray-600 uppercase tracking-wide">
                                 Order Number

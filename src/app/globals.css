@@ -140,3 +140,9 @@
     -webkit-text-stroke: 1px white;
   }
 }
+
+.mapboxgl-ctrl.mapboxgl-ctrl-attrib {
+  display: none;
+  height: 0px;
+  width: 0px;
+}

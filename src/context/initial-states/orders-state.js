@@ -17,7 +17,7 @@ const titleSection = {
   title: 'Orders',
   description: 'Manage your SAP orders',
   button: {
-    text: 'Add Order',
+    text: 'Upload SAP CSV',
     icon: <Plus className="mr-2 h-4 w-4" />,
   },
 }
