@@ -27,14 +27,15 @@ export const loadLoads = async (loadsDispatch, data) =>
 // *****************************
 // fetch loads
 // *****************************
-export const fetchLoads = async (loadsDispatch) => {
+export const fetchLoads = async (loadsDispatch, query) => {
+  console.log('query :>> ', API_URL + query)
   fetchApi({
     dispatch: loadsDispatch,
     start: load_actions.fetchLoadsStart,
     success: load_actions.fetchLoadsSuccess,
     failure: load_actions.fetchLoadsFailure,
     errorMsg: 'Something went wrong, while fetching loads',
-    url: API_URL,
+    url: query ? API_URL + query : API_URL,
   })
 }
 

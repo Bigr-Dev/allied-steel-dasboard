@@ -62,8 +62,8 @@ const columns = ({ onEdit, onDelete }) => {
       header: createSortableHeader('Last Name'),
     },
     {
-      accessorKey: 'branch_name',
-      header: createSortableHeader('Branch'),
+      accessorKey: 'current_vehicle',
+      header: createSortableHeader('Assigned vehicle'),
     },
 
     {

@@ -81,7 +81,7 @@ const data = []
 // table header
 const tableInfo = {
   value: 'tomorrow',
-  title: "Tomorrow's Loads",
+  title: 'Selected Loads',
   filterColumn: 'status',
   filterBy: 'tomorrow',
   filterPlaceholder: "Search Tomorrow's orders...",

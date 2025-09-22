@@ -52,11 +52,18 @@ const tableInfo = {
       filterPlaceholder: 'Search vehicles...',
     },
     {
-      value: 'Vehicle',
-      title: 'Vehicles',
-      filterColumn: 'Vehicle',
-      filterBy: 'Del Vehicle',
-      filterPlaceholder: 'Search vehicles...',
+      value: 'vehicle',
+      title: 'Horses',
+      filterColumn: 'horse',
+      filterBy: 'horse',
+      filterPlaceholder: 'Search horses...',
+    },
+    {
+      value: 'rigid',
+      title: "Rigid's",
+      filterColumn: 'rigid',
+      filterBy: 'rigid',
+      filterPlaceholder: "Search rigid's...",
     },
     {
       value: 'Trailer',
@@ -72,10 +79,17 @@ const columns = ({ onEdit, onDelete }) => {
   return [
     createCheckboxColumn(),
     {
+      accessorKey: 'fleet_number',
+      header: createSortableHeader('Fleet Number'),
+      // cell: ({ row }) => (
+      //   <div className="font-medium">{row.getValue('fleet_number')}</div>
+      // ),
+    },
+    {
       accessorKey: 'license_plate',
       header: createSortableHeader('License Plate'),
       // cell: ({ row }) => (
-      //   <div className="font-medium">{row.getValue('id')}</div>
+      //   <div className="font-medium">{row.getValue('fleet_number')}</div>
       // ),
     },
     {
@@ -83,8 +97,8 @@ const columns = ({ onEdit, onDelete }) => {
       header: createSortableHeader('Type'),
     },
     {
-      accessorKey: 'model',
-      header: createSortableHeader('Model'),
+      accessorKey: 'current_driver',
+      header: createSortableHeader('Driver'),
       // cell: ({ row }) => (
       //   <div>
       //     <div className="font-medium">{row.getValue('model')}</div>
@@ -95,8 +109,8 @@ const columns = ({ onEdit, onDelete }) => {
       // ),
     },
     {
-      accessorKey: 'color',
-      header: createSortableHeader('Color'),
+      accessorKey: 'assigned_to',
+      header: createSortableHeader('Horse/Trailer'),
       // cell: ({ row }) => (
       //   <div>
       //     <div className="font-medium">{row.getValue('regNumber')}</div>
@@ -107,11 +121,11 @@ const columns = ({ onEdit, onDelete }) => {
       // ),
     },
     {
-      accessorKey: 'tare',
-      header: createSortableHeader('Tare'),
+      accessorKey: 'capacity',
+      header: createSortableHeader('Capacity'),
       cell: ({ row }) => (
         <div>
-          <div>{row.original.tare} Kg</div>
+          <div>{row.original.capacity} Kg</div>
         </div>
       ),
     },
@@ -123,6 +137,13 @@ const columns = ({ onEdit, onDelete }) => {
     {
       accessorKey: 'branch_name',
       header: createSortableHeader('Branch'),
+      cell: ({ row }) => (
+        <div className="">
+          {row.getValue('branch_name')?.includes('Head Office')
+            ? 'Alrode'
+            : 'ASSM'}
+        </div>
+      ),
     },
     {
       accessorKey: 'licence_expiry_date',

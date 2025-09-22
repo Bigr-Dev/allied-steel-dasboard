@@ -1,5 +1,6 @@
 'use client'
 import mapboxgl from 'mapbox-gl'
+import { getRoute } from '@/lib/routeService'
 
 // Route zone coordinates for South African locations
 export const ZONE_COORDINATES = {
@@ -41,7 +42,9 @@ export const ZONE_COORDINATES = {
   'SILDALEPARK,SILVERDALE,PRETORIA': [-25.7, 28.35],
 }
 
-export function createRouteLayer(map, routeData, selectedVehicleId) {
+export async function createRouteLayer(map, routeData, selectedVehicleId) {
+  console.log('[v0] createRouteLayer: Starting route creation')
+
   // Remove existing route layers
   if (map.getLayer('route-lines')) {
     map.removeLayer('route-lines')
@@ -51,6 +54,7 @@ export function createRouteLayer(map, routeData, selectedVehicleId) {
   }
 
   const features = []
+  const routePromises = []
 
   routeData.forEach((vehicle) => {
     if (selectedVehicleId && vehicle.vehicle_id !== selectedVehicleId) return
@@ -59,45 +63,136 @@ export function createRouteLayer(map, routeData, selectedVehicleId) {
       const routeCoords = ZONE_COORDINATES[load.route_name]
       if (!routeCoords) return
 
-      // Create route line from depot to destination
+      // Create waypoints for road-snapped route
       const depotCoords = ZONE_COORDINATES['ALRODE'] || [28.1396, -26.3071]
+      const waypoints = [
+        [depotCoords[1], depotCoords[0]], // [lng, lat] for depot
+        [routeCoords[1], routeCoords[0]], // [lng, lat] for destination
+      ]
 
-      features.push({
-        type: 'Feature',
-        properties: {
-          vehicle_id: vehicle.vehicle_id,
-          route_name: load.route_name,
-          load_weight: load.required_kg,
-          color: getRouteColor(loadIndex),
-        },
-        geometry: {
-          type: 'LineString',
-          coordinates: [
-            [depotCoords[1], depotCoords[0]], // [lng, lat]
-            [routeCoords[1], routeCoords[0]],
-          ],
-        },
-      })
+      // Get road-following route
+      const routePromise = getRoute({ waypoints, profile: 'driving' })
+        .then((routeResult) => {
+          if (routeResult && !routeResult.error) {
+            console.log(
+              '[v0] createRouteLayer: Got road-snapped route for',
+              load.route_name
+            )
 
-      // Add destination marker
-      features.push({
-        type: 'Feature',
-        properties: {
-          vehicle_id: vehicle.vehicle_id,
-          route_name: load.route_name,
-          type: 'destination',
-          orders_count: load.orders.length,
-          total_weight: load.required_kg,
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: [routeCoords[1], routeCoords[0]],
-        },
-      })
+            // Use the road-snapped geometry
+            features.push({
+              type: 'Feature',
+              properties: {
+                vehicle_id: vehicle.vehicle_id,
+                route_name: load.route_name,
+                load_weight: load.required_kg,
+                color: getRouteColor(loadIndex),
+                distance: Math.round(routeResult.distance / 1000), // km
+                duration: Math.round(routeResult.duration / 60), // minutes
+              },
+              geometry: routeResult.geometry,
+            })
+          } else {
+            console.warn(
+              '[v0] createRouteLayer: Using fallback straight line for',
+              load.route_name
+            )
+
+            // Fallback to straight line if API fails
+            const geometry = routeResult?.fallback?.geometry || {
+              type: 'LineString',
+              coordinates: waypoints,
+            }
+
+            features.push({
+              type: 'Feature',
+              properties: {
+                vehicle_id: vehicle.vehicle_id,
+                route_name: load.route_name,
+                load_weight: load.required_kg,
+                color: getRouteColor(loadIndex),
+                distance: 0,
+                duration: 0,
+                error: routeResult?.error || 'Unknown error',
+              },
+              geometry,
+            })
+          }
+
+          // Add destination marker
+          features.push({
+            type: 'Feature',
+            properties: {
+              vehicle_id: vehicle.vehicle_id,
+              route_name: load.route_name,
+              type: 'destination',
+              orders_count: load.orders.length,
+              total_weight: load.required_kg,
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [routeCoords[1], routeCoords[0]],
+            },
+          })
+        })
+        .catch((error) => {
+          console.error(
+            '[v0] createRouteLayer: Route error for',
+            load.route_name,
+            error
+          )
+
+          // Add fallback straight line route
+          features.push({
+            type: 'Feature',
+            properties: {
+              vehicle_id: vehicle.vehicle_id,
+              route_name: load.route_name,
+              load_weight: load.required_kg,
+              color: getRouteColor(loadIndex),
+              distance: 0,
+              duration: 0,
+              error: error.message,
+            },
+            geometry: {
+              type: 'LineString',
+              coordinates: waypoints,
+            },
+          })
+
+          // Add destination marker
+          features.push({
+            type: 'Feature',
+            properties: {
+              vehicle_id: vehicle.vehicle_id,
+              route_name: load.route_name,
+              type: 'destination',
+              orders_count: load.orders.length,
+              total_weight: load.required_kg,
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [routeCoords[1], routeCoords[0]],
+            },
+          })
+        })
+
+      routePromises.push(routePromise)
     })
   })
 
-  if (features.length === 0) return
+  // Wait for all route requests to complete
+  try {
+    await Promise.all(routePromises)
+    console.log('[v0] createRouteLayer: All routes processed, adding to map')
+  } catch (error) {
+    console.error('[v0] createRouteLayer: Error processing routes:', error)
+  }
+
+  if (features.length === 0) {
+    console.log('[v0] createRouteLayer: No features to display')
+    return
+  }
 
   // Add route lines source and layer
   map.addSource('route-lines', {
@@ -118,7 +213,7 @@ export function createRouteLayer(map, routeData, selectedVehicleId) {
     },
     paint: {
       'line-color': ['get', 'color'],
-      'line-width': 3,
+      'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 12, 4, 16, 6],
       'line-opacity': 0.8,
     },
   })
@@ -144,7 +239,17 @@ export function createRouteLayer(map, routeData, selectedVehicleId) {
     type: 'circle',
     source: 'route-destinations',
     paint: {
-      'circle-radius': 8,
+      'circle-radius': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        8,
+        6,
+        12,
+        8,
+        16,
+        12,
+      ],
       'circle-color': '#059669',
       'circle-stroke-width': 2,
       'circle-stroke-color': '#ffffff',
@@ -154,6 +259,17 @@ export function createRouteLayer(map, routeData, selectedVehicleId) {
   // Add click handlers for destinations
   map.on('click', 'route-destinations', (e) => {
     const properties = e.features[0].properties
+
+    // Find the corresponding route feature for distance/duration
+    const routeFeature = features.find(
+      (f) =>
+        f.geometry.type === 'LineString' &&
+        f.properties.route_name === properties.route_name &&
+        f.properties.vehicle_id === properties.vehicle_id
+    )
+
+    const routeInfo = routeFeature ? routeFeature.properties : {}
+
     new mapboxgl.Popup()
       .setLngLat(e.lngLat)
       .setHTML(
@@ -163,6 +279,21 @@ export function createRouteLayer(map, routeData, selectedVehicleId) {
           <div class="space-y-1 text-xs">
             <div>Orders: ${properties.orders_count}</div>
             <div>Weight: ${Math.round(properties.total_weight)} kg</div>
+            ${
+              routeInfo.distance
+                ? `<div>Distance: ${routeInfo.distance} km</div>`
+                : ''
+            }
+            ${
+              routeInfo.duration
+                ? `<div>Duration: ${routeInfo.duration} min</div>`
+                : ''
+            }
+            ${
+              routeInfo.error
+                ? `<div class="text-red-600">⚠ ${routeInfo.error}</div>`
+                : ''
+            }
           </div>
         </div>
       `
@@ -177,6 +308,8 @@ export function createRouteLayer(map, routeData, selectedVehicleId) {
   map.on('mouseleave', 'route-destinations', () => {
     map.getCanvas().style.cursor = ''
   })
+
+  console.log('[v0] createRouteLayer: Route layer creation complete')
 }
 
 function getRouteColor(index) {
@@ -192,6 +325,8 @@ function getRouteColor(index) {
 }
 
 export function fitMapToRoutes(map, routeData, selectedVehicleId) {
+  console.log('[v0] fitMapToRoutes: Fitting map to routes')
+
   const coordinates = []
 
   // Add depot coordinates
@@ -217,7 +352,7 @@ export function fitMapToRoutes(map, routeData, selectedVehicleId) {
     }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]))
 
     map.fitBounds(bounds, {
-      padding: 50,
+      padding: { top: 80, bottom: 80, left: 80, right: 420 }, // More padding on right for sidebar
       duration: 1000,
     })
   }

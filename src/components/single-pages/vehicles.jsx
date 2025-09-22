@@ -53,10 +53,13 @@ const getStatusBadge = (status) => {
 }
 
 const VehicleSinglePage = ({ id }) => {
-  const { vehicles } = useGlobalContext()
+  const {
+    vehicles,
+    drivers: { data: drivers },
+  } = useGlobalContext()
   const vehicle = vehicles?.data?.find((v) => v.id === id)
 
-  console.log('vehicle :>> ', vehicle)
+  //console.log('vehicle :>> ', vehicle)
 
   //   {
   //     "id": "1ed16c61-bc2a-4b43-8f5b-ca82b9ec964a",
@@ -131,8 +134,15 @@ const VehicleSinglePage = ({ id }) => {
   ]
 
   const vehicle_status = [
-    { label: 'Current Driver', value: vehicle?.current_driver },
-    { label: 'assigned to', value: vehicle?.assigned_to },
+    {
+      label: 'Current Driver',
+      value: drivers?.filter((d) => d.id == vehicle?.current_driver)?.[0]?.name,
+    },
+    {
+      label: 'assigned to',
+      value: vehicles?.data?.filter((v) => v.id == vehicle?.assigned_to)?.[0]
+        ?.fleet_number,
+    },
     // { label: '', value: '' },
     // { label: '', value: '' },
   ]

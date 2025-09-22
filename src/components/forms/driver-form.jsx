@@ -74,17 +74,17 @@ const DriverForm = ({ id, onCancel }) => {
     emergency_phone: driver?.emergency_phone || '',
     status: driver?.status || 'available',
     // assigned_to: driver?.assigned_to || '',
-    current_vehicle: driver?.current_vehicle || '',
+    current_vehicle: driver?.current_vehicle || undefined,
 
     license_type: driver?.license_type || '',
     license: driver?.license || '',
     license_code: driver?.license_code || '',
-    license_expiry: driver?.license_expiry || '',
+    license_expiry: driver?.license_expiry || null,
     attach_license_front: driver?.attach_license_front || '',
     attach_license_back: driver?.attach_license_back || '',
     professional_permit: driver?.professional_permit || false,
     attach_professional_permit: driver?.attach_professional_permit || null,
-    permit_expiry_date: driver?.permit_expiry_date || '',
+    permit_expiry_date: driver?.permit_expiry_date || undefined,
     // medical_exam_expiry: driver?.medical_exam_expiry || '',
     // hire_date: driver?.hire_date || '',
     certifications: driver?.certifications || null,
@@ -93,12 +93,12 @@ const DriverForm = ({ id, onCancel }) => {
   const tabs = [
     { name: 'Driver Information', value: 'driver_info' },
     { name: 'License Information', value: 'license_info' },
-    { name: 'Vehicle Assignment', value: 'status' },
+    { name: 'Vehicle Assignment', value: 'vehicle_assignment' },
   ]
-  console.log(
-    'vehicles :>> ',
-    vehicles?.data?.filter((v) => v.type == 'Del Vehicle')
-  )
+  // console.log(
+  //   'vehicles :>> ',
+  //   vehicles?.data?.filter((v) => v.type == 'horse' || v.type == 'rigid')
+  // )
   const driver_details = [
     {
       type: 'select',
@@ -284,6 +284,26 @@ const DriverForm = ({ id, onCancel }) => {
     },
   ]
 
+  const vehicle_assignment = [
+    {
+      type: 'select',
+      htmlFor: 'current_vehicle',
+      label: 'Assigned Vehicle',
+      value: formData.current_vehicle,
+
+      options: vehicles?.data
+        ?.filter((v) => v.type == 'horse' || v.type == 'rigid')
+        ?.map((e) => {
+          return {
+            value: e.id,
+            label: `${e.fleet_number} - ${e.license_plate}`,
+          }
+        }),
+
+      readOnly: false,
+    },
+  ]
+
   const nextStep = () => {
     if (currentTab < 2) {
       const next = currentTab + 1
@@ -333,7 +353,7 @@ const DriverForm = ({ id, onCancel }) => {
         ?.map((s) => s.trim())
         ?.filter((s) => s !== ''),
     }
-    console.log('dataToSubmit :>> ', dataToSubmit)
+    //console.log('dataToSubmit :>> ', dataToSubmit)
     upsertDriver(id, dataToSubmit, driversDispatch)
 
     onCancel()
@@ -392,6 +412,19 @@ const DriverForm = ({ id, onCancel }) => {
               </div>
               <DynamicInput
                 inputs={documents}
+                handleSelectChange={handleSelectChange}
+                handleChange={handleChange}
+              />
+            </DetailCard>
+          </TabsContent>
+
+          <TabsContent value="vehicle_assignment" className="space-y-4">
+            <DetailCard
+              title={'Assigned Vehicle'}
+              description={'Assign Driver to vehicle'}
+            >
+              <DynamicInput
+                inputs={vehicle_assignment}
                 handleSelectChange={handleSelectChange}
                 handleChange={handleChange}
               />

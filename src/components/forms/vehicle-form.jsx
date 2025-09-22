@@ -38,6 +38,7 @@ const VehiclesForm = ({ onCancel, id }) => {
 
   const vehicle = vehicles?.find((v) => v.id === id)
   const trailers = vehicles?.filter((v) => v.type === 'Trailer')
+  const horses = vehicles?.filter((v) => v.type === 'horse')
 
   const [formData, setFormData] = useState({
     id: vehicle?.id || '',
@@ -61,7 +62,7 @@ const VehiclesForm = ({ onCancel, id }) => {
     height: vehicle?.height || '',
     length: vehicle?.length || '',
     transmission: vehicle?.transmission || 'manual',
-    branch_id: vehicles?.branch_id || '',
+    branch_id: vehicle?.branch_id || '',
     // branch_name: vehicle?.branch_name || '',
     // purchase_date: vehicle?.purchase_date || '',
     priority: vehicle?.priority || '',
@@ -132,12 +133,6 @@ const VehiclesForm = ({ onCancel, id }) => {
     upsertVehicle(id, formData, vehiclesDispatch)
     onCancel()
   }
-
-  // useEffect(() => {
-  //   const current_branch = branches.filter((b) => b.id == formData.branch_id)
-  //   console.log('current_branch :>> ', current_branch[0]?.name)
-  //   setFormData({ ...formData, branch_name: current_branch[0]?.name })
-  // }, [formData.branch_id])
 
   const tabs = [
     { name: 'Licence Information', value: '0' },
@@ -270,16 +265,15 @@ const VehiclesForm = ({ onCancel, id }) => {
       readOnly: false,
     },
   ]
-
+  console.log('vehicle :>> ', formData?.branch_id)
   const additional_information = [
     {
       type: 'select',
       htmlFor: 'branch_id',
       label: 'Branch *',
       placeholder: 'Select a branch',
-      value: formData.branch_id,
+      value: formData?.branch_id,
       required: true,
-
       options: branches?.map((b) => {
         return { value: b.id, label: b.name }
       }),
@@ -441,14 +435,19 @@ const VehiclesForm = ({ onCancel, id }) => {
       readOnly: vehicle?.type == 'Trailer' ? true : false,
     },
     {
-      type: vehicle?.type == 'Trailer' ? null : 'select',
+      type: 'select',
       htmlFor: 'assigned_to',
       label: vehicle?.type == 'Trailer' ? 'Linked Horse' : 'Linked Trailer',
       value: formData.assigned_to,
 
-      options: trailers?.map((t) => {
-        return { value: t.id, label: t.license_plate }
-      }),
+      options:
+        vehicle?.type == 'Trailer'
+          ? horses?.map((h) => {
+              return { value: h.id, label: h.fleet_number }
+            })
+          : trailers?.map((t) => {
+              return { value: t.id, label: t.fleet_number }
+            }),
 
       readOnly: vehicle?.type == 'Trailer' ? true : false,
     },

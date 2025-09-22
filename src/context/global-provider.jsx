@@ -38,7 +38,7 @@ import {
   upsertCustomer,
 } from './apis/customer-apis'
 import { deleteUser, loadUsers, upsertUser } from './apis/user-apis'
-import { deleteLoad, loadLoads, upsertLoad } from './apis/load-apis'
+import { deleteLoad, fetchLoads, loadLoads, upsertLoad } from './apis/load-apis'
 import { deleteOrder, loadOrders, upsertOrder } from './apis/order-apis'
 import { deleteVehicle, loadVehicles, upsertVehicle } from './apis/vehicle-apis'
 import { deleteDriver, loadDrivers, upsertDriver } from './apis/driver-apis'
@@ -61,6 +61,15 @@ const GlobalProvider = ({ children, data }) => {
   const pathname = usePathname().slice(1)
   const screen = replaceHyphenWithUnderscore(pathname)
 
+  // console.log('screen :>> ', screen)
+  // const vehicles_data = data?.vehicles?.map((v) => {
+  //   const driver = data?.drivers?.filter((d) => d.id == v.current_driver)?.[0]
+  //     ?.name
+  //   const link = data?.vehicles?.filter((link) => link.id == v.assigned_to)?.[0]
+  //     ?.fleet_number
+  //   return { ...v, current_driver: driver, assigned_to: link }
+  // })
+  // console.log('vehicles_data :>> ', vehicles_data)
   // auth
   const { current_user, currentUserDispatch } = useAuth()
 
@@ -340,6 +349,7 @@ const GlobalProvider = ({ children, data }) => {
         deleteUser,
         loads,
         loadsDispatch,
+        fetchLoads,
         upsertLoad,
         deleteLoad,
         orders,

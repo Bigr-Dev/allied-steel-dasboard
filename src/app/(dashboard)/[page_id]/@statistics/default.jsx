@@ -26,6 +26,8 @@ import {
   PackageOpen,
   Package,
   PackagePlus,
+  Tractor,
+  Caravan,
 } from 'lucide-react'
 
 import CountUp from '@/components/ui/count-up'
@@ -34,6 +36,8 @@ import { useGlobalContext } from '@/context/global-context'
 import { replaceHyphenWithUnderscore } from '@/hooks/replace-hyphen'
 import { usePathname } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { formatWeight } from '@/lib/formatters'
+import { useEffect } from 'react'
 
 const iconMap = {
   ChartColumnBig: ChartColumnBig,
@@ -140,6 +144,9 @@ const Statistics = () => {
     return due >= startDayAfter
   })
   //console.log('path :>> ', path)
+
+  // Calculate summary statistics
+
   switch (path) {
     case 'orders':
       screenStats = [
@@ -168,50 +175,117 @@ const Statistics = () => {
       //      console.log('current_screen :Statistics>> ', path, current_screen?.data)
       break
     case 'loads':
-      let total_load_suburbs = 0
-      let total_load_orders = 0
-      let total_load_items = 0
-      loads?.data?.map(
-        (r) => (total_load_suburbs = total_load_suburbs + r.suburbs.length)
-      )
-      loads?.data?.map((r) =>
-        r.suburbs.map(
-          (s) => (total_load_orders = total_load_orders + s.load_orders.length)
-        )
-      )
-      loads?.data?.map((r) =>
-        r.suburbs.map((s) =>
-          s.load_orders?.map(
-            (l) => (total_load_items = total_load_items + l.load_items.length)
-          )
-        )
-      )
+      // useEffect(() => {
+      //  // console.log('loads?.data :>> ', current_screen?.data)
+      // }, [current_screen?.loading])
+      const summaryStats = () => {
+        if (current_screen?.data?.length === 0) {
+          return {
+            routes: 0,
+            suburbs: 0,
+            orders: 0,
+            totalQty: 0,
+            totalWeight: 0,
+          }
+        }
+
+        let routes = current_screen?.data?.length
+        let suburbs = 0
+        let orders = 0
+        let totalQty = 0
+        let totalWeight = 0
+
+        current_screen?.data?.forEach((route) => {
+          route.suburbs?.forEach((suburb) => {
+            suburbs++
+            suburb.load_orders?.forEach((order) => {
+              orders++
+              totalQty += order.total_quantity || 0
+              totalWeight += order.total_weight || 0
+            })
+          })
+        })
+
+        return {
+          routes,
+          suburbs,
+          orders,
+          totalQty,
+          totalWeight,
+        }
+      }
+
       screenStats = [
         {
           title: 'Active Routes',
-          value: current_screen?.data?.length || 0,
-          icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
+          value: summaryStats()?.routes || 0,
+          icon: <Truck className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
         },
         {
-          title: 'Total Suburbs',
-          value: total_load_suburbs || 0,
-          icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
+          title: 'Active Suburbs',
+          value: summaryStats()?.suburbs || 0,
+          icon: <MapPin className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
         {
-          title: 'Total Customers',
-          value: total_load_orders || 0,
-          icon: (
-            <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
-          ),
+          title: 'Total Orders',
+          value: summaryStats()?.orders || 0,
+          icon: <Package className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />,
         },
+        // {
+        //   title: 'Total Load Items',
+        //   value: `${formatQty(summaryStats()?.totalQty)}` || 0,
+        //   icon: <CheckCircle className="h-6 w-6 xl:h-7 xl:w-7 text-green-500" />,
+        // },
         {
-          title: 'Total Load Items',
-          value: total_load_items || 0,
-          icon: (
-            <CheckCircle className="h-6 w-6 xl:h-7 xl:w-7 text-green-500" />
-          ),
+          title: 'Total Weight',
+          value: `${formatWeight(summaryStats()?.totalWeight)}` || 0,
+          icon: <Package className="h-6 w-6 xl:h-7 xl:w-7 text-green-500" />,
         },
       ]
+      // let total_load_suburbs = 0
+      // let total_load_orders = 0
+      // let total_load_items = 0
+      // loads?.data?.map(
+      //   (r) => (total_load_suburbs = total_load_suburbs + r.suburbs.length)
+      // )
+      // loads?.data?.map((r) =>
+      //   r.suburbs.map(
+      //     (s) => (total_load_orders = total_load_orders + s.load_orders.length)
+      //   )
+      // )
+      // loads?.data?.map((r) =>
+      //   r.suburbs.map((s) =>
+      //     s.load_orders?.map(
+      //       (l) => (total_load_items = total_load_items + l.load_items.length)
+      //     )
+      //   )
+      // )
+      // screenStats = [
+      //   {
+      //     title: 'Active Routes',
+      //     value: current_screen?.data?.length || 0,
+      //     icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
+      //   },
+      //   {
+      //     title: 'Total Suburbs',
+      //     value: total_load_suburbs || 0,
+      //     icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
+      //   },
+      //   {
+      //     title: 'Total Customers',
+      //     value: total_load_orders || 0,
+      //     icon: (
+      //       <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
+      //     ),
+      //   },
+      //   {
+      //     title: 'Total Load Items',
+      //     value: total_load_items || 0,
+      //     icon: (
+      //       <CheckCircle className="h-6 w-6 xl:h-7 xl:w-7 text-green-500" />
+      //     ),
+      //   },
+      // ]
       //  console.log('current_screen :Statistics>> ', path, current_screen?.data)
       break
     case 'branches':
@@ -329,25 +403,23 @@ const Statistics = () => {
           icon: <Truck className="h-6 w-6 text-gray-500" />,
         },
         {
-          title: 'Trucks',
+          title: "Horse's",
           value:
-            current_screen?.data?.filter((v) => v.type == 'Trailer')?.length ||
-            0,
-          icon: <CheckCircle className="h-6 w-6 text-green-500" />,
+            current_screen?.data?.filter((v) => v.type == 'horse')?.length || 0,
+          icon: <Tractor className="h-6 w-6 text-green-500" />,
+        },
+        {
+          title: "Rigid's",
+          value:
+            current_screen?.data?.filter((v) => v.type == 'rigid')?.length || 0,
+          icon: <Truck className="h-6 w-6 text-blue-500" />,
         },
         {
           title: 'Trailers',
           value:
-            current_screen?.data?.filter((v) => v.type == 'Del Vehicle')
-              ?.length || 0,
-          icon: <Truck className="h-6 w-6 text-blue-500" />,
-        },
-        {
-          title: 'Available',
-          value:
-            current_screen?.data?.filter((v) => v.status == 'available')
-              ?.length || 0,
-          icon: <Wrench className="h-6 w-6 text-amber-500" />,
+            current_screen?.data?.filter((v) => v.type == 'Trailer')?.length ||
+            0,
+          icon: <Caravan className="h-6 w-6 text-amber-500" />,
         },
       ]
 

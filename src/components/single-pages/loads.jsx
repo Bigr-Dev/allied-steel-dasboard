@@ -97,7 +97,7 @@ export default function CurrentRoutingView({ id }) {
   //  console.log('routeData :>> ', routeData)
 
   const [selectedView, setSelectedView] = useState(null)
-
+  console.log('routeData :>> ', routeData)
   // Calculate totals
   const totalOrders = routeData?.suburbs.reduce(
     (sum, suburb) => sum + suburb.load_orders.length,
@@ -217,16 +217,18 @@ export default function CurrentRoutingView({ id }) {
                 description={`${suburb.province} • Position ${suburb.position}`}
               >
                 <Accordion type="multiple" className="w-full space-y-4">
-                  {suburb.load_orders.map((order, orderIndex) => {
-                    console.log('order :>> ', order)
+                  {suburb.customer_groups.map((customer, orderIndex) => {
+                    console.log('customer :>> ', customer)
                     return (
                       <AccordionItem
-                        key={order.id}
-                        value={order.id}
+                        key={orderIndex}
+                        value={customer.customer_name}
                         className="border rounded-lg border-[#003e69] overflow-hidden"
                       >
                         <AccordionTrigger
-                          onClick={() => setSelectedView(order.id)}
+                          onClick={() =>
+                            setSelectedView(customer.customer_name)
+                          }
                           className="p-4 hover:bg-[#7a7877] hover:text-white [&[data-state=open]]:bg-[#003e69] [&[data-state=open]]:text-white w-full"
                         >
                           <div className="flex items-center justify-between w-full ">
@@ -236,10 +238,10 @@ export default function CurrentRoutingView({ id }) {
                               </div>
                               <div className="text-left">
                                 <h4 className="font-medium  leading-tight">
-                                  {order.customer_name}
+                                  {customer.customer_name}
                                 </h4>
                                 <p className="text-sm ">
-                                  Order #{order.sales_order_number}
+                                  # of Orders {customer.orders.length}
                                 </p>
                               </div>
                             </div>
@@ -247,28 +249,28 @@ export default function CurrentRoutingView({ id }) {
                             <div className="flex items-center space-x-4">
                               <div className="text-right">
                                 <p className="text-sm font-medium">
-                                  {order.total_weight.toLocaleString()} kg
+                                  {customer?.total_wt?.toLocaleString()} kg
                                 </p>
                                 <p className="text-xs ">
-                                  {order.total_quantity} items
+                                  {customer.total_qty} items
                                 </p>
                               </div>
-                              <Badge
+                              {/* <Badge
                                 variant={
-                                  order.order_status ===
+                                  customer.order_status ===
                                   'Stock Item Ready to Load'
                                     ? 'default'
                                     : 'secondary'
                                 }
                                 className="text-xs"
                               >
-                                {order.order_status ===
+                                {customer.order_status ===
                                 'Stock Item Ready to Load'
                                   ? 'Ready'
                                   : 'Pending'}
-                              </Badge>
+                              </Badge> */}
                               {/* <div>
-                                {selectedView == order.id ? (
+                                {selectedView == order.customer_name ? (
                                   <ChevronDown />
                                 ) : (
                                   <ChevronRight />
@@ -278,97 +280,162 @@ export default function CurrentRoutingView({ id }) {
                           </div>
                         </AccordionTrigger>
 
-                        <AccordionContent className="">
-                          <div className="w-full space-y-4">
-                            {/* Order Summary */}
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-                              <div className="flex items-center space-x-2">
-                                <Calendar className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm">
-                                  Delivery:{' '}
-                                  {new Date(
-                                    order.delivery_date
-                                  ).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Weight className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm">
-                                  Total: {order.total_weight.toLocaleString()}{' '}
-                                  kg
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Package className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm">
-                                  Items: {order.total_quantity}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Detailed Order Items */}
-                            <div className="px-4 mb-4 space-y-2">
-                              <h5 className="font-medium text-gray-900 mb-3">
-                                Order Items
-                              </h5>
-                              <div className="space-y-2">
-                                {order.load_items?.map((item, itemIndex) => {
-                                  // console.log('item :>> ', item)
-                                  return (
-                                    <div
-                                      key={itemIndex}
-                                      className="flex items-center justify-between p-3 border rounded-lg bg-white border-[#428bca]"
-                                    >
-                                      <div className="flex-1">
-                                        <div className="flex items-center space-x-3">
-                                          <div className="bg-blue-50 px-2 py-1 rounded text-xs font-mono text-blue-700">
-                                            {item.item_code}
-                                          </div>
-                                          <div>
-                                            <p className="font-medium text-gray-900">
-                                              {item.description}
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                              Qty: {item.quantity} {item.unit} •
-                                              Weight:{' '}
-                                              {item.weight.toLocaleString()} kg
-                                            </p>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <p className="text-sm font-medium">
-                                          {item.weight.toLocaleString()} kg
-                                        </p>
-                                        <p className="text-xs text-gray-600">
-                                          {item.quantity} {item.unit}
-                                        </p>
-                                      </div>
+                        <AccordionContent className="p-4">
+                          {customer.orders?.map((order) => (
+                            <AccordionItem
+                              key={order.id}
+                              value={order.id}
+                              className="rounded-md overflow-hidden"
+                            >
+                              <AccordionTrigger
+                                onClick={() => setSelectedView(order.id)}
+                                className="p-4 hover:bg-[#7a7877] hover:text-white [&[data-state=open]]:bg-[#003e69] [&[data-state=open]]:text-white w-full"
+                              >
+                                <div className="flex items-center justify-between w-full ">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="bg-gray-100 p-1.5 rounded">
+                                      <User className="h-4 w-4 text-gray-600" />
                                     </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-
-                            {/* Dispatch Remarks */}
-                            {order.dispatch_remarks && (
-                              <div className="p-4 bg-yellow-50 border border-yellow-200 ">
-                                <div className="flex items-start space-x-2">
-                                  <div className="bg-yellow-100 p-1 rounded">
-                                    <Clock className="h-3 w-3 text-yellow-600" />
+                                    <div className="text-left">
+                                      <h4 className="font-medium  leading-tight">
+                                        {order.sales_order_number}
+                                      </h4>
+                                      <p className="text-sm ">
+                                        # of Items {order.total_quantity}
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="text-sm font-medium text-yellow-800">
-                                      Dispatch Note
-                                    </p>
-                                    <p className="text-sm text-yellow-700">
-                                      {order.dispatch_remarks}
-                                    </p>
+
+                                  <div className="flex items-center space-x-4">
+                                    <div className="text-right">
+                                      <p className="text-sm font-medium">
+                                        {order?.total_weight?.toLocaleString()}{' '}
+                                        kg
+                                      </p>
+                                      <p className="text-xs ">
+                                        {order.total_quantity} items
+                                      </p>
+                                    </div>
+                                    <Badge
+                                      variant={
+                                        order.order_status ===
+                                        'Stock Item Ready to Load'
+                                          ? 'default'
+                                          : 'secondary'
+                                      }
+                                      className="text-xs"
+                                    >
+                                      {order.order_status ===
+                                      'Stock Item Ready to Load'
+                                        ? 'Ready'
+                                        : 'Pending'}
+                                    </Badge>
+                                    {/* <div>
+                                {selectedView == order.customer_name ? (
+                                  <ChevronDown />
+                                ) : (
+                                  <ChevronRight />
+                                )}
+                              </div> */}
                                   </div>
                                 </div>
-                              </div>
-                            )}
-                          </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="p-4">
+                                <div className="w-full space-y-4">
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-2">
+                                      <Calendar className="h-4 w-4 text-gray-400" />
+                                      <span className="text-sm">
+                                        Delivery:{' '}
+                                        {new Date(
+                                          order.delivery_date
+                                        ).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <Weight className="h-4 w-4 text-gray-400" />
+                                      <span className="text-sm">
+                                        Total:{' '}
+                                        {order?.total_weight?.toLocaleString()}{' '}
+                                        kg
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <Package className="h-4 w-4 text-gray-400" />
+                                      <span className="text-sm">
+                                        Items: {order.total_quantity}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="px-4 mb-4 space-y-2">
+                                    <h5 className="font-medium text-gray-900 mb-3">
+                                      Order Items
+                                    </h5>
+                                    <div className="space-y-2">
+                                      {order.load_items?.map(
+                                        (item, itemIndex) => {
+                                          // console.log('item :>> ', item)
+                                          return (
+                                            <div
+                                              key={itemIndex}
+                                              className="flex items-center justify-between p-3 border rounded-lg bg-white border-[#428bca]"
+                                            >
+                                              <div className="flex-1">
+                                                <div className="flex items-center space-x-3">
+                                                  <div className="bg-blue-50 px-2 py-1 rounded text-xs font-mono text-blue-700">
+                                                    {item.item_code}
+                                                  </div>
+                                                  <div>
+                                                    <p className="font-medium text-gray-900">
+                                                      {item.description}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                      Qty: {item.quantity}{' '}
+                                                      {item.unit} • Weight:{' '}
+                                                      {item.weight.toLocaleString()}{' '}
+                                                      kg
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                              <div className="text-right">
+                                                <p className="text-sm font-medium">
+                                                  {item.weight.toLocaleString()}{' '}
+                                                  kg
+                                                </p>
+                                                <p className="text-xs text-gray-600">
+                                                  {item.quantity} {item.unit}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          )
+                                        }
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {order.dispatch_remarks && (
+                                    <div className="p-4 bg-yellow-50 border border-yellow-200 ">
+                                      <div className="flex items-start space-x-2">
+                                        <div className="bg-yellow-100 p-1 rounded">
+                                          <Clock className="h-3 w-3 text-yellow-600" />
+                                        </div>
+                                        <div>
+                                          <p className="text-sm font-medium text-yellow-800">
+                                            Dispatch Note
+                                          </p>
+                                          <p className="text-sm text-yellow-700">
+                                            {order.dispatch_remarks}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
                         </AccordionContent>
                       </AccordionItem>
                     )

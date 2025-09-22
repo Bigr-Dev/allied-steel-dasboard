@@ -44,6 +44,7 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
         `loads?date=${tomorrow}&includeItems=true`,
         'GET'
       )
+      // console.log('tomorrow :>> ', tomorrow)
       // const Loads = await fetchServerData(`loads?includeItems=true`, 'GET')
       const Orders = await fetchServerData('orders', 'GET')
       const Users = await fetchServerData('users', 'GET')

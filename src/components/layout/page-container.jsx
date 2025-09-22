@@ -19,9 +19,8 @@ const PageContainer = ({ children }) => {
   const pathname = usePathname().slice(1)
   const path = replaceHyphenWithUnderscore(pathname)
   const current_screen = useGlobalContext()[path]
-  const { branches } = useGlobalContext()
-
-  const { onEdit, onDelete, loading } = useGlobalContext()
+  const { onEdit, onDelete, loading, branches, drivers, vehicles } =
+    useGlobalContext()
 
   const overDue = current_screen?.data?.filter((order) => {
     const dateStr = order?.document_due_date
@@ -80,7 +79,41 @@ const PageContainer = ({ children }) => {
     return due >= startDayAfter
   })
 
-  // console.log('current_screen :>> ', current_screen?.data)
+  //console.log('current_screen :>> ', current_screen?.data)
+  //console.log('pathname :>> ', pathname)
+  let data = current_screen?.data
+
+  switch (pathname) {
+    case 'vehicles':
+      const vehicles_data = current_screen?.data?.map((v) => {
+        const driver = drivers?.data?.filter(
+          (d) => d.id == v.current_driver
+        )?.[0]?.name
+        const link = vehicles?.data?.filter(
+          (link) => link.id == v.assigned_to
+        )?.[0]?.fleet_number
+        return { ...v, current_driver: driver, assigned_to: link }
+      })
+      data = vehicles_data
+      // console.log('current_screen?.data :>> ', vehicles_data)
+      break
+
+    case 'drivers':
+      console.log('pathname :>> ', pathname)
+      const driver_data = current_screen?.data?.map((d) => {
+        const d_vehicle = vehicles?.data?.filter(
+          (v) => v.id == d.current_vehicle
+        )?.[0]?.fleet_number
+        console.log('d_vehicle :>> ', d_vehicle)
+        return { ...d, current_vehicle: d_vehicle }
+      })
+      console.log('driver_data :>> ', driver_data)
+      data = driver_data
+      break
+
+    default:
+      break
+  }
 
   return (
     <>
@@ -105,7 +138,66 @@ const PageContainer = ({ children }) => {
                 })}
               </TabsList>
               {current_screen?.tableInfo?.tabs?.map((content, index) => {
-                // console.log('content.value :>> ', content)
+                console.log('content :>> ', content)
+                // let data = current_screen?.data
+
+                // if (pathname == 'vehicles') {
+                //   const vehicles_data = current_screen?.data?.map((v) => {
+                //     const driver = drivers?.data?.filter(
+                //       (d) => d.id == v.current_driver
+                //     )?.[0]?.name
+                //     const link = vehicles?.data?.filter(
+                //       (link) => link.id == v.assigned_to
+                //     )?.[0]?.fleet_number
+                //     return { ...v, current_driver: driver, assigned_to: link }
+                //   })
+                //   data = vehicles_data
+                // } else if (pathname == 'drivers') {
+                //   console.log('pathname :>> ', pathname)
+                //   const driver_data = current_screen?.data?.map((d) => {
+                //     const d_vehicle = vehicles?.data?.filter(
+                //       (v) => v.id == d.current_vehicle
+                //     )?.[0]?.fleet_number
+                //     console.log('d_vehicle :>> ', d_vehicle)
+                //     return { ...d, current_vehicle: d_vehicle }
+                //   })
+                //   console.log('driver_data :>> ', driver_data)
+                //   data = driver_data
+                // }
+
+                // switch (pathname) {
+                //   case 'vehicles':
+                //     const vehicles_data = current_screen?.data?.map((v) => {
+                //       const driver = drivers?.data?.filter(
+                //         (d) => d.id == v.current_driver
+                //       )?.[0]?.name
+                //       const link = vehicles?.data?.filter(
+                //         (link) => link.id == v.assigned_to
+                //       )?.[0]?.fleet_number
+                //       return { ...v, current_driver: driver, assigned_to: link }
+                //     })
+                //     data = vehicles_data
+                //     // console.log('current_screen?.data :>> ', vehicles_data)
+                //     break
+
+                //   case 'drivers':
+                //     console.log('pathname :>> ', pathname)
+                //     const driver_data = current_screen?.data?.map((d) => {
+                //       const d_vehicle = vehicles?.data?.filter(
+                //         (v) => v.id == d.current_vehicle
+                //       )?.[0]?.fleet_number
+                //       console.log('d_vehicle :>> ', d_vehicle)
+                //       return { ...d, current_vehicle: d_vehicle }
+                //     })
+                //     console.log('driver_data :>> ', driver_data)
+                //     data = driver_data
+                //     break
+
+                //   default:
+                //     break
+                // }
+
+                console.log('data :>> ', data)
                 return (
                   <TabsContent
                     key={index}
@@ -130,12 +222,12 @@ const PageContainer = ({ children }) => {
                               // : current_screen?.data?.filter(
                               //     (v) => v.type == 'Del Vehicle'
                               //   )
-                              current_screen?.data.filter(
+                              data.filter(
                                 (data) =>
                                   !content?.filterBy?.includes(data.type)
                               )
                             : content.filterBy
-                            ? current_screen?.data?.filter((item) =>
+                            ? data?.filter((item) =>
                                 item.type
                                   ? item.type === content.filterBy
                                   : item?.status && content.value === 'active'
@@ -143,7 +235,7 @@ const PageContainer = ({ children }) => {
                                     item.status === 'delayed'
                                   : item?.status === content.filterBy
                               )
-                            : current_screen?.data
+                            : data
                         }
                         filterColumn={content.filterColumn}
                         filterPlaceholder={content.filterPlaceholder}
@@ -159,7 +251,7 @@ const PageContainer = ({ children }) => {
             <DetailCard title={`All ${current_screen?.tableInfo.title}`}>
               <DataTable
                 columns={current_screen?.columns({ onEdit, onDelete })}
-                data={current_screen?.data}
+                data={data}
                 filterColumn={current_screen?.tableInfo.filterColumn}
                 filterPlaceholder={current_screen?.tableInfo.filterPlaceholder}
                 csv_headers={current_screen?.csv_headers}
