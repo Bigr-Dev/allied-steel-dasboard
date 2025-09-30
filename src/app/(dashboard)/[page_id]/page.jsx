@@ -7,10 +7,11 @@ import Statistics from './@statistics/default'
 import RouteAssignment from '@/components/layout/route-assignment-container'
 import LoadsTableContainer from '@/components/layout/loads-table-container'
 import LoadsPage from '@/components/loads/loads-archive'
+import { LoadAssignment } from '@/components/layout/assignment/load-assignment'
 
 const ArchivePage = async ({ params, title, statistics }) => {
   const { page_id } = await params
-  console.log('page_id :ArchivePage>> ', page_id)
+  //console.log('page_id :ArchivePage>> ', page_id)
 
   switch (page_id) {
     case 'loads':
@@ -45,7 +46,8 @@ const ArchivePage = async ({ params, title, statistics }) => {
           <div className="space-y-6 h-full overflow-y-auto  p-1">
             {/* {<PageContainer />} */}
 
-            <RouteAssignment />
+            {/* <RouteAssignment /> */}
+            <LoadAssignment />
           </div>
         </>
       )

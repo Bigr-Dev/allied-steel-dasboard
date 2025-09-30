@@ -15,6 +15,7 @@ import { initialOrderState } from './initial-states/orders-state'
 import { initialVehiclesState } from './initial-states/vehicle-state'
 import { initialRoutesState } from './initial-states/routes-state'
 import { initialGroupedLoadsState } from './initial-states/grouped-load-state'
+import { initialAssignmentState } from './initial-states/assignment-state'
 
 export const initialState = {
   initialBranchesState,
@@ -27,6 +28,7 @@ export const initialState = {
   initialUsersState,
   initialVehiclesState,
   initialOrderState,
+  initialAssignmentState,
 }
 
 export const GlobalContext = createContext(initialState)

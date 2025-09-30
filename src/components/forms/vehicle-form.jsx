@@ -166,7 +166,7 @@ const VehiclesForm = ({ onCancel, id }) => {
       ],
     },
     {
-      htmlFor: 'regNumber',
+      htmlFor: 'eg_number',
       label: 'Registration Number *',
       value: formData.reg_number,
       placeholder: 'e.g., CA 123-456',
@@ -174,13 +174,14 @@ const VehiclesForm = ({ onCancel, id }) => {
       readOnly: false,
     },
     {
-      htmlFor: 'licensePlate',
+      htmlFor: 'license_plate',
       label: 'License Number *',
       value: formData.license_plate,
       placeholder: 'e.g., CA123456',
       required: true,
       readOnly: false,
     },
+
     {
       htmlFor: 'vin',
       label: 'VIN Number *',
@@ -190,7 +191,7 @@ const VehiclesForm = ({ onCancel, id }) => {
       readOnly: false,
     },
     {
-      htmlFor: 'engineNumber',
+      htmlFor: 'engine_number',
       label: 'Engine Number *',
       value: formData.engine_number,
       placeholder: 'e.g., ABC123456789',
@@ -214,7 +215,7 @@ const VehiclesForm = ({ onCancel, id }) => {
       readOnly: false,
     },
     {
-      htmlFor: 'seriesName',
+      htmlFor: 'series_name',
       label: 'Series Name *',
       value: formData.series_name,
       placeholder: 'e.g., SR5',
@@ -222,7 +223,7 @@ const VehiclesForm = ({ onCancel, id }) => {
       readOnly: false,
     },
     {
-      htmlFor: 'vehicleCategory',
+      htmlFor: 'vehicle_category',
       label: 'Vehicle Category *',
       value: formData.vehicle_category,
       placeholder: 'e.g., Light Commercial',
@@ -230,7 +231,7 @@ const VehiclesForm = ({ onCancel, id }) => {
       readOnly: false,
     },
     {
-      htmlFor: 'vehicleDescription',
+      htmlFor: 'vehicle_description',
       label: 'Vehicle Description *',
       value: formData.vehicle_description,
       placeholder: 'e.g., Double cab bakkie',
@@ -256,7 +257,7 @@ const VehiclesForm = ({ onCancel, id }) => {
       readOnly: false,
     },
     {
-      htmlFor: 'registrationDate',
+      htmlFor: 'registration_date',
       label: 'Registration Date *',
       type: 'date',
       value: formData.registration_date,
@@ -265,7 +266,7 @@ const VehiclesForm = ({ onCancel, id }) => {
       readOnly: false,
     },
   ]
-  console.log('vehicle :>> ', formData?.branch_id)
+  // console.log('vehicle :>> ', formData?.branch_id)
   const additional_information = [
     {
       type: 'select',
@@ -296,7 +297,7 @@ const VehiclesForm = ({ onCancel, id }) => {
     },
     {
       type: 'select',
-      htmlFor: 'fuelType',
+      htmlFor: 'fuel_type',
       label: 'Fuel Type *',
       placeholder: 'Select fuel type',
       value: formData.fuel_type,
@@ -368,7 +369,7 @@ const VehiclesForm = ({ onCancel, id }) => {
 
   const maintenance_information = [
     {
-      htmlFor: 'licenceExpiryDate',
+      htmlFor: 'licence_expiry_date',
       label: 'Licence Expiry Date *',
       type: 'date',
       value: formData.licence_expiry_date,
@@ -393,7 +394,7 @@ const VehiclesForm = ({ onCancel, id }) => {
     //   required: false,
     // },
     {
-      htmlFor: 'serviceIntervalsMonths',
+      htmlFor: 'service_intervals_months',
       label: 'Service Intervals (Months)',
       value: formData.service_intervals_months,
       type: 'number',
@@ -404,14 +405,14 @@ const VehiclesForm = ({ onCancel, id }) => {
 
   const tracker_information = [
     {
-      htmlFor: 'trackerProvider',
+      htmlFor: 'tracker_provider',
       label: 'Tracker Provider',
       value: formData.tracker_provider,
       placeholder: 'e.g., Tracker SA',
       required: true,
     },
     {
-      htmlFor: 'trackerDeviceId',
+      htmlFor: 'tracker_device_id',
       label: 'Tracker Device ID',
       value: formData.tracker_device_id,
       placeholder: 'e.g., 1234567890',

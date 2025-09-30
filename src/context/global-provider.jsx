@@ -56,6 +56,9 @@ import { replaceHyphenWithUnderscore } from '@/hooks/replace-hyphen'
 
 // config
 import supabase from '@/config/supabase'
+import { fetchData } from '@/lib/fetch'
+import assignmentReducer from './reducers/assignment-reducer'
+import { autoAssignLoads, loadAssignments } from './apis/assignment-apis'
 
 const GlobalProvider = ({ children, data }) => {
   const pathname = usePathname().slice(1)
@@ -111,6 +114,10 @@ const GlobalProvider = ({ children, data }) => {
     initialState.initialRoutesState
   )
 
+  const [assignment, assignmentDispatch] = useReducer(
+    assignmentReducer,
+    initialState.initialAssignmentState
+  )
   // local states
   const [dashboardRoutes, setDashboardRoutes] = useState([])
   const [modalOpen, setModalOpen] = useState(false)
@@ -129,6 +136,7 @@ const GlobalProvider = ({ children, data }) => {
       loadBranches(branchesDispatch, data?.branches)
       loadCustomers(customersDispatch, data?.customers)
       loadOrders(ordersDispatch, data?.orders)
+      loadAssignments(assignmentDispatch, data?.load_assignment)
       // loadRoutes(routesDispatch, data?.routes)
     }
   }, [data, current_user])
@@ -330,6 +338,8 @@ const GlobalProvider = ({ children, data }) => {
         onEdit: onEdit(setModalOpen, modalOpen, setId),
         onDelete: onDelete(setAlertOpen, alertOpen, setId),
         setModalOpen,
+        assignment,
+        assignmentDispatch,
         load_assignment,
         groupedLoadsDispatch,
         dashboardState,
@@ -368,6 +378,7 @@ const GlobalProvider = ({ children, data }) => {
         routesDispatch,
         upsertRoute,
         deleteRoute,
+        fetchData,
       }}
     >
       {children}

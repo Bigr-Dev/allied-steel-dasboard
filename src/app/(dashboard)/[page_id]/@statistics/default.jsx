@@ -70,8 +70,8 @@ const Statistics = () => {
   const pathname = usePathname().slice(1)
   const path = replaceHyphenWithUnderscore(pathname)
   const current_screen = useGlobalContext()[path]
-  const { loads, users, vehicles, drivers } = useGlobalContext()
-
+  const { loads, users, vehicles, drivers, assignment } = useGlobalContext()
+  const plan = assignment?.data
   let screenStats = []
 
   const overDueOrders = current_screen?.data?.filter((order) => {
@@ -143,9 +143,74 @@ const Statistics = () => {
 
     return due >= startDayAfter
   })
-  //console.log('path :>> ', path)
 
-  // Calculate summary statistics
+  // *********************
+  // Helper functions for load assignment stats
+  // *********************
+
+  // Count unique values helper
+  const uniqueCount = (arr) => new Set(arr.filter(Boolean)).size
+
+  const getTotalVehicles = (plan) => {
+    // vehicles are the assigned units
+    return Array.isArray(plan.assigned_units) ? plan.assigned_units.length : 0
+  }
+
+  const getTotalRoutes = (plan) => {
+    console.log('plan.assigned_units :>> ', plan)
+    if (!Array.isArray(plan.assigned_units)) return 0
+    const routes = []
+    plan.assigned_units.forEach((unit) => {
+      unit.customers?.forEach((c) => {
+        if (c.route_name) routes.push(c.route_name)
+      })
+    })
+    // also include unassigned routes
+    plan.unassigned?.forEach((item) => {
+      if (item.route_name) routes.push(item.route_name)
+    })
+    return uniqueCount(routes)
+  }
+
+  const getTotalSuburbs = (plan) => {
+    if (!Array.isArray(plan.assigned_units)) return 0
+    const suburbs = []
+    plan.assigned_units.forEach((unit) => {
+      unit.customers?.forEach((c) => {
+        if (c.suburb_name) suburbs.push(c.suburb_name)
+      })
+    })
+    plan.unassigned?.forEach((item) => {
+      if (item.suburb_name) suburbs.push(item.suburb_name)
+    })
+    return uniqueCount(suburbs)
+  }
+
+  const getTotalClients = (plan) => {
+    const clients = []
+    plan.assigned_units?.forEach((unit) => {
+      unit.customers?.forEach((c) => {
+        if (c.customer_name) clients.push(c.customer_name)
+      })
+    })
+    plan.unassigned?.forEach((item) => {
+      if (item.customer_name) clients.push(item.customer_name)
+    })
+    return uniqueCount(clients)
+  }
+
+  const getTotalOrders = (plan) => {
+    const orders = []
+    plan.assigned_units?.forEach((unit) => {
+      unit.customers?.forEach((c) => {
+        c.orders?.forEach((o) => orders.push(o.order_id))
+      })
+    })
+    plan.unassigned?.forEach((item) => {
+      if (item.order_id) orders.push(item.order_id)
+    })
+    return uniqueCount(orders)
+  }
 
   switch (path) {
     case 'orders':
@@ -473,22 +538,22 @@ const Statistics = () => {
       screenStats = [
         {
           title: 'Active Routes',
-          value: current_screen?.data?.[0]?.length || 0,
+          value: getTotalRoutes(plan) || 0,
           icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
         },
         {
           title: 'Total Suburbs',
-          value: total_grouped_load_suburbs || 0,
+          value: getTotalSuburbs(plan) || 0,
           icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
         {
           title: 'Assigned Vehicles',
-          value: current_screen?.data?.[1]?.length || 0,
+          value: getTotalVehicles(plan) || 0,
           icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
         {
-          title: 'Total Orders',
-          value: total_grouped_load_orders || 0,
+          title: 'Total Clients',
+          value: getTotalClients(plan) || 0,
           icon: (
             <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
           ),

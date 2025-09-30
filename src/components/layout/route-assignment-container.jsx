@@ -53,7 +53,7 @@ const RouteAssignment = () => {
   //  console.log('routingData :>> ', load_assignment?.data?.[0])
 
   const vehicleData = load_assignment?.data?.[1] || []
-  //  console.log('vehicleData :>> ', load_assignment?.data?.[1])
+  console.log('vehicleData :>> ', load_assignment?.data)
 
   const unassigned = load_assignment?.data?.[1] || []
   //  console.log('unassigned :>> ', load_assignment?.data)

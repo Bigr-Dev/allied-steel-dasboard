@@ -30,8 +30,8 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
   )
   console.log(typeof YMD_UTC(tomorrowUTC)) // UTC calendar date
 
-  const tomorrow = YMD_UTC(tomorrowUTC)
-  // const tomorrow = '2025-09-16'
+  // const tomorrow = YMD_UTC(tomorrowUTC)
+  const tomorrow = '2025-09-29'
 
   // console.log('tomorrow :>> ', tomorrow)
   try {
@@ -47,32 +47,50 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       // console.log('tomorrow :>> ', tomorrow)
       // const Loads = await fetchServerData(`loads?includeItems=true`, 'GET')
       const Orders = await fetchServerData('orders', 'GET')
+      //console.log('Orders :>> ', Orders)
       const Users = await fetchServerData('users', 'GET')
+
       const Vehicles = await fetchServerData('vehicles', 'GET')
       // console.log('tomorrow :>> ', tomorrow)
+
+      const assignment = await fetchServerData('auto-assign-loads', 'POST', {
+        departure_date: tomorrow, // default: tomorrow
+        //   "cutoff_date": "2025-09-18",     // default: today
+        commit: false, // preview (no DB writes) if false
+      })
+
       let AssignedLoads = {}
       if (Users?.message) {
         const load_params = {
-          date: tomorrow,
-          branch_ids: [
-            Users?.message?.filter((u) => u.id === uid)?.[0]?.managed_branches,
-          ],
-          order_status: 'Sales Order Open Printed',
-          commit: false,
-          detailLevel: 'item',
-          maxItemsPerOrder: 200,
-          ignoreDepartment: true,
-          ignoreLengthIfMissing: true,
-          defaultVehicleCapacityKg: 33000,
-          defaultVehicleLengthMm: 13600,
-          debug: true,
+          // date: tomorrow,
+          // branch_ids: [
+          //   Users?.message?.filter((u) => u.id === uid)?.[0]?.managed_branches,
+          // ],
+          // order_status: 'Sales Order Open Printed',
+          // commit: false,
+          // detailLevel: 'item',
+          // maxItemsPerOrder: 200,
+          // ignoreDepartment: true,
+          // ignoreLengthIfMissing: true,
+          // defaultVehicleCapacityKg: 33000,
+          // defaultVehicleLengthMm: 13600,
+          // debug: true,
+
+          departure_date: tomorrow, // default: tomorrow
+          //   "cutoff_date": "2025-09-18",     // default: today
+          //   "branch_id": "uuid-optional",
+          //   "customer_id": "uuid-optional",
+          commit: false, // preview (no DB writes) if false
+          //   "notes": "optional plan note"
         }
-        AssignedLoads = await fetchServerData('auto-assign/loads', 'POST', {
+        //  console.log('AssignedLoads :>> ', load_params)
+        AssignedLoads = await fetchServerData('auto-assign-loads', 'POST', {
           ...load_params,
         })
       }
-
+      //console.log('assignment :layout>> ', assignment?.data)
       data = {
+        load_assignment: assignment?.data,
         branches: Branches?.message,
         customers: Customers?.data,
         drivers: Drivers,

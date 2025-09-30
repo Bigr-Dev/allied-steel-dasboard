@@ -39,7 +39,7 @@ const LoadsTable = () => {
       setIsLoading(false)
     }
   }
-  console.log('data :>> ', data)
+  // console.log('data :>> ', data)
   return (
     <div className="space-y-6 h-full overflow-y-auto">
       <div className="max-w-7xl mx-auto space-y-6">
