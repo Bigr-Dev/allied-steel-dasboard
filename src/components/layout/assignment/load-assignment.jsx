@@ -130,14 +130,14 @@ export function LoadAssignment() {
   }
 
   // add these helpers inside LoadAssignmentSingle, above return
-  const onAssignItem = async ({ plan_unit_id, item }) => {
-    // item here should be an UNASSIGNED item (has item_id, weight_left, description, etc.)
-    await handleAssignItem(item.item_id, plan_unit_id)
-  }
+  // const onAssignItem = async ({ plan_unit_id, item }) => {
+  //   // item here should be an UNASSIGNED item (has item_id, weight_left, description, etc.)
+  //   await handleAssignItem(item.item_id, plan_unit_id)
+  // }
 
-  const onUnassignItem = async (item_id) => {
-    await handleUnassignItem(item_id)
-  }
+  // const onUnassignItem = async (item_id) => {
+  //   await handleUnassignItem(item_id)
+  // }
 
   return (
     <DetailCard title="Vehicle Assignment">

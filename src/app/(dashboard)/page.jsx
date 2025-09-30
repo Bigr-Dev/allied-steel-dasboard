@@ -56,6 +56,7 @@ import { FilterPanel, applyFilters } from '@/components/map/filter-panel'
 export default function VehicleDashboard() {
   const { dashboardState, branches, load_assignment, vehicles } =
     useGlobalContext()
+  //console.log('assignment :>> ', assignment?.data?.assigned_units)
   const [selectedVehicle, setSelectedVehicle] = useState(null)
   const [showAllVehicles, setShowAllVehicles] = useState(true)
   const [map, setMap] = useState(null)
@@ -80,6 +81,7 @@ export default function VehicleDashboard() {
 
   const tcpFeedData = []
   const routeData = load_assignment?.data?.[1] || []
+  //const routeData = assignment?.data?.assigned_units || []
 
   useEffect(() => {
     if (tcpFeedData.rawMessage) {

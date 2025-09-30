@@ -1,5 +1,7 @@
 // API client utilities for consistent error handling and request formatting
 
+import { fetchData } from './fetch'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || ''
 
 class APIError extends Error {
@@ -12,30 +14,34 @@ class APIError extends Error {
 }
 
 async function apiRequest(endpoint, options = {}) {
+  // console.log('endpoint :>> ', endpoint)
   const url = `${API_BASE_URL}${endpoint}`
 
+  console.log('url :>> ', endpoint)
+  console.log('options :>> ', options?.body)
+  const body = options?.body || options
   const config = {
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
     },
     credentials: 'include', // Include cookies for authentication
-    ...options,
+    ...options?.body,
   }
 
   try {
-    const response = await fetch(url, config)
+    const response = await fetchData(endpoint, 'POST', body)
+    console.log('response :>> ', response)
+    // if (!response.ok) {
+    //   const errorData = await response.json().catch(() => ({}))
+    //   throw new APIError(
+    //     errorData.error || `HTTP ${response.status}`,
+    //     response.status,
+    //     errorData
+    //   )
+    // }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new APIError(
-        errorData.error || `HTTP ${response.status}`,
-        response.status,
-        errorData
-      )
-    }
-
-    return await response.json()
+    return await response
   } catch (error) {
     if (error instanceof APIError) {
       throw error
@@ -61,13 +67,13 @@ export const assignmentAPI = {
       searchParams.set('preview', params.preview)
 
     const query = searchParams.toString()
-    console.log('url', `/api/vehicle-assignment${query ? `?${query}` : ''}`)
-    return apiRequest(`/api/vehicle-assignment${query ? `?${query}` : ''}`)
+    console.log('url', `/vehicle-assignment${query ? `?${query}` : ''}`)
+    return apiRequest(`/vehicle-assignment${query ? `?${query}` : ''}`)
   },
 
   // Manually assign item to vehicle
   assignItem: (itemId, vehicleId) => {
-    return apiRequest('/api/manual-assign', {
+    return apiRequest('/manual-assign', {
       method: 'POST',
       body: JSON.stringify({
         item_id: itemId,
@@ -78,14 +84,14 @@ export const assignmentAPI = {
 
   // Unassign single item
   unassignItem: (itemId) => {
-    return apiRequest(`/api/unassign/${itemId}`, {
+    return apiRequest(`/unassign/${itemId}`, {
       method: 'POST',
     })
   },
 
   // Unassign all items from vehicle
   unassignAllItems: (vehicleId) => {
-    return apiRequest('/api/unassign/all', {
+    return apiRequest('/unassign/all', {
       method: 'POST',
       body: JSON.stringify({
         vehicle_id: vehicleId,
@@ -95,21 +101,21 @@ export const assignmentAPI = {
 
   // Auto-assign items
   autoAssign: (params) => {
-    return apiRequest('/api/auto-assign', {
+    return apiRequest('/auto-assign', {
       method: 'POST',
       body: JSON.stringify(params),
     })
   },
 
   moveItem: (payload) => {
-    return apiRequest('/api/vehicle-assignment/move', {
+    return apiRequest('/vehicle-assignment/move', {
       method: 'POST',
       body: JSON.stringify(payload),
     })
   },
 
   commitPlan: (changes) => {
-    return apiRequest('/api/vehicle-assignment/commit', {
+    return apiRequest('/vehicle-assignment/commit', {
       method: 'POST',
       body: JSON.stringify({
         commit: true,

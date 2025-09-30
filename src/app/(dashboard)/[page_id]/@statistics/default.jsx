@@ -157,7 +157,7 @@ const Statistics = () => {
   }
 
   const getTotalRoutes = (plan) => {
-    console.log('plan.assigned_units :>> ', plan)
+    //  console.log('plan.assigned_units :>> ', plan)
     if (!Array.isArray(plan.assigned_units)) return 0
     const routes = []
     plan.assigned_units.forEach((unit) => {

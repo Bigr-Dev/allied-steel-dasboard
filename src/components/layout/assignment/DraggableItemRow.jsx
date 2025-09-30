@@ -9,8 +9,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { GripVertical, MapPin, Route, Building2 } from 'lucide-react'
+import { memo } from 'react'
 
-export function DraggableItemRow({
+export const DraggableItemRow = memo(function DraggableItemRow({
   item,
   customer,
   containerId,
@@ -39,6 +40,7 @@ export function DraggableItemRow({
   const style = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        willChange: 'transform',
       }
     : undefined
 
@@ -106,4 +108,4 @@ export function DraggableItemRow({
       </div>
     </TooltipProvider>
   )
-}
+})

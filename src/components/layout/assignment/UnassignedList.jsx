@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, memo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,7 +15,10 @@ import {
 import { DraggableItemRow } from './DraggableItemRow'
 import { Search, Filter, Package, AlertCircle } from 'lucide-react'
 
-export function UnassignedList({ items, onItemsChange }) {
+export const UnassignedList = memo(function UnassignedList({
+  items,
+  onItemsChange,
+}) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRoutes, setSelectedRoutes] = useState(new Set())
   const [selectedSuburbs, setSelectedSuburbs] = useState(new Set())
@@ -309,4 +312,4 @@ export function UnassignedList({ items, onItemsChange }) {
       </CardContent>
     </Card>
   )
-}
+})

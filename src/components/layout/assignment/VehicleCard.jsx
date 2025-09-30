@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, memo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,11 @@ import {
 } from '@/components/ui/collapsible'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 
-export function VehicleCard({ unit, onUnitChange }) {
+export const VehicleCard = memo(function VehicleCard({
+  unit,
+  onUnitChange,
+  onUnassignAll,
+}) {
   const [isLoading, setIsLoading] = useState(false)
   const [expandedRoutes, setExpandedRoutes] = useState(new Set())
   const { toast } = useToast()
@@ -465,4 +469,4 @@ export function VehicleCard({ unit, onUnitChange }) {
       </CardContent>
     </Card>
   )
-}
+})

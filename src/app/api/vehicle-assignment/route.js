@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { fetchServerData } from '../_lib/server-fetch'
 
-const url = '/auto-assign-loads'
+const url = 'auto-assign-loads'
 
 // *****************************
 // get vehicle assignment data
@@ -10,7 +10,7 @@ export async function POST(req) {
   const body = await req?.json()
   //console.log('body :>> ', body)
   try {
-    const response = await fetchServerData('auto-assign-loads', 'POST', body)
+    const response = await fetchServerData(url, 'POST', body)
     //console.log('loads response :>> ', response?.data)
     return NextResponse.json(response?.data, { status: 200 })
   } catch (error) {

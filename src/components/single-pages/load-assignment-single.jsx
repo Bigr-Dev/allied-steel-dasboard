@@ -6,12 +6,14 @@ import {
   DndContext,
   DragOverlay,
   closestCenter,
-  PointerSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
   rectIntersection,
+  useDraggable,
+  PointerSensor,
 } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useMemo, useState } from 'react'
 import DetailActionBar from '../layout/detail-action-bar'
@@ -19,12 +21,16 @@ import { UnassignedList } from '../layout/assignment/UnassignedList'
 import { VehicleCard } from '../layout/assignment/VehicleCard'
 import { DraggableItemRow } from '../layout/assignment/DraggableItemRow'
 import { createPortal } from 'react-dom'
+import { useAssignmentPlan } from '@/hooks/assignment-plan/use-assignment-plan'
 
 const LoadAssignmentSingle = ({ id }) => {
   const {
     assignment: { data },
   } = useGlobalContext()
+  const { error, refresh, assignItem, unassignItem, unassignAllFromUnit } =
+    useAssignmentPlan()
   const { toast } = useToast()
+  //console.log('data :>> ', data)
 
   const [assignedUnits, setAssignedUnits] = useState(data?.assigned_units || [])
   const [unassigned, setUnassigned] = useState(data?.unassigned || [])
@@ -35,21 +41,77 @@ const LoadAssignmentSingle = ({ id }) => {
   const [changes, setChanges] = useState([])
 
   const planned_unit = assignedUnits?.find((v) => v.plan_unit_id === id)
-  //console.log('planned_unit :>> ', planned_unit)
 
-  // const sensors = useSensors(
-  //   useSensor(PointerSensor, {
-  //     activationConstraint: {
-  //       distance: 6,
-  //     },
-  //   }),
-  //   useSensor(KeyboardSensor, {
-  //     coordinateGetter: sortableKeyboardCoordinates,
-  //   })
-  // )
+  const units = assignedUnits
+  const onAssignItem = assignItem
+  const onUnassignItem = unassignItem
+  const onUnassignAll = unassignAllFromUnit
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 12,
+        delay: 100,
+        tolerance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
   )
+
+  // Memoize item lookup for better performance
+
+  const itemLookupMap = useMemo(() => {
+    const map = new Map()
+
+    // Add unassigned items
+    unassigned.forEach((item) => {
+      map.set(item.item_id, {
+        item,
+        sourceType: 'unassigned',
+        sourceVehicleId: null,
+      })
+    })
+
+    // Add assigned items
+    assignedUnits.forEach((unit) => {
+      unit.customers.forEach((customer) => {
+        customer.orders.forEach((order) => {
+          order.items.forEach((item) => {
+            map.set(item.item_id, {
+              item: {
+                ...item,
+                customer_name: customer.customer_name,
+                route_name: customer.route_name,
+                suburb_name: customer.suburb_name,
+              },
+              sourceType: 'assigned',
+              sourceVehicleId: unit.plan_unit_id,
+            })
+          })
+        })
+      })
+    })
+
+    return map
+  }, [assignedUnits, unassigned])
+
+  const containers = useMemo(() => {
+    const arr = [
+      { id: 'bucket:unassigned' },
+      ...units.map((u) => ({ id: `unit:${u.plan_unit_id}` })),
+    ]
+    return new Set(arr.map((c) => c.id))
+  }, [units])
+
+  function getDropTargetId(over) {
+    if (!over) return null
+
+    const id = over.id?.toString()
+
+    return containers.has(id) ? id : null
+  }
 
   const loadAssignmentData = async () => {
     setLoading(true)
@@ -70,39 +132,11 @@ const LoadAssignmentSingle = ({ id }) => {
 
   const handleDragStart = (event) => {
     const { active } = event
+    const lookupResult = itemLookupMap.get(active.id)
 
-    let draggedItem = null
-    let sourceType = null
-    let sourceVehicleId = null
-
-    const unassignedItem = unassigned.find((item) => item.item_id === active.id)
-    if (unassignedItem) {
-      draggedItem = unassignedItem
-      sourceType = 'unassigned'
-    } else {
-      for (const unit of assignedUnits) {
-        for (const customer of unit.customers) {
-          for (const order of customer.orders) {
-            const item = order.items.find((item) => item.item_id === active.id)
-            if (item) {
-              draggedItem = {
-                ...item,
-                customer_name: customer.customer_name,
-                route_name: customer.route_name,
-                suburb_name: customer.suburb_name,
-              }
-              sourceType = 'assigned'
-              sourceVehicleId = unit.plan_unit_id
-              break
-            }
-          }
-          if (draggedItem) break
-        }
-        if (draggedItem) break
-      }
+    if (lookupResult) {
+      setActiveItem(lookupResult)
     }
-
-    setActiveItem({ item: draggedItem, sourceType, sourceVehicleId })
   }
 
   const handleDragEnd = async (event) => {
@@ -146,13 +180,14 @@ const LoadAssignmentSingle = ({ id }) => {
       weight: dragData.weight,
     }
 
+    // Create undo state with deep copy only when needed
     const undoState = {
-      assignedUnits: [...assignedUnits],
-      unassigned: [...unassigned],
+      assignedUnits: JSON.parse(JSON.stringify(assignedUnits)),
+      unassigned: JSON.parse(JSON.stringify(unassigned)),
       timestamp: Date.now(),
     }
 
-    await handleOptimisticMove(movePayload)
+    handleOptimisticMove(movePayload)
 
     try {
       const data = await assignmentAPI.moveItem(movePayload)
@@ -174,6 +209,113 @@ const LoadAssignmentSingle = ({ id }) => {
       handleAPIError(error, toast)
     }
   }
+
+  // const handleDragStart = (event) => {
+  //   const { active } = event
+
+  //   let draggedItem = null
+  //   let sourceType = null
+  //   let sourceVehicleId = null
+
+  //   const unassignedItem = unassigned.find((item) => item.item_id === active.id)
+  //   if (unassignedItem) {
+  //     draggedItem = unassignedItem
+  //     sourceType = 'unassigned'
+  //   } else {
+  //     for (const unit of assignedUnits) {
+  //       for (const customer of unit.customers) {
+  //         for (const order of customer.orders) {
+  //           const item = order.items.find((item) => item.item_id === active.id)
+  //           if (item) {
+  //             draggedItem = {
+  //               ...item,
+  //               customer_name: customer.customer_name,
+  //               route_name: customer.route_name,
+  //               suburb_name: customer.suburb_name,
+  //             }
+  //             sourceType = 'assigned'
+  //             sourceVehicleId = unit.plan_unit_id
+  //             break
+  //           }
+  //         }
+  //         if (draggedItem) break
+  //       }
+  //       if (draggedItem) break
+  //     }
+  //   }
+
+  //   setActiveItem({ item: draggedItem, sourceType, sourceVehicleId })
+  // }
+
+  // const handleDragEnd = async (event) => {
+  //   const { active, over } = event
+  //   setActiveItem(null)
+
+  //   if (!over) return
+
+  //   const dragData = active.data.current
+  //   if (!dragData) return
+
+  //   const from = dragData.containerId
+  //   const to = over.id
+
+  //   if (from === to) return
+
+  //   if (to.startsWith('unit:')) {
+  //     const targetUnitId = to.slice(5)
+  //     const targetUnit = assignedUnits.find(
+  //       (unit) => unit.plan_unit_id === targetUnitId
+  //     )
+
+  //     if (targetUnit) {
+  //       const newUsedCapacity = targetUnit.used_capacity_kg + dragData.weight
+  //       if (newUsedCapacity > targetUnit.capacity_kg) {
+  //         toast({
+  //           title: 'Over Capacity',
+  //           description: 'Cannot assign item - would exceed vehicle capacity',
+  //           variant: 'destructive',
+  //         })
+  //         return
+  //       }
+  //     }
+  //   }
+
+  //   const movePayload = {
+  //     item_id: dragData.item_id,
+  //     assignment_id: dragData.assignment_id || null,
+  //     from_plan_unit_id: from.startsWith('unit:') ? from.slice(5) : null,
+  //     to_plan_unit_id: to.startsWith('unit:') ? to.slice(5) : null,
+  //     weight: dragData.weight,
+  //   }
+
+  //   const undoState = {
+  //     assignedUnits: [...assignedUnits],
+  //     unassigned: [...unassigned],
+  //     timestamp: Date.now(),
+  //   }
+
+  //   await handleOptimisticMove(movePayload)
+
+  //   try {
+  //     const data = await assignmentAPI.moveItem(movePayload)
+
+  //     setAssignedUnits(data.assigned_units || assignedUnits)
+  //     setUnassigned(data.unassigned || unassigned)
+
+  //     setChanges((prev) => [...prev, movePayload])
+
+  //     setUndoStack((prev) => [...prev.slice(-9), undoState])
+
+  //     toast({
+  //       title: 'Item Moved',
+  //       description: 'Assignment updated successfully',
+  //     })
+  //   } catch (error) {
+  //     setAssignedUnits(undoState.assignedUnits)
+  //     setUnassigned(undoState.unassigned)
+  //     handleAPIError(error, toast)
+  //   }
+  // }
 
   const handleOptimisticMove = async (payload) => {
     const { item_id, from_plan_unit_id, to_plan_unit_id } = payload
@@ -364,58 +506,47 @@ const LoadAssignmentSingle = ({ id }) => {
     }
   }
 
-  const containers = useMemo(() => {
-    const arr = [
-      { id: 'bucket:unassigned' },
-      ...assignedUnits.map((u) => ({ id: `unit:${u.plan_unit_id}` })),
-    ]
-    return new Set(arr.map((c) => c.id))
-  }, [assignedUnits])
-
-  function getDropTargetId(over) {
-    if (!over) return null
-    const id = over.id?.toString()
-    return containers.has(id) ? id : null
-  }
-
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={rectIntersection}
-      // onDragStart={handleDragStart}
-      // onDragEnd={handleDragEnd}
-      onDragStart={(evt) => {
-        const item = evt.active?.data?.current?.item || null
-        setActiveItem(item)
-      }}
+      collisionDetection={closestCenter}
+      // onDragStart={(evt) => {
+      //   const item = evt.active?.data?.current?.item_id || null
+      //   setActiveItem(item)
+      // }}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveItem(null)}
-      onDragEnd={async (evt) => {
-        const { active, over } = evt
-        setActiveItem(null)
-        if (!active) return
+      // onDragEnd={async (evt) => {
+      //   const { active, over } = evt
+      //   //  console.log('evt :>> ', evt)
+      //   setActiveItem(null)
+      //   if (!active) return
 
-        const item = active.data?.current?.item
-        const from = active.data?.current?.from // 'bucket:unassigned' | `unit:${id}`
-        const overId = getDropTargetId(over)
+      //   const item = active.data?.current?.item_id
 
-        if (!item || !overId || overId === from) return
+      //   const from = 'bucket:unassigned' | `unit:${id}`
 
-        try {
-          if (overId.startsWith('unit:')) {
-            const plan_unit_id = overId.split(':')[1]
-            await onAssignItem({ plan_unit_id, item })
-            toast({ title: 'Assigned', description: `Moved item to vehicle` })
-          } else if (overId === 'bucket:unassigned') {
-            await onUnassignItem(item.item_id)
-            toast({
-              title: 'Unassigned',
-              description: `Item returned to bucket`,
-            })
-          }
-        } catch (e) {
-          // error toast handled upstream if needed
-        }
-      }}
+      //   const overId = getDropTargetId(over)
+
+      //   if (!item || !overId || overId === from) return
+
+      //   try {
+      //     if (overId.startsWith('unit:')) {
+      //       const plan_unit_id = overId.split(':')[1]
+      //       await onAssignItem({ plan_unit_id, item })
+      //       toast({ title: 'Assigned', description: `Moved item to vehicle` })
+      //     } else if (overId === 'unassigned') {
+      //       await onUnassignItem(item.item_id)
+      //       toast({
+      //         title: 'Unassigned',
+      //         description: `Item returned to bucket`,
+      //       })
+      //     }
+      //   } catch (e) {
+      //     // error toast handled upstream if needed
+      //   }
+      // }}
     >
       <div className="space-y-6">
         <DetailActionBar
@@ -448,6 +579,16 @@ const LoadAssignmentSingle = ({ id }) => {
                         )
                       )
                     }}
+                    // onUnitChange={(updatedUnit) => {
+                    //   setAssignedUnits((prev) =>
+                    //     prev.map((u) =>
+                    //       u.plan_unit_id === updatedUnit.plan_unit_id
+                    //         ? updatedUnit
+                    //         : u
+                    //     )
+                    //   )
+                    // }}
+                    onUnassignAll={() => onUnassignAll(u.plan_unit_id)}
                   />
                 )}
               </div>
@@ -455,17 +596,7 @@ const LoadAssignmentSingle = ({ id }) => {
           </div>
         </div>
       </div>
-      {/* <DragOverlay>
-        {activeItem ? (
-          <div className="rotate-3 opacity-90">
-            <DraggableItemRow
-              item={activeItem.item}
-              isDraggable={false}
-              isUnassigned={activeItem.sourceType === 'unassigned'}
-            />
-          </div>
-        ) : null}
-      </DragOverlay> */}
+
       {typeof window !== 'undefined' &&
         createPortal(
           <DragOverlay>
