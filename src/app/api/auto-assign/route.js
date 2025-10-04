@@ -6,7 +6,7 @@ export async function POST(req) {
   // const body = await req?.json()
   try {
     const { date, branch_id, customer_id, commit = false } = await req.json()
-    const response = await fetchServerData('auto-assign-loads', 'POST', {
+    const response = await fetchServerData('/auto-assign-loads', 'POST', {
       date,
       branch_id,
       customer_id,

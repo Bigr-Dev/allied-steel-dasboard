@@ -199,6 +199,15 @@ const Statistics = () => {
     return uniqueCount(clients)
   }
 
+  const getIdleUnits = (plan) => {
+    const orders = []
+    plan?.idle_units_by_branch?.forEach((unit) => {
+      orders.push(unit)
+    })
+
+    return uniqueCount(orders)
+  }
+
   const getTotalOrders = (plan) => {
     const orders = []
     plan.assigned_units?.forEach((unit) => {
@@ -511,30 +520,30 @@ const Statistics = () => {
       //   console.log('current_screen :Statistics>> ', path, current_screen?.data)
       break
     case 'load_assignment':
-      let total_grouped_load_suburbs = 0
-      let total_grouped_load_orders = 0
-      let total_grouped_load_items = 0
-      loads?.data?.map(
-        (r) =>
-          (total_grouped_load_suburbs =
-            total_grouped_load_suburbs + r.suburbs.length)
-      )
-      loads?.data?.map((r) =>
-        r.suburbs.map(
-          (s) =>
-            (total_grouped_load_orders =
-              total_grouped_load_orders + s.load_orders.length)
-        )
-      )
-      // current_screen?.data?.map((r) =>
-      //   r.suburbs.map((s) =>
-      //     s.load_orders?.map(
-      //       (l) =>
-      //         (total_grouped_load_items =
-      //           total_grouped_load_items + l.load_items.length)
-      //     )
+      // let total_grouped_load_suburbs = 0
+      // let total_grouped_load_orders = 0
+      // let total_grouped_load_items = 0
+      // loads?.data?.map(
+      //   (r) =>
+      //     (total_grouped_load_suburbs =
+      //       total_grouped_load_suburbs + r.suburbs.length)
+      // )
+      // loads?.data?.map((r) =>
+      //   r.suburbs.map(
+      //     (s) =>
+      //       (total_grouped_load_orders =
+      //         total_grouped_load_orders + s.load_orders.length)
       //   )
       // )
+      // // current_screen?.data?.map((r) =>
+      // //   r.suburbs.map((s) =>
+      // //     s.load_orders?.map(
+      // //       (l) =>
+      // //         (total_grouped_load_items =
+      // //           total_grouped_load_items + l.load_items.length)
+      // //     )
+      // //   )
+      // // )
       screenStats = [
         {
           title: 'Active Routes',
@@ -552,8 +561,8 @@ const Statistics = () => {
           icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
         {
-          title: 'Total Clients',
-          value: getTotalClients(plan) || 0,
+          title: 'Unassigned Vehicles',
+          value: getIdleUnits(plan) || 0,
           icon: (
             <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
           ),

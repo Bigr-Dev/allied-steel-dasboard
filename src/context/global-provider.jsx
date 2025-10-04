@@ -128,7 +128,7 @@ const GlobalProvider = ({ children, data }) => {
     value: current_user?.currentUser?.branch_id || '',
     label: current_user?.currentUser?.branch_name || '',
   })
-
+  console.log('data :>> ', data?.load_assignment)
   // load data on initial render
   useEffect(() => {
     if (data) {
