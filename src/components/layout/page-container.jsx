@@ -14,12 +14,20 @@ import { useGlobalContext } from '@/context/global-context'
 
 // hooks
 import { replaceHyphenWithUnderscore } from '@/hooks/replace-hyphen'
+import { LoadAssignment } from './assignment/load-assignment'
 
 const PageContainer = ({ children }) => {
   const pathname = usePathname().slice(1)
-  const path = replaceHyphenWithUnderscore(pathname)
+  let path
+  if (pathname == 'load-assignment') {
+    path = pathname
+  } else {
+    path = replaceHyphenWithUnderscore(pathname)
+  }
+  //const path = replaceHyphenWithUnderscore(pathname)
+
   const current_screen = useGlobalContext()[path]
-  const { onEdit, onDelete, loading, branches, drivers, vehicles } =
+  const { onEdit, onDelete, loading, branches, drivers, vehicles, assignment } =
     useGlobalContext()
 
   const overDue = current_screen?.data?.filter((order) => {
@@ -79,7 +87,7 @@ const PageContainer = ({ children }) => {
     return due >= startDayAfter
   })
 
-  //console.log('current_screen :>> ', current_screen?.data)
+  //console.log('current_screen :>> ', current_screen)
   //console.log('pathname :>> ', pathname)
   let data = current_screen?.data
 
@@ -99,16 +107,40 @@ const PageContainer = ({ children }) => {
       break
 
     case 'drivers':
-      console.log('pathname :>> ', pathname)
+      // console.log('pathname :>> ', pathname)
       const driver_data = current_screen?.data?.map((d) => {
         const d_vehicle = vehicles?.data?.filter(
           (v) => v.id == d.current_vehicle
         )?.[0]?.fleet_number
-        console.log('d_vehicle :>> ', d_vehicle)
+        // console.log('d_vehicle :>> ', d_vehicle)
         return { ...d, current_vehicle: d_vehicle }
       })
-      console.log('driver_data :>> ', driver_data)
+      // console.log('driver_data :>> ', driver_data)
       data = driver_data
+      break
+
+    case 'load-assignment':
+      data = assignment
+      return (
+        <>
+          <DetailCard title={`${assignment?.tableInfo.title}`}>
+            {assignment?.data?.plans && (
+              <DataTable
+                columns={assignment?.columns({
+                  onEdit,
+                  onDelete,
+                  branches: branches?.data,
+                })}
+                data={assignment?.data?.plans}
+                filterColumn={assignment?.tableInfo.filterColumn}
+                filterPlaceholder={assignment?.tableInfo.filterPlaceholder}
+                // csv_headers={current_screen?.csv_headers}
+                // csv_rows={current_screen?.csv_rows}
+              />
+            )}
+          </DetailCard>
+        </>
+      )
       break
 
     default:
@@ -127,7 +159,7 @@ const PageContainer = ({ children }) => {
               className="w-full"
             >
               <TabsList
-                className={`grid w-full grid-cols-${current_screen?.tableInfo?.tabs.length} gap-6`}
+                className={`grid w-full grid-cols-${current_screen?.tableInfo?.tabs?.length} gap-6`}
               >
                 {current_screen?.tableInfo?.tabs.map((trigger, index) => {
                   return (
@@ -138,7 +170,7 @@ const PageContainer = ({ children }) => {
                 })}
               </TabsList>
               {current_screen?.tableInfo?.tabs?.map((content, index) => {
-                console.log('content :>> ', content)
+                // console.log('content :>> ', content)
                 // let data = current_screen?.data
 
                 // if (pathname == 'vehicles') {
@@ -197,7 +229,7 @@ const PageContainer = ({ children }) => {
                 //     break
                 // }
 
-                console.log('data :>> ', data)
+                //console.log('data :>> ', data)
                 return (
                   <TabsContent
                     key={index}
@@ -222,18 +254,18 @@ const PageContainer = ({ children }) => {
                               // : current_screen?.data?.filter(
                               //     (v) => v.type == 'Del Vehicle'
                               //   )
-                              data.filter(
+                              data?.filter(
                                 (data) =>
                                   !content?.filterBy?.includes(data.type)
                               )
                             : content.filterBy
                             ? data?.filter((item) =>
                                 item.type
-                                  ? item.type === content.filterBy
-                                  : item?.status && content.value === 'active'
+                                  ? item.type === content?.filterBy
+                                  : item?.status && content?.value === 'active'
                                   ? item.status === 'in-progress' ||
                                     item.status === 'delayed'
-                                  : item?.status === content.filterBy
+                                  : item?.status === content?.filterBy
                               )
                             : data
                         }
@@ -252,8 +284,8 @@ const PageContainer = ({ children }) => {
               <DataTable
                 columns={current_screen?.columns({ onEdit, onDelete })}
                 data={data}
-                filterColumn={current_screen?.tableInfo.filterColumn}
-                filterPlaceholder={current_screen?.tableInfo.filterPlaceholder}
+                filterColumn={current_screen?.tableInfo?.filterColumn}
+                filterPlaceholder={current_screen?.tableInfo?.filterPlaceholder}
                 csv_headers={current_screen?.csv_headers}
                 csv_rows={current_screen?.csv_rows}
               />

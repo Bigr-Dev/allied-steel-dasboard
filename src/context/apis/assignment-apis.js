@@ -2,7 +2,7 @@
 import * as assignment_actions from '../actions/assignment-actions'
 
 // api calls
-import { fetchApi, loadAPI, postApi } from '@/hooks/use-apis'
+import { deleteApi, fetchApi, loadAPI, postApi } from '@/hooks/use-apis'
 
 // api url
 const API_URL = 'assignments'
@@ -98,4 +98,19 @@ export const fetchPlannedAssignmentById = async (assignmentDispatch, id) =>
     onFailure: assignment_actions.fetchPlannedAssignmentByIdFailure,
     errorMsg: 'Something went wrong, while fetching planned assignment',
     url: `${API_URL}/planned/${id}`,
+  })
+
+// *****************************
+// delete driver
+// *****************************
+export const deletePlannedAssignmentById = async (assignmentDispatch, id) =>
+  deleteApi({
+    dispatch: assignmentDispatch,
+    start: assignment_actions.deletePlannedAssignmentByIdStart,
+    id,
+    success: assignment_actions.deletePlannedAssignmentByIdSuccess,
+    successMsg: `plan with id: ${id} has been deleted.`,
+    failure: assignment_actions.deletePlannedAssignmentByIdFailure,
+    errorMsg: 'Something went wrong, while deleting plan',
+    url: API_URL,
   })

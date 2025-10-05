@@ -23,14 +23,14 @@ import { DraggableItemRow } from '../layout/assignment/DraggableItemRow'
 import { createPortal } from 'react-dom'
 import { useAssignmentPlan } from '@/hooks/assignment-plan/use-assignment-plan'
 
-const LoadAssignmentSingle = ({ id, data }) => {
-  const {
-    // assignment: { data },
-  } = useGlobalContext()
+const LoadAssignmentPreviewSingle = ({ id }) => {
+  const { assignment } = useGlobalContext()
   const { error, refresh, assignItem, unassignItem, unassignAllFromUnit } =
     useAssignmentPlan()
   const { toast } = useToast()
   //console.log('data :>> ', data)
+
+  const data = assignment?.data
 
   const [assignedUnits, setAssignedUnits] = useState(data?.assigned_units || [])
   const [unassigned, setUnassigned] = useState(data?.unassigned || [])
@@ -612,4 +612,4 @@ const LoadAssignmentSingle = ({ id, data }) => {
   )
 }
 
-export default LoadAssignmentSingle
+export default LoadAssignmentPreviewSingle

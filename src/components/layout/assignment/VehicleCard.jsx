@@ -355,7 +355,7 @@ export const VehicleCard = memo(function VehicleCard({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
+      <CardContent className="pt-0  max-h-screen overflow-y-auto">
         {/* Items List */}
         <div className="space-y-3">
           {groupedData.length === 0 ? (

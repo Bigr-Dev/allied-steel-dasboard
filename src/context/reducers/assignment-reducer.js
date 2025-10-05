@@ -52,6 +52,19 @@ const assignmentReducer = (state, action) => {
         loading: false,
         data: action.payload,
       }
+    case assignment.DELETE_PLANNED_ASSIGNMENT_BY_ID:
+      return {
+        ...state,
+        plans: Array.isArray(state.plans)
+          ? state.plans.filter((item) => item.id !== action.payload)
+          : [],
+        // currentDriver:
+        //   state.currentDriver?.id === action.payload
+        //     ? null
+        //     : state.currentDriver,
+        loading: false,
+      }
+
     default:
       return state
   }

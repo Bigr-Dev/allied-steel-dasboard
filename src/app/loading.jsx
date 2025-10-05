@@ -10,8 +10,8 @@ import Image from 'next/image'
 import { Bell, Truck } from 'lucide-react'
 
 // image
-import page_bg from '@/assets/page_bg.png'
-import header_bg from '@/assets/Allied-Steelrode-Background-1.jpg'
+import page_bg from '@/assets/allied_plain_bg.png'
+import header_bg from '@/assets/Allied-Steelrode-Background-1.png'
 
 const Loading = () => {
   return (

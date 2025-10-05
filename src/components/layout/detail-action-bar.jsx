@@ -1,3 +1,5 @@
+'use client'
+
 import { ArrowLeft, Edit } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 

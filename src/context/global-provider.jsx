@@ -7,7 +7,7 @@ import { useEffect, useReducer, useState } from 'react'
 
 // actions
 import * as branch_actions from '@/context/actions/branch-actions'
-
+import * as assignment_actions from '@/context/actions/assignment-actions'
 import * as customer_actions from '@/context/actions/customer-actions'
 import * as driver_actions from '@/context/actions/driver-actions'
 import * as vehicle_actions from '@/context/actions/vehicle-actions'
@@ -44,6 +44,7 @@ import { deleteVehicle, loadVehicles, upsertVehicle } from './apis/vehicle-apis'
 import { deleteDriver, loadDrivers, upsertDriver } from './apis/driver-apis'
 import { deleteRoute, loadRoutes, upsertRoute } from './apis/route-apis'
 import { loadGroupedLoads } from './apis/grouped-load-apis'
+import { deletePlannedAssignmentById } from './apis/assignment-apis'
 
 // components
 import AlertScreen from '@/components/layout/alert-screen'
@@ -128,7 +129,7 @@ const GlobalProvider = ({ children, data }) => {
     value: current_user?.currentUser?.branch_id || '',
     label: current_user?.currentUser?.branch_name || '',
   })
-  console.log('data :>> ', data?.load_assignment)
+  // console.log('data :>> ', data?.load_assignment)
   // load data on initial render
   useEffect(() => {
     if (data) {
@@ -268,7 +269,15 @@ const GlobalProvider = ({ children, data }) => {
       onDelete: (o) =>
         branchesDispatch(branch_actions.deleteBranchSuccess(o.id)),
     },
-
+    {
+      table: 'assignment_plans',
+      //  onInsert: (r) => assignmentDispatch(assignment_actions. (r)),
+      //   onUpdate: (r) => assignmentDispatch(assignment_actions.updateBranchSuccess(r)),
+      onDelete: (o) =>
+        assignmentDispatch(
+          assignment_actions.deletePlannedAssignmentByIdSuccess(o.id)
+        ),
+    },
     {
       table: 'customers',
       onInsert: (r) =>
@@ -330,7 +339,7 @@ const GlobalProvider = ({ children, data }) => {
       channels.forEach((ch) => supabase.removeChannel(ch))
     }
   }, [])
-
+  // console.log('assignment :>> ', assignment)
   return (
     <GlobalContext.Provider
       value={{
@@ -340,6 +349,7 @@ const GlobalProvider = ({ children, data }) => {
         setModalOpen,
         assignment,
         assignmentDispatch,
+        deletePlannedAssignmentById,
         load_assignment,
         groupedLoadsDispatch,
         dashboardState,

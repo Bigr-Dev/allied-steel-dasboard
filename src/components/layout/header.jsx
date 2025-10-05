@@ -16,8 +16,8 @@ import { Bell } from 'lucide-react'
 // components
 import { SidebarTrigger } from '@/components/ui/sidebar-provider'
 import Image from 'next/image'
-import allied_logo from '@/assets/steel_logo.png'
-import bg_img from '@/assets/Allied-Steelrode-Background-1.jpg'
+import allied_logo from '@/assets/allied_logo_dark.png'
+// import bg_img from '@/assets/Allied-Steelrode-Background-1.'
 import {
   Sheet,
   SheetClose,
@@ -32,7 +32,7 @@ import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 
-import header_bg from '@/assets/Allied-Steelrode-Background-1.jpg'
+import header_bg from '@/assets/Allied-Steelrode-Background-1.png'
 
 const Header = () => {
   const {

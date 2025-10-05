@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button'
 import { useGlobalContext } from '@/context/global-context'
 import { useAuth } from '@/context/initial-states/auth-state'
 import { getPermittedAccessRoutes } from '@/hooks/get-accessible-routes'
-import { useParams, usePathname } from 'next/navigation'
+import { useParams, usePathname, useRouter } from 'next/navigation'
 
 const PageTitle = () => {
   const pathname = usePathname().slice(1)
+  const { push } = useRouter()
   const {
     current_user: {
       currentUser: { permissions },
@@ -14,6 +15,7 @@ const PageTitle = () => {
   } = useAuth()
   const params = useParams()
   const {
+    assignment,
     dashboard,
     branches,
     customers,
@@ -121,12 +123,12 @@ const PageTitle = () => {
     if (params?.id) {
       const loads = grouped_loads?.data.find((item) => item.id === params.id)
       titleSection = {
-        ...grouped_loads?.titleSection,
-        title: grouped_loads?.name,
-        description: grouped_loads?.address,
+        ...assignment?.titleSection,
+        // title: assignment?.name,
+        // description: assignment?.address,
       }
     } else {
-      titleSection = load_assignment?.titleSection
+      titleSection = assignment?.titleSection
     }
   } else if (pathname.includes('routes')) {
     if (params?.id) {
@@ -150,11 +152,24 @@ const PageTitle = () => {
         <h2 className="text-xl text-[#003e69]   font-bold tracking-tight uppercase">
           {titleSection?.title}
         </h2>
-        <p className="text-[#fff]">{titleSection?.description}</p>
+        <p className="text-[#428bca]]">{titleSection?.description}</p>
       </div>
       {titleSection?.button && (
         <Button
-          onClick={() => onCreate()}
+          onClick={() => {
+            switch (pathname) {
+              case 'load-assignment':
+                console.log(
+                  'create load assignment load-assignment :PageTitle>> '
+                )
+                push('/load-assignment/create-plan')
+                break
+
+              default:
+                onCreate()
+                break
+            }
+          }}
           disabled={canEdit[0]?.access !== 'write' || false}
           className={'bg-[#003e69] hover:bg-[#428bca]'}
         >

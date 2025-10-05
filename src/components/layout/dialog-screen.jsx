@@ -25,6 +25,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 
 // hooks
 import { replaceHyphenWithUnderscore } from '@/hooks/replace-hyphen'
+import AssignmentForm from '../forms/assignment-form'
 
 const DialogScreen = ({ open, onOpenChange, id, href }) => {
   // const pathname = usePathname().slice(1)
@@ -44,6 +45,7 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
       </DialogContent>
     </Dialog>
   )
+  // console.log('screen :>> ', screen)
 
   switch (screen) {
     case 'branches':
@@ -118,10 +120,10 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
         </Modal>
       )
 
-    case 'trips':
+    case 'load_assignment':
       return (
         <Modal>
-          <TripForm
+          <AssignmentForm
             screen={screen}
             id={id}
             open={open}

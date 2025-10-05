@@ -96,3 +96,17 @@ export const fetchPlannedAssignmentByIdSuccess = (data) => ({
 export const fetchPlannedAssignmentByIdFailure = () => ({
   type: assignment.REQUEST_FAILURE,
 })
+
+export const deletePlannedAssignmentByIdStart = () => ({
+  type: assignment.REQUEST_START,
+})
+
+export const deletePlannedAssignmentByIdSuccess = (id) => ({
+  type: assignment.DELETE_PLANNED_ASSIGNMENT_BY_ID,
+  payload: id,
+})
+
+export const deletePlannedAssignmentByIdFailure = (error) => ({
+  type: assignment.REQUEST_FAILURE,
+  payload: error,
+})

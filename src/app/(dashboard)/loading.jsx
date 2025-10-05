@@ -11,7 +11,6 @@ const Loading = () => {
         <Skeleton />
       </div>
       <div className="space-y-6 h-full overflow-y-auto  p-1">
-        {' '}
         <Skeleton />
       </div>
     </div>

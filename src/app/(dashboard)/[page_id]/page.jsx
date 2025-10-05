@@ -44,10 +44,10 @@ const ArchivePage = async ({ params, title, statistics }) => {
           </div>
 
           <div className="space-y-6 h-full overflow-y-auto  p-1">
-            {/* {<PageContainer />} */}
+            <PageContainer />
 
             {/* <RouteAssignment /> */}
-            <LoadAssignment />
+            {/* <LoadAssignment /> */}
           </div>
         </>
       )

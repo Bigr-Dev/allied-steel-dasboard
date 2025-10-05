@@ -39,10 +39,12 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
     routesDispatch,
     deleteLoad,
     loadsDispatch,
+    assignmentDispatch,
+    deletePlannedAssignmentById,
   } = useGlobalContext()
   let deleteItem = null
   let dispatch = null
-
+  //console.log('screen :>> ', screen)
   switch (screen) {
     case 'branches':
       deleteItem = deleteBranch
@@ -78,6 +80,10 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
       deleteItem = deleteLoad
       dispatch = loadsDispatch
       break
+
+    case 'load_assignment':
+      deleteItem = deletePlannedAssignmentById
+      dispatch = assignmentDispatch
 
     default:
       deleteItem = null

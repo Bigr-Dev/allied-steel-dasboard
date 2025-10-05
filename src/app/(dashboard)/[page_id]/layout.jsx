@@ -2,7 +2,7 @@
 import Image from 'next/image'
 
 // image
-import page_bg from '@/assets/page_bg.png'
+import page_bg from '@/assets/allied_plain_bg.png'
 
 export const metadata = {
   title: 'Allied Steelrode',

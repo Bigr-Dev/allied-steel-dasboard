@@ -28,10 +28,10 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
   const tomorrowUTC = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)
   )
-  console.log(typeof YMD_UTC(tomorrowUTC)) // UTC calendar date
+  //console.log(typeof YMD_UTC(tomorrowUTC)) // UTC calendar date
 
-  // const tomorrow = YMD_UTC(tomorrowUTC)
-  const tomorrow = '2025-09-29'
+  const tomorrow = YMD_UTC(tomorrowUTC)
+  // const tomorrow = '2025-09-29'
 
   // console.log('tomorrow :>> ', tomorrow)
   try {
@@ -56,6 +56,7 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       const current_user = Users?.message?.filter((u) => u.id == uid)?.[0]
       //console.log('current_user :>> ', current_user?.branch_id)
 
+      const plans = await fetchServerData('plans', 'GET')
       const assignment = await fetchServerData('auto-assign-loads', 'POST', {
         departure_date: tomorrow, // default: tomorrow
         //   "cutoff_date": "2025-09-18",     // default: today
@@ -94,8 +95,10 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
         })
       }
       //console.log('assignment :layout>> ', assignment?.data)
+      // const test = { ...plans?.data, ...assignment?.data }
+
       data = {
-        load_assignment: assignment?.data,
+        load_assignment: { ...plans?.data, ...assignment?.data },
         branches: Branches?.message,
         customers: Customers?.data,
         drivers: Drivers,

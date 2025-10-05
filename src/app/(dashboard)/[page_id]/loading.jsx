@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
-import page_bg from '@/assets/page_bg.png'
+import page_bg from '@/assets/allied_plain_bg.png'
 import Image from 'next/image'
 
 export default function Loading() {

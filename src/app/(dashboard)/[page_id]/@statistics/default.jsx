@@ -153,7 +153,7 @@ const Statistics = () => {
 
   const getTotalVehicles = (plan) => {
     // vehicles are the assigned units
-    return Array.isArray(plan.assigned_units) ? plan.assigned_units.length : 0
+    return Array.isArray(plan?.assigned_units) ? plan?.assigned_units.length : 0
   }
 
   const getTotalRoutes = (plan) => {
@@ -173,7 +173,7 @@ const Statistics = () => {
   }
 
   const getTotalSuburbs = (plan) => {
-    if (!Array.isArray(plan.assigned_units)) return 0
+    if (!Array.isArray(plan?.assigned_units)) return 0
     const suburbs = []
     plan.assigned_units.forEach((unit) => {
       unit.customers?.forEach((c) => {

@@ -4,22 +4,34 @@ import { useGlobalContext } from '@/context/global-context'
 import { AssignmentBoard } from './AssignmentBoard'
 import { useState } from 'react'
 import DetailCard from '@/components/ui/detail-card'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { AlertTriangle, Truck, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ProgressBar } from './ProgressBar'
 import { Separator } from '@/components/ui/separator'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { UnassignedList } from './UnassignedList'
 
-export function LoadAssignment() {
+export function LoadAssignment({ id, assignment, onEdit, preview }) {
   const router = useRouter()
+  const pathname = usePathname()
+  const data = assignment?.data
+  //console.log('pathname :>> ', pathname)
   const {
-    assignment: { data },
+    // assignment: { data },
   } = useGlobalContext()
+  // console.log('data :>> ', data)
   const assigned_units = data?.assigned_units || []
-  const unassigned = data?.unassigned || []
+  // const unassigned = data?.unassigned || []
   const plan = data?.plan || {}
 
+  const [unassigned, setUnassigned] = useState(data?.unassigned || [])
   const [filters, setFilters] = useState({
     scope_branch_id: 'all',
     scope_customer_name: '',
@@ -138,121 +150,173 @@ export function LoadAssignment() {
   // const onUnassignItem = async (item_id) => {
   //   await handleUnassignItem(item_id)
   // }
+  //console.log('commit :>> ', assignment?.data?.plan)
+  const handleClick = ({ unit, preview, onEdit, id }) => {
+    //console.log('unit :>> ', unit)
+    if (pathname.includes('create-plan')) {
+      router.push(`${pathname}/${unit}`)
+    } else {
+      router.push(`/load-assignment/${unit}/${id}`)
+    }
+    // switch (pathname) {
+    //   case true:
+    //     router.push(`${pathname}/${unit}`)
+    //     break
 
+    //   default:
+    //     router.push(`/load-assignment/${unit}/${id}`)
+    //     break
+    // }
+  }
   return (
-    <DetailCard title="Vehicle Assignment">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-        {assigned_units.length > 0 &&
-          assigned_units.map((unit, index) => {
-            const vehicle = getVehicleDisplay(unit)
-            const driverInfo = getDriverInfo(unit)
-            const groupedData = getGroupUnitData(unit)
-            const capacityPercentage =
-              (unit.used_capacity_kg / unit.capacity_kg) * 100
-            const isOverCapacity = capacityPercentage > 100
-            const isNearCapacity = capacityPercentage >= 85
-            //`/assignments/${plan.plan_id}/units/${unit.plan_unit_id}`
-            return (
-              <Card
-                key={unit?.plan_unit_id || index}
-                onClick={() =>
-                  router.push(`/load-assignment/${unit.plan_unit_id}`)
-                }
-                className="cursor-pointer hover:shadow-lg transition-shadow"
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-end justify-between">
-                    <div className="flex items-center gap-2">
-                      {vehicle.icon}
-                      <div>
-                        <h3 className="font-semibold text-sm">
-                          {vehicle.name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {vehicle.plate}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <User className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
-                        {driverInfo.name}
-                        {/* {driverInfo.source && (
+    <div>
+      <div className="grid gap-6 grid-cols-12  ">
+        <div className="grid col-span-12  ">
+          <Card className={'h-fit'}>
+            <CardHeader>
+              <CardTitle>
+                {assignment?.data?.plan?.id
+                  ? `Vehicle Assignment - ${assignment?.data?.plan?.notes}`
+                  : 'Tomorrows Assignment Preview'}
+              </CardTitle>
+              <CardDescription>
+                {assignment?.data?.plan?.id
+                  ? 'Manually assign loads for this plan'
+                  : 'Adjust the preview, commit, then manual assign your loads from "Assignment Plans Tab"'}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent
+              className={
+                'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 max-h-screen overflow-y-auto'
+              }
+            >
+              {assigned_units.length > 0 &&
+                assigned_units.map((unit, index) => {
+                  const vehicle = getVehicleDisplay(unit)
+                  const driverInfo = getDriverInfo(unit)
+                  const groupedData = getGroupUnitData(unit)
+                  const capacityPercentage =
+                    (unit.used_capacity_kg / unit.capacity_kg) * 100
+                  const isOverCapacity = capacityPercentage > 100
+                  const isNearCapacity = capacityPercentage >= 85
+
+                  //`/assignments/${plan.plan_id}/units/${unit.plan_unit_id}`
+                  return (
+                    <Card
+                      key={unit?.plan_unit_id || index}
+                      onClick={() => {
+                        handleClick({
+                          unit: unit.plan_unit_id,
+                          preview,
+                          onEdit,
+                          id,
+                        })
+                      }}
+                      className="cursor-pointer hover:shadow-lg transition-shadow"
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-end justify-between">
+                          <div className="flex items-center gap-2">
+                            {vehicle.icon}
+                            <div>
+                              <h3 className="font-semibold text-sm">
+                                {vehicle.name}
+                              </h3>
+                              <p className="text-xs text-muted-foreground">
+                                {vehicle.plate}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <User className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">
+                              {driverInfo.name}
+                              {/* {driverInfo.source && (
                           <span className="ml-1 text-xs opacity-75">
                             ({driverInfo.source})
                           </span>
                         )} */}
-                      </span>
-                    </div>
-                  </div>
+                            </span>
+                          </div>
+                        </div>
 
-                  <div className="flex items-center justify-between gap-2 mt-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {vehicle.type}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {unit.customers.length} customers
-                    </Badge>
-                  </div>
-                  <Separator className="mt-2" />
-                </CardHeader>
+                        <div className="flex items-center justify-between gap-2 mt-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {vehicle.type}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {unit.customers.length} customers
+                          </Badge>
+                        </div>
+                        <Separator className="mt-2" />
+                      </CardHeader>
 
-                <CardContent className="flex flex-col min-h-[150px] justify-between  ">
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    {groupedData.map((route) => (
-                      <Badge
-                        key={route.route_name}
-                        variant="outline"
-                        className="text-xs"
-                      >
-                        {route.route_name}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="mt-3 ">
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <div className="flex items-center gap-1">
-                        <span className="text-muted-foreground">Capacity</span>
-                        {isOverCapacity && (
-                          <AlertTriangle className="h-3 w-3 text-destructive" />
-                        )}
-                      </div>
-                      <span
-                        className={`font-medium ${
-                          isOverCapacity
-                            ? 'text-destructive'
-                            : isNearCapacity
-                            ? 'text-amber-600'
-                            : 'text-foreground'
-                        }`}
-                      >
-                        {unit.used_capacity_kg}kg / {unit.capacity_kg}kg
-                      </span>
-                    </div>
-                    <ProgressBar
-                      value={capacityPercentage}
-                      className={
-                        isOverCapacity
-                          ? 'bg-destructive'
-                          : isNearCapacity
-                          ? 'bg-amber-500'
-                          : 'bg-primary'
-                      }
-                    />
-                    {isOverCapacity && (
-                      <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        Over capacity by {(capacityPercentage - 100).toFixed(1)}
-                        %
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+                      <CardContent className="flex flex-col min-h-[150px] justify-between  ">
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          {groupedData.map((route) => (
+                            <Badge
+                              key={route.route_name}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {route.route_name}
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="mt-3 ">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <div className="flex items-center gap-1">
+                              <span className="text-muted-foreground">
+                                Capacity
+                              </span>
+                              {isOverCapacity && (
+                                <AlertTriangle className="h-3 w-3 text-destructive" />
+                              )}
+                            </div>
+                            <span
+                              className={`font-medium ${
+                                isOverCapacity
+                                  ? 'text-destructive'
+                                  : isNearCapacity
+                                  ? 'text-amber-600'
+                                  : 'text-foreground'
+                              }`}
+                            >
+                              {unit.used_capacity_kg}kg / {unit.capacity_kg}kg
+                            </span>
+                          </div>
+                          <ProgressBar
+                            value={capacityPercentage}
+                            className={
+                              isOverCapacity
+                                ? 'bg-destructive'
+                                : isNearCapacity
+                                ? 'bg-amber-500'
+                                : 'bg-primary'
+                            }
+                          />
+                          {isOverCapacity && (
+                            <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Over capacity by{' '}
+                              {(capacityPercentage - 100).toFixed(1)}%
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* <div className="md:col-span-3">
+          <UnassignedList items={unassigned} onItemsChange={setUnassigned} />
+        </div> */}
       </div>
-    </DetailCard>
+    </div>
   )
 }
 {
