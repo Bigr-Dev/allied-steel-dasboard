@@ -21,11 +21,12 @@ import { UnassignedList } from './UnassignedList'
 export function LoadAssignment({ id, assignment, onEdit, preview }) {
   const router = useRouter()
   const pathname = usePathname()
-  const data = assignment?.data
-  //console.log('pathname :>> ', pathname)
+
+  console.log('preview :>> ', preview)
   const {
-    // assignment: { data },
+    assignment: { data: context_data },
   } = useGlobalContext()
+  const data = preview ? context_data : assignment?.data
   // console.log('data :>> ', data)
   const assigned_units = data?.assigned_units || []
   // const unassigned = data?.unassigned || []

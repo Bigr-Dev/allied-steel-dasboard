@@ -340,6 +340,10 @@ const GlobalProvider = ({ children, data }) => {
     }
   }, [])
   // console.log('assignment :>> ', assignment)
+
+  const fetchAssignmentPreview = (data) =>
+    autoAssignLoads(assignmentDispatch, data)
+
   return (
     <GlobalContext.Provider
       value={{
@@ -348,6 +352,7 @@ const GlobalProvider = ({ children, data }) => {
         onDelete: onDelete(setAlertOpen, alertOpen, setId),
         setModalOpen,
         assignment,
+        fetchAssignmentPreview,
         assignmentDispatch,
         deletePlannedAssignmentById,
         load_assignment,

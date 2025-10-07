@@ -1,4 +1,5 @@
 // actions
+import { fetchData } from '@/lib/fetch'
 import * as assignment_actions from '../actions/assignment-actions'
 
 // api calls
@@ -23,15 +24,27 @@ export const loadAssignments = async (assignmentDispatch, data) =>
 // *****************************
 // auto assign loads
 // *****************************
-export const autoAssignLoads = async (assignmentDispatch, data) =>
-  postApi({
-    dispatch: assignmentDispatch,
-    url: `${API_URL}/auto-assign`,
-    data,
-    onStart: assignment_actions.autoAssignLoadsStart,
-    onSuccess: assignment_actions.autoAssignLoadsSuccess,
-    onFailure: assignment_actions.autoAssignLoadsFailure,
-  })
+export const autoAssignLoads = async (assignmentDispatch, data) => {
+  assignmentDispatch(assignment_actions.autoAssignLoadsStart())
+  try {
+    const r = await fetchData(`plans`, 'POST', data)
+    assignmentDispatch(assignment_actions.autoAssignLoadsSuccess(r))
+    // console.log('r :>> ', r)
+  } catch (error) {
+    console.log('error :>> ', error)
+    assignmentDispatch(assignment_actions.autoAssignLoadsFailure(error))
+  }
+}
+// postApi({
+//   dispatch: assignmentDispatch,
+//   Start: assignment_actions.autoAssignLoadsStart,
+//   Success: assignment_actions.autoAssignLoadsSuccess,
+//   successMsg: 'success',
+//   Failure: assignment_actions.autoAssignLoadsFailure,
+//   errorMsg: 'Something went wrong, while fetching the assignment preview',
+//   url: `plans`,
+//   data: data,
+// })
 
 // *****************************
 // manually assign loads

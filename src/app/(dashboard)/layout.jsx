@@ -57,13 +57,13 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       //console.log('current_user :>> ', current_user?.branch_id)
 
       const plans = await fetchServerData('plans', 'GET')
-      const assignment = await fetchServerData('auto-assign-loads', 'POST', {
-        departure_date: tomorrow, // default: tomorrow
-        //   "cutoff_date": "2025-09-18",     // default: today
-        branch_id: current_user?.branch_id,
-        commit: false, // preview (no DB writes) if false
-        routeAffinitySlop: 0.25,
-      })
+      // const assignment = await fetchServerData('auto-assign-loads', 'POST', {
+      //   departure_date: tomorrow, // default: tomorrow
+      //   //   "cutoff_date": "2025-09-18",     // default: today
+      //   branch_id: current_user?.branch_id,
+      //   commit: false, // preview (no DB writes) if false
+      //   routeAffinitySlop: 0.25,
+      // })
 
       let AssignedLoads = {}
       if (Users?.message) {
@@ -98,7 +98,10 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       // const test = { ...plans?.data, ...assignment?.data }
 
       data = {
-        load_assignment: { ...plans?.data, ...assignment?.data },
+        load_assignment: {
+          ...plans?.data,
+          // ...assignment?.data
+        },
         branches: Branches?.message,
         customers: Customers?.data,
         drivers: Drivers,
