@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Dashboard: Vehicles + Routes + Live TCP overlay
+ * Dashboard: Vehicles Routes Live TCP overlay
  * - Expects you provide the auto-assign payload in global context: load_assignment?.data
  * - Reads: data.plan, data.plans (list), data.assigned_units
  * - Builds "route cards" from assigned_units (vehicle_id, total weight, load count, loads[])
@@ -37,7 +37,7 @@ import {
   Map as MapIcon,
 } from 'lucide-react'
 
-// app context + helpers
+// app context helpers
 import { useGlobalContext } from '@/context/global-context'
 import {
   createVehicleMarker,
@@ -59,7 +59,8 @@ export default function VehicleDashboard({
   tcpSocketUrl = 'ws://64.227.138.235:8001',
   initialTcp = null,
 } = {}) {
-  const { load_assignment } = useGlobalContext()
+  const { load_assignment, vehicles } = useGlobalContext()
+  console.log('vehicles :>> ', vehicles?.data)
 
   // Persist markers across renders
   const markerByPlateRef = useRef(new Map()) // Map<PLATE, mapboxgl.Marker>
@@ -73,23 +74,17 @@ export default function VehicleDashboard({
     el.classList.toggle('ring-2', !!isSelected)
     el.classList.toggle('ring-primary', !!isSelected)
   }
-
   // ---------- Source data ----------
-  // We expect the payload to look like your sample:
-  // {
-  //   plan: {...}, assigned_units: [...], unassigned: [...],
-  //   plans: [{id, run_at, departure_date, ...}, ...]
-  // }
+  // Prefer vehicles?.data; fall back to prior load_assignment shape if needed
   const data = load_assignment?.data || {}
+  const vehiclesList = Array.isArray(vehicles?.data) ? vehicles.data : []
+  const usingVehiclesOnly = vehiclesList.length > 0
 
+  // legacy (only used if vehiclesList is empty)
   const initialAssignedUnits = data?.assigned_units || []
   const planList = Array.isArray(data?.plans) ? data.plans : []
   const currentPlan = data?.plan || null
-
-  // Selected plan state (default to current plan if present)
   const [selectedPlanId, setSelectedPlanId] = useState(currentPlan?.id ?? '')
-
-  // Assigned units for the active view (we keep this local so plan switch can update it)
   const [assignedUnits, setAssignedUnits] = useState(initialAssignedUnits)
 
   // ---------- Live TCP upsert by Plate ----------
@@ -189,22 +184,35 @@ export default function VehicleDashboard({
   })
   const mapContainer = useRef(null)
 
-  // Transform assigned_units → route cards the rest of the UI expects
+  // Helper to choose a plate-like identifier from vehicle record
+  const pickPlate = (v) =>
+    String(
+      v?.license_plate || v?.reg_number || v?.fleet_number || v?.id || ''
+    ).toUpperCase()
+
+  // Transform either vehicles?.data or assigned_units → cards the UI expects
   const routeCards = useMemo(() => {
+    if (usingVehiclesOnly) {
+      // Build "vehicle cards" from vehicles list (no route info available here)
+      return vehiclesList.map((v) => ({
+        vehicle_id: pickPlate(v), // aligns with live marker Plate
+        assigned_load_count: 0, // unknown without load_assignment
+        total_assigned_kg: 0, // unknown without load_assignment
+        loads: [], // unknown; keep shape for filters/UI
+        _vehicle: v, // keep raw ref for future use
+      }))
+    }
+    // legacy path: assigned_units → route cards (unchanged)
     return (assignedUnits || []).map((u) => {
-      // choose a primary plate for the card id & map highlight
       const plate =
         u?.rigid?.plate ||
         u?.horse?.plate ||
         u?.trailer?.plate ||
         u?.plan_unit_id
-
-      // derive total weight + load count + a compact loads[] list
       let total_kg = 0
       let loadCount = 0
       const loads = []
       const seenRoutes = new Set()
-
       for (const cust of u.customers || []) {
         for (const order of cust.orders || []) {
           total_kg += Number(order.total_assigned_weight_kg || 0)
@@ -216,18 +224,16 @@ export default function VehicleDashboard({
           loads.push({ route_name: rn })
         }
       }
-
       return {
-        vehicle_id: plate, // keep this a plate so clicking live markers & cards align
+        vehicle_id: plate,
         assigned_load_count: loadCount,
         total_assigned_kg: total_kg,
         loads,
-        // keep a reference if you need to show capacity/driver/etc. in cards later
         _unit: u,
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assignedUnits])
+  }, [assignedUnits, vehiclesList, usingVehiclesOnly])
 
   // Initial mapbox glue
   useEffect(() => {
@@ -260,7 +266,7 @@ export default function VehicleDashboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map])
 
-  // Filter application → responds to live + routeCards + filters
+  // Filter application → responds to live routeCards filters
   useEffect(() => {
     const result = applyFilters(liveVehicles, routeCards, filters)
     setFilteredData(result)
@@ -269,7 +275,7 @@ export default function VehicleDashboard({
   // Use the already-filtered list you render on the left
   const markersSig = useMemo(() => {
     const live = filteredData.filteredLive || []
-    // only what affects position + identity
+    // only what affects position identity
     return JSON.stringify(
       live.map((v) => [
         String(v.Plate || '').toUpperCase(),
@@ -493,33 +499,30 @@ export default function VehicleDashboard({
   return (
     <div className="h-full bg-background">
       {/* HEADER (kept lightweight to preserve your look/feel) */}
-      <div className="border-b bg-card">
+      {/* <div className="border-b bg-transparent ">
         <div className="flex h-16 items-center px-4 md:px-6 gap-3">
-          <div className="flex items-center space-x-2">
-            <Truck className="h-5 w-5 text-primary" />
-            <h1 className="text-base md:text-lg font-semibold text-foreground">
-              Fleet Dashboard
-            </h1>
-          </div>
-
-          {/* Plan selector (from data.plans) */}
+      
           <div className="ml-auto flex items-center gap-3">
-            <Select value={selectedPlanId || ''} onValueChange={onPlanChange}>
-              <SelectTrigger className="w-[260px]">
-                <SelectValue
-                  placeholder={
-                    currentPlan ? prettyPlanLabel(currentPlan) : 'Select plan…'
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent className="max-h-72">
-                {planList.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {prettyPlanLabel(p)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {!usingVehiclesOnly && (
+              <Select value={selectedPlanId || ''} onValueChange={onPlanChange}>
+                <SelectTrigger className="w-[260px]">
+                  <SelectValue
+                    placeholder={
+                      currentPlan
+                        ? prettyPlanLabel(currentPlan)
+                        : 'Select plan…'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {planList.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {prettyPlanLabel(p)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <Button
               variant={showRoutes ? 'default' : 'outline'}
@@ -540,20 +543,44 @@ export default function VehicleDashboard({
               <Zap className="h-4 w-4" />
               <span>{isLiveTracking ? 'Live' : 'Paused'}</span>
             </Button>
-
-            <Badge variant="outline" className="text-xs md:text-sm">
-              {liveVehicles.length + routeCards.length} vehicles
-            </Badge>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div className="flex h-[calc(100vh-4rem)]">
-        {/* LEFT COLUMN: Live Fleet + Scheduled Routes */}
+        {/* LEFT COLUMN: Live Fleet Scheduled Routes */}
         <div className="w-80 border-r bg-card overflow-y-auto">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Live Fleet</h2>
+              {/* <div className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-primary" color="#003e69" />
+                <Badge variant="outline" className="text-xs md:text-sm">
+                  {liveVehicles.length +
+                    (usingVehiclesOnly
+                      ? vehiclesList.length
+                      : routeCards.length)}{' '}
+                  vehicles
+                </Badge>
+              </div> */}
+              <Button
+                variant={showRoutes ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowRoutes(!showRoutes)}
+                className="hidden md:inline-flex items-center space-x-2"
+              >
+                <MapIcon className="h-4 w-4" />
+                <span>Routes</span>
+              </Button>
+
+              <Button
+                variant={isLiveTracking ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setIsLiveTracking(!isLiveTracking)}
+                className="hidden md:inline-flex items-center space-x-2"
+              >
+                <Zap className="h-4 w-4" />
+                <span>{isLiveTracking ? 'Live' : 'Paused'}</span>
+              </Button>
               <Button
                 variant={showAllVehicles ? 'default' : 'outline'}
                 size="sm"
@@ -566,9 +593,9 @@ export default function VehicleDashboard({
               </Button>
             </div>
 
-            {tcpError && (
+            {/* {tcpError && (
               <div className="text-xs text-red-600 mb-3">{tcpError}</div>
-            )}
+            )} */}
 
             {filteredData.filteredLive.map((vehicle) => (
               <Card
@@ -636,7 +663,7 @@ export default function VehicleDashboard({
 
             <div className="border-t pt-4 mt-4">
               <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                Scheduled Routes
+                {usingVehiclesOnly ? 'Vehicles' : 'Scheduled Routes'}
               </h3>
 
               {filteredData.filteredRoutes.slice(0, 3).map((vehicle, index) => (
@@ -655,7 +682,7 @@ export default function VehicleDashboard({
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-medium">
-                        Route {index + 1}
+                        Route {index}
                       </CardTitle>
                       <div className="flex items-center space-x-1">
                         <Badge variant="secondary" className="text-xs">
@@ -700,7 +727,7 @@ export default function VehicleDashboard({
           </div>
         </div>
 
-        {/* RIGHT: Map + info panel */}
+        {/* RIGHT: Map info panel */}
         <div className="flex-1 relative">
           <div
             ref={mapContainer}

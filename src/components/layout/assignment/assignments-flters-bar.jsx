@@ -141,7 +141,7 @@ export default function AssignmentsFiltersBar({
     return {
       departure_date: depISO,
       cutoff_date: cutISO,
-      scope_branch_id: branch,
+      branch_id: branch,
       notes: f.scope_customer_name || '',
       commit: !!commitFlag,
     }

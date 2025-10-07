@@ -25,8 +25,11 @@ export async function POST(req) {
   console.log('body :>> ', body)
   try {
     const response = await fetchServerData('auto-assign-loads', 'POST', body)
-    console.log('loads response :>> ', response)
-    return NextResponse.json(response?.data, { status: 200 })
+    // console.log('loads response :>> ', response)
+    if (response && response?.status == 500) {
+      return NextResponse.json({ error: response?.message }, { status: 500 })
+    }
+    return NextResponse.json(response?.data || response, { status: 200 })
   } catch (error) {
     console.error('Error fetching data:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
