@@ -30,13 +30,14 @@ function todayTomorrow() {
 const { today, tomorrow, yesterday } = todayTomorrow()
 
 const CreatePlan = async ({ id, onEdit, preview }) => {
-  const assignment = await fetchServerData('auto-assign-loads', 'POST', {
-    departure_date: tomorrow, // default: tomorrow
-    cutoff_date: today, // default: today
-    // branch_id: current_user?.branch_id,
-    commit: false, // preview (no DB writes) if false
-    routeAffinitySlop: 0.25,
-  })
+  // const assignment = await fetchServerData('auto-assign-loads', 'POST', {
+  //   departure_date: tomorrow, // default: tomorrow
+  //   cutoff_date: today, // default: today
+  //   // branch_id: current_user?.branch_id,
+  //   commit: false, // preview (no DB writes) if false
+  //   routeAffinitySlop: 0.25,
+  // })
+  const assignment = []
 
   console.log('assignment :>> ', assignment)
   const data = assignment?.data
@@ -181,7 +182,7 @@ const CreatePlan = async ({ id, onEdit, preview }) => {
         <AssignmentsFiltersBar />
 
         <div className="space-y-6 h-full overflow-y-auto  p-1">
-          <LoadAssignment id={id} assignment={[]} preview={true} />
+          <LoadAssignment id={id} assignment={assignment} preview={true} />
         </div>
       </>
       {/* )} */}

@@ -25,14 +25,15 @@ export const loadAssignments = async (assignmentDispatch, data) =>
 // auto assign loads
 // *****************************
 export const autoAssignLoads = async (assignmentDispatch, data) => {
-  assignmentDispatch(assignment_actions.autoAssignLoadsStart())
+  //assignmentDispatch(assignment_actions.autoAssignLoadsStart())
   try {
     const r = await fetchData(`plans`, 'POST', data)
-    assignmentDispatch(assignment_actions.autoAssignLoadsSuccess(r))
-    // console.log('r :>> ', r)
+    //(assignment_actions.autoAssignLoadsSuccess(r))
+   // console.log('r :>> ', r)
+    return r
   } catch (error) {
     console.log('error :>> ', error)
-    assignmentDispatch(assignment_actions.autoAssignLoadsFailure(error))
+    // assignmentDispatch(assignment_actions.autoAssignLoadsFailure(error))
   }
 }
 // postApi({

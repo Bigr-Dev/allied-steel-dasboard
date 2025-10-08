@@ -22,7 +22,7 @@ export async function GET(req) {
 // *****************************
 export async function POST(req) {
   const body = await req?.json()
-  console.log('body :>> ', body)
+  //console.log('body :>> ', body)
   try {
     const response = await fetchServerData('auto-assign-loads', 'POST', body)
     // console.log('loads response :>> ', response)

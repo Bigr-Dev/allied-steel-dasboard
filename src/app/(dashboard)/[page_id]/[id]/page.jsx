@@ -164,7 +164,7 @@ const SinglePage = async ({ params }) => {
         },
       ]
 
-      console.log('assignment?.data :page_id>> ', assignment?.data)
+      // console.log('assignment?.data :page_id>> ', assignment?.data)
       return (
         <>
           {assignment?.data && (

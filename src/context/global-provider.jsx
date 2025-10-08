@@ -340,9 +340,11 @@ const GlobalProvider = ({ children, data }) => {
     }
   }, [])
   // console.log('assignment :>> ', assignment)
-
-  const fetchAssignmentPreview = (data) =>
-    autoAssignLoads(assignmentDispatch, data)
+  const [assignment_preview, setAssignmentPreview] = useState([])
+  const fetchAssignmentPreview = async (data) => {
+    const r = await autoAssignLoads(assignmentDispatch, data)
+    setAssignmentPreview(r)
+  }
 
   return (
     <GlobalContext.Provider
@@ -350,6 +352,7 @@ const GlobalProvider = ({ children, data }) => {
         onCreate: onCreate(setModalOpen, modalOpen, setHref),
         onEdit: onEdit(setModalOpen, modalOpen, setId),
         onDelete: onDelete(setAlertOpen, alertOpen, setId),
+        assignment_preview,
         setModalOpen,
         assignment,
         fetchAssignmentPreview,

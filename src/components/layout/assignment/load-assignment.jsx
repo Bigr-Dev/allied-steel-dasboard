@@ -22,11 +22,12 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
   const router = useRouter()
   const pathname = usePathname()
 
-  console.log('preview :>> ', preview)
+  //console.log('preview :>> ', preview)
   const {
     assignment: { data: context_data },
+    assignment_preview,
   } = useGlobalContext()
-  const data = preview ? context_data : assignment?.data
+  const data = preview ? assignment_preview : assignment?.data
   // console.log('data :>> ', data)
   const assigned_units = data?.assigned_units || []
   // const unassigned = data?.unassigned || []
