@@ -23,7 +23,7 @@ export async function getRoute({ waypoints, profile = 'driving' }) {
   }
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
-    console.error('[v0] getRoute: NEXT_PUBLIC_MAPBOX_TOKEN not found')
+    // console.error('[v0] getRoute: NEXT_PUBLIC_MAPBOX_TOKEN not found')
     return { error: 'Mapbox token not configured' }
   }
 
@@ -31,7 +31,7 @@ export async function getRoute({ waypoints, profile = 'driving' }) {
 
   // Check cache first
   if (routeCache.has(cacheKey)) {
-    console.log('[v0] getRoute: Using cached route')
+    // console.log('[v0] getRoute: Using cached route')
     return routeCache.get(cacheKey)
   }
 
@@ -43,7 +43,7 @@ export async function getRoute({ waypoints, profile = 'driving' }) {
       `https://api.mapbox.com/directions/v5/mapbox/${profile}/${coordinates}` +
       `?geometries=geojson&overview=full&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
 
-    console.log('[v0] getRoute: Fetching route from Mapbox Directions API')
+    // console.log('[v0] getRoute: Fetching route from Mapbox Directions API')
     const response = await fetch(url)
 
     if (!response.ok) {
@@ -72,7 +72,7 @@ export async function getRoute({ waypoints, profile = 'driving' }) {
 
     // Cache the result
     routeCache.set(cacheKey, result)
-    console.log('[v0] getRoute: Route cached successfully')
+    // console.log('[v0] getRoute: Route cached successfully')
 
     return result
   } catch (error) {
@@ -111,7 +111,7 @@ export async function matchRoute({ coords, profile = 'driving' }) {
   }
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
-    console.error('[v0] matchRoute: NEXT_PUBLIC_MAPBOX_TOKEN not found')
+    // console.error('[v0] matchRoute: NEXT_PUBLIC_MAPBOX_TOKEN not found')
     return { error: 'Mapbox token not configured' }
   }
 
@@ -119,7 +119,7 @@ export async function matchRoute({ coords, profile = 'driving' }) {
 
   // Check cache first
   if (routeCache.has(cacheKey)) {
-    console.log('[v0] matchRoute: Using cached matched route')
+    //console.log('[v0] matchRoute: Using cached matched route')
     return routeCache.get(cacheKey)
   }
 
@@ -131,9 +131,9 @@ export async function matchRoute({ coords, profile = 'driving' }) {
       `https://api.mapbox.com/matching/v5/mapbox/${profile}/${coordinates}` +
       `?geometries=geojson&overview=full&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
 
-    console.log(
-      '[v0] matchRoute: Fetching matched route from Mapbox Map Matching API'
-    )
+    // console.log(
+    //   '[v0] matchRoute: Fetching matched route from Mapbox Map Matching API'
+    // )
     const response = await fetch(url)
 
     if (!response.ok) {
@@ -163,7 +163,7 @@ export async function matchRoute({ coords, profile = 'driving' }) {
 
     // Cache the result
     routeCache.set(cacheKey, result)
-    console.log('[v0] matchRoute: Matched route cached successfully')
+    //  console.log('[v0] matchRoute: Matched route cached successfully')
 
     return result
   } catch (error) {
@@ -194,7 +194,7 @@ export async function matchRoute({ coords, profile = 'driving' }) {
  */
 export function clearRouteCache() {
   routeCache.clear()
-  console.log('[v0] Route cache cleared')
+  // console.log('[v0] Route cache cleared')
 }
 
 /**

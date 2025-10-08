@@ -56,11 +56,30 @@ export default function VehicleDashboard({
   // optional: let parent handle plan fetch on selection
   onSelectPlan, // (planId) => Promise<{ plan, assigned_units, ... }>
   // optional: pass a ws url override or initial tcp payload
-  tcpSocketUrl = 'ws://64.227.138.235:8001',
+  // tcpSocketUrl = 'ws://64.227.138.235:8001',
+  tcpSocketUrl = null,
   initialTcp = null,
 } = {}) {
-  const { load_assignment, vehicles } = useGlobalContext()
-  console.log('vehicles :>> ', vehicles?.data)
+  const { load_assignment, vehicles, assignment } = useGlobalContext()
+  // console.log('vehicles :>> ', assignment?.data)
+
+  const computedWsUrl = useMemo(() => {
+    if (typeof window === 'undefined') return null
+
+    // Support full ws:// or wss:// URL in env
+    const envUrl =
+      process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_WS_PATH || ''
+
+    if (/^wss?:\/\//i.test(envUrl)) {
+      return envUrl
+    }
+
+    // Otherwise build from current page + path
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    const host = window.location.host
+    const path = (envUrl || '/ws/').replace(/([^/])$/, '$1/') // ensure trailing /
+    return `${proto}://${host}${path}`
+  }, [])
 
   // Persist markers across renders
   const markerByPlateRef = useRef(new Map()) // Map<PLATE, mapboxgl.Marker>
@@ -69,10 +88,15 @@ export default function VehicleDashboard({
   // Toggle selected styling on an existing marker element (uses your ring classes)
   function setMarkerSelected(marker, isSelected) {
     if (!marker) return
+    // const el = marker.getElement?.()
+    // if (!el) return
+    // el.classList.toggle('ring-2', !!isSelected)
+    // el.classList.toggle('ring-primary', !!isSelected)
     const el = marker.getElement?.()
-    if (!el) return
-    el.classList.toggle('ring-2', !!isSelected)
-    el.classList.toggle('ring-primary', !!isSelected)
+    const inner = el?.querySelector?.('.marker-inner')
+    if (!inner) return
+    inner.classList.toggle('ring-2', !!isSelected)
+    inner.classList.toggle('ring-primary', !!isSelected)
   }
   // ---------- Source data ----------
   // Prefer vehicles?.data; fall back to prior load_assignment shape if needed
@@ -110,10 +134,13 @@ export default function VehicleDashboard({
 
   // WebSocket → upsert by Plate
   useEffect(() => {
-    if (!tcpSocketUrl) return
+    // if (!tcpSocketUrl) return
+    const url = tcpSocketUrl || computedWsUrl
+    if (!url) return
     let ws
     try {
-      ws = new WebSocket(tcpSocketUrl)
+      // ws = new WebSocket(tcpSocketUrl)
+      ws = new WebSocket(url)
     } catch (e) {
       setTcpError('⚠️ Could not open WebSocket')
       return
@@ -148,7 +175,7 @@ export default function VehicleDashboard({
       } catch {}
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tcpSocketUrl])
+  }, [tcpSocketUrl, computedWsUrl])
 
   function upsertLive(newPackets) {
     setLiveVehicles((prev) => {
