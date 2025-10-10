@@ -158,12 +158,12 @@ const PageTitle = () => {
         <Button
           onClick={() => {
             switch (pathname) {
-              case 'load-assignment':
-                console.log(
-                  'create load assignment load-assignment :PageTitle>> '
-                )
-                push('/load-assignment/create-plan')
-                break
+              // case 'load-assignment':
+              //   console.log(
+              //     'create load assignment load-assignment :PageTitle>> '
+              //   )
+              //   push('/load-assignment/create-plan')
+              //   break
 
               default:
                 onCreate()

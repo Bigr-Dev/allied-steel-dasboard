@@ -13,6 +13,13 @@ export const getAccessibleRoutes = (permissions) => {
         permission: null, // Accessible to all authenticated users
       },
       {
+        label: 'load-assignment',
+        icon: 'ChartColumnBig',
+        href: '/load-assignment',
+        color: 'text-sky-500',
+        permission: null, // Accessible to all authenticated users
+      },
+      {
         label: 'Vehicles',
         icon: 'Truck',
         href: '/vehicles',
@@ -35,7 +42,7 @@ export const getAccessibleRoutes = (permissions) => {
       },
     ]
   }
-  console.log('permissions :>> ', permissions)
+  // console.log('permissions :>> ', permissions)
   return routes.filter((route) => {
     // Route doesn't require a permission → allow
     if (!route.permission) {

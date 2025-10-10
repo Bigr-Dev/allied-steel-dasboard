@@ -19,7 +19,7 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
   const pathname = usePathname().slice(1)
   const screen = replaceHyphenWithUnderscore(pathname)
   const { toast } = useToast()
-
+  console.log('screen :>> ', screen)
   //       orders,
   //       ordersDispatch,
   //       deleteOrder,
@@ -39,12 +39,18 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
     routesDispatch,
     deleteLoad,
     loadsDispatch,
+    assignment,
     assignmentDispatch,
     deletePlannedAssignmentById,
   } = useGlobalContext()
   let deleteItem = null
   let dispatch = null
+  let name = id
   //console.log('screen :>> ', screen)
+  // console.log(
+  //   'assignment :>> ',
+  //   assignment?.data?.plans?.filter((p) => p.id == id)?.[0]?.notes
+  // )
   switch (screen) {
     case 'branches':
       deleteItem = deleteBranch
@@ -84,19 +90,34 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
     case 'load_assignment':
       deleteItem = deletePlannedAssignmentById
       dispatch = assignmentDispatch
-
+      name =
+        assignment?.data?.plans?.filter((p) => p.id == id)?.[0]?.notes || id
+      break
     default:
       deleteItem = null
       break
   }
 
+  // console.log('deleteItem :>> ', deleteItem)
+  // console.log('dispatch :>> ', dispatch)
+  // console.log('id :>> ', id)
   const handleDelete = async () => {
     const readableScreen = pathname?.replace(/-/g, ' ')
 
-    if (!deleteItem || !dispatch) {
+    if (!dispatch) {
       toast({
         title: 'Error deleting item',
-        description: 'This item cannot be deleted from this screen.',
+        description:
+          'This item cannot be deleted from this screen.-dispatch missing',
+      })
+      return
+    }
+
+    if (!deleteItem) {
+      toast({
+        title: 'Error deleting item',
+        description:
+          'This item cannot be deleted from this screen.-deleteItem missing',
       })
       return
     }
@@ -120,14 +141,23 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            You are about to remove item with id {id} from {screen} data This
+            You are about to remove{name == id ? ` item with id` : null}{' '}
+            <span className="font-bold text-[#003e69]">{name}</span> from{' '}
+            <span className="font-bold text-[#003e69]">{screen}</span> data This
             action cannot be undone. This will permanently delete your account
             and remove your data from our servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+          <AlertDialogCancel className="border-[#003e69]">
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-[#003e69] hover:bg-[#428bca]"
+          >
+            Continue
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

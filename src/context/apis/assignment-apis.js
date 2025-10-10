@@ -24,18 +24,29 @@ export const loadAssignments = async (assignmentDispatch, data) =>
 // *****************************
 // auto assign loads
 // *****************************
-export const autoAssignLoads = async (assignmentDispatch, data) => {
-  //assignmentDispatch(assignment_actions.autoAssignLoadsStart())
-  try {
-    const r = await fetchData(`plans`, 'POST', data)
-    //(assignment_actions.autoAssignLoadsSuccess(r))
-   // console.log('r :>> ', r)
-    return r
-  } catch (error) {
-    console.log('error :>> ', error)
-    // assignmentDispatch(assignment_actions.autoAssignLoadsFailure(error))
-  }
-}
+export const autoAssignLoads = async (assignmentDispatch, data) =>
+  postApi({
+    dispatch: assignmentDispatch,
+    start: assignment_actions.autoAssignLoadsStart,
+    success: assignment_actions.autoAssignLoadsSuccess,
+    successMsg: 'success',
+    failure: assignment_actions.autoAssignLoadsFailure,
+    errorMsg: 'Something went wrong, while fetching the assignment preview',
+    url: `plans`,
+    data,
+  })
+//   {
+//   //assignmentDispatch(assignment_actions.autoAssignLoadsStart())
+//   try {
+//     const r = await fetchData(`plans`, 'POST', data)
+//     //(assignment_actions.autoAssignLoadsSuccess(r))
+//     // console.log('r :>> ', r)
+//     return r
+//   } catch (error) {
+//     console.log('error :>> ', error)
+//     // assignmentDispatch(assignment_actions.autoAssignLoadsFailure(error))
+//   }
+// }
 // postApi({
 //   dispatch: assignmentDispatch,
 //   Start: assignment_actions.autoAssignLoadsStart,
@@ -117,7 +128,7 @@ export const fetchPlannedAssignmentById = async (assignmentDispatch, id) =>
 // *****************************
 // delete driver
 // *****************************
-export const deletePlannedAssignmentById = async (assignmentDispatch, id) =>
+export const deletePlannedAssignmentById = async (id, assignmentDispatch) =>
   deleteApi({
     dispatch: assignmentDispatch,
     start: assignment_actions.deletePlannedAssignmentByIdStart,
@@ -126,5 +137,5 @@ export const deletePlannedAssignmentById = async (assignmentDispatch, id) =>
     successMsg: `plan with id: ${id} has been deleted.`,
     failure: assignment_actions.deletePlannedAssignmentByIdFailure,
     errorMsg: 'Something went wrong, while deleting plan',
-    url: API_URL,
+    url: `plans`,
   })

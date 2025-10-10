@@ -35,3 +35,19 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
+
+// *****************************
+// delete a user by id
+// *****************************
+export async function DELETE(req, { params }) {
+  const { id, planId } = await params
+
+  try {
+    const response = await fetchServerData(`${url}/${planId}`, 'DELETE')
+    console.log('response :>> /plans', response)
+    return NextResponse.json(response, { status: 200 })
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}

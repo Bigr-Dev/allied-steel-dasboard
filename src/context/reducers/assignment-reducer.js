@@ -53,6 +53,8 @@ const assignmentReducer = (state, action) => {
         data: action.payload,
       }
     case assignment.DELETE_PLANNED_ASSIGNMENT_BY_ID:
+      // console.log('state.plans :>> ', state.plans)
+      // console.log('action.payload :>> ', action.payload)
       return {
         ...state,
         plans: Array.isArray(state.plans)

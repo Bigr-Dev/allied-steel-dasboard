@@ -183,7 +183,7 @@ export const deleteApi = async ({
     // Handle new standardized response format
     const responseData = response
     // if (responseData && responseData !== undefined) {
-    //   dispatch(success(responseData))
+    dispatch(success(responseData))
     // } else {
     //   // Fallback for old format
     //   dispatch(success(responseData))

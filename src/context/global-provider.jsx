@@ -271,6 +271,10 @@ const GlobalProvider = ({ children, data }) => {
     },
     {
       table: 'assignment_plans',
+      onInsert: (r) =>
+        console.log('r-insert assignment_plans:>> GlobalProvider', r),
+      onUpdate: (r) =>
+        console.log('r-update assignment_plans:>> GlobalProvider', r),
       //  onInsert: (r) => assignmentDispatch(assignment_actions. (r)),
       //   onUpdate: (r) => assignmentDispatch(assignment_actions.updateBranchSuccess(r)),
       onDelete: (o) =>
@@ -341,10 +345,8 @@ const GlobalProvider = ({ children, data }) => {
   }, [])
   // console.log('assignment :>> ', assignment)
   const [assignment_preview, setAssignmentPreview] = useState([])
-  const fetchAssignmentPreview = async (data) => {
-    const r = await autoAssignLoads(assignmentDispatch, data)
-    setAssignmentPreview(r)
-  }
+  const fetchAssignmentPreview = async (data) =>
+    autoAssignLoads(assignmentDispatch, data)
 
   return (
     <GlobalContext.Provider
