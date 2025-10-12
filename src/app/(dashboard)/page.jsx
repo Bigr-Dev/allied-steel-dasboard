@@ -60,8 +60,8 @@ export default function VehicleDashboard({
   tcpSocketUrl = null,
   initialTcp = null,
 } = {}) {
-  const { load_assignment, vehicles, assignment } = useGlobalContext()
-  // console.log('vehicles :>> ', assignment?.data)
+  const { load_assignment = {}, vehicles, assignment } = useGlobalContext()
+  console.log('vehicles :>> ', assignment?.data)
 
   const computedWsUrl = useMemo(() => {
     if (typeof window === 'undefined') return null

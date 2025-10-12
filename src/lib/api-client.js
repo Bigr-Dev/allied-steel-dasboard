@@ -73,7 +73,7 @@ export const assignmentAPI = {
 
   // Manually assign item to vehicle
   assignItem: (itemId, vehicleId) => {
-    return apiRequest('/manual-assign', {
+    return apiRequest('plans/manual-assign', {
       method: 'POST',
       body: JSON.stringify({
         item_id: itemId,

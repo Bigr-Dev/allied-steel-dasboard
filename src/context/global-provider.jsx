@@ -271,10 +271,13 @@ const GlobalProvider = ({ children, data }) => {
     },
     {
       table: 'assignment_plans',
-      onInsert: (r) =>
-        console.log('r-insert assignment_plans:>> GlobalProvider', r),
-      onUpdate: (r) =>
-        console.log('r-update assignment_plans:>> GlobalProvider', r),
+      onInsert: (r) => {
+        return console.log('r-insert assignment_plans:>> GlobalProvider', r)
+      },
+      //assignmentDispatch(assignment_actions.addPlanSuccess(r)),
+      onUpdate: (r) => {
+        return console.log('r-update assignment_plans:>> GlobalProvider', r)
+      },
       //  onInsert: (r) => assignmentDispatch(assignment_actions. (r)),
       //   onUpdate: (r) => assignmentDispatch(assignment_actions.updateBranchSuccess(r)),
       onDelete: (o) =>
@@ -315,34 +318,118 @@ const GlobalProvider = ({ children, data }) => {
   ]
 
   //  realtime subscription
+  // global-provider.jsx (inside GlobalProvider)
   useEffect(() => {
-    const channels = TABLES.map(({ table, onInsert, onUpdate, onDelete }) => {
-      const ch = supabase
-        .channel(`${table}-rt`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table },
-          (p) => onInsert?.(p.new)
-        )
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table },
-          (p) => onUpdate?.(p.new)
-        )
-        .on(
-          'postgres_changes',
-          { event: 'DELETE', schema: 'public', table },
-          (p) => onDelete?.(p.old)
-        )
-        .subscribe()
+    // Guard: need a branch filter and a logged-in user before subscribing
+    if (!current_user?.currentUser?.id) return
 
-      return ch
+    // Build a simple filter by branch_id if applicable
+    // If you want "All", set filter to null to receive everything (or skip the table).
+    const branchId = dashboardState?.value
+    const makeFilter = (table) =>
+      branchId && branchId !== 'all' ? `branch_id=eq.${branchId}` : null
+
+    // Single shared channel for all tables
+    const ch = supabase.channel('app-rt')
+
+    // helper to batch dispatches
+    let queue = []
+    let scheduled = false
+    const enqueue = (fn) => {
+      queue.push(fn)
+      if (!scheduled) {
+        scheduled = true
+        // batch on next tick
+        Promise.resolve().then(() => {
+          const fns = queue
+          queue = []
+          scheduled = false
+          // run all dispatches together
+          fns.forEach((f) => f())
+        })
+      }
+    }
+
+    const addTable = ({ table, onInsert, onUpdate, onDelete }) => {
+      const filter = makeFilter(table)
+
+      // INSERT
+      ch.on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table,
+          ...(filter ? { filter } : {}),
+        },
+        (p) => enqueue(() => onInsert?.(p.new))
+      )
+      // UPDATE
+      ch.on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table,
+          ...(filter ? { filter } : {}),
+        },
+        (p) => enqueue(() => onUpdate?.(p.new))
+      )
+      // DELETE
+      ch.on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table,
+          ...(filter ? { filter } : {}),
+        },
+        (p) => enqueue(() => onDelete?.(p.old))
+      )
+    }
+
+    // Attach all your tables to the one channel
+    TABLES.forEach(addTable)
+
+    // Subscribe once
+    ch.subscribe((status) => {
+      // optional: console.log('realtime status', status)
     })
 
     return () => {
-      channels.forEach((ch) => supabase.removeChannel(ch))
+      // Remove the whole channel (and every handler registered on it)
+      supabase.removeChannel(ch)
     }
-  }, [])
+  }, [dashboardState?.value, current_user?.currentUser?.id])
+
+  // useEffect(() => {
+  //   const channels = TABLES.map(({ table, onInsert, onUpdate, onDelete }) => {
+  //     const ch = supabase
+  //       .channel(`${table}-rt`)
+  //       .on(
+  //         'postgres_changes',
+  //         { event: 'INSERT', schema: 'public', table },
+  //         (p) => onInsert?.(p.new)
+  //       )
+  //       .on(
+  //         'postgres_changes',
+  //         { event: 'UPDATE', schema: 'public', table },
+  //         (p) => onUpdate?.(p.new)
+  //       )
+  //       .on(
+  //         'postgres_changes',
+  //         { event: 'DELETE', schema: 'public', table },
+  //         (p) => onDelete?.(p.old)
+  //       )
+  //       .subscribe()
+
+  //     return ch
+  //   })
+
+  //   return () => {
+  //     channels.forEach((ch) => supabase.removeChannel(ch))
+  //   }
+  // }, [])
   // console.log('assignment :>> ', assignment)
   const [assignment_preview, setAssignmentPreview] = useState([])
   const fetchAssignmentPreview = async (data) =>
@@ -357,6 +444,7 @@ const GlobalProvider = ({ children, data }) => {
         assignment_preview,
         setModalOpen,
         assignment,
+
         fetchAssignmentPreview,
         assignmentDispatch,
         deletePlannedAssignmentById,

@@ -18,6 +18,23 @@ export const autoAssignLoadsFailure = () => ({
 })
 
 // *****************************
+// add auto-assigned plan
+// *****************************
+export const addPlanStart = () => ({
+  type: assignment.REQUEST_START,
+})
+
+export const addPlanSuccess = (data) => ({
+  type: assignment.ADD_PLAN,
+  payload: data,
+  // payload: data,
+})
+
+export const addPlanFailure = () => ({
+  type: assignment.REQUEST_FAILURE,
+})
+
+// *****************************
 // manually assign loads
 // *****************************
 export const manualAssignLoadsStart = () => ({

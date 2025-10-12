@@ -246,7 +246,7 @@ export async function POST(request) {
     //   })
     // }
 
-    const response = await fetchServerData(url, 'POST', payload)
+    const response = await fetchServerData(``, 'POST', payload)
     console.log('response :>> ', response)
     return NextResponse.json(response)
     // return NextResponse.json({

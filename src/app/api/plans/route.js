@@ -22,10 +22,10 @@ export async function GET(req) {
 // *****************************
 export async function POST(req) {
   const body = await req?.json()
-  //console.log('body :>> ', body)
+  console.log('body :>> ', body)
   try {
-    const response = await fetchServerData('auto-assign-loads', 'POST', body)
-    // console.log('loads response :>> ', response)
+    const response = await fetchServerData('plans', 'POST', body)
+    console.log('loads response :>> ', response)
     if (response && response?.status == 500) {
       return NextResponse.json({ error: response?.message }, { status: 500 })
     }

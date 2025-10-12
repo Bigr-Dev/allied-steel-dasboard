@@ -45,6 +45,7 @@ const AssignmentForm = ({ id, onCancel }) => {
     departure_date: tomorrow, // default: tomorrow
     cutoff_date: today, // default: today
     branch_id: current_user?.branch_id,
+
     // customer_id: null,
     commit: false, // preview (no DB writes) if false
     notes: '',
@@ -59,6 +60,29 @@ const AssignmentForm = ({ id, onCancel }) => {
   })
   const [depOpen, setDepOpen] = useState(false)
   const [cutOpen, setCutOpen] = useState(false)
+
+  // const buildNormalized = (commitFlag) => {
+  //   const f = { ...localFilters }
+
+  //   const depISO = isoOr(f.departure_date, tomorrow)
+  //   const cutISO = isoOr(f.cutoff_date, depISO || today)
+
+  //   // Accept array or single; drop "all"/empty
+  //   let branch = f.branch_id
+  //   if (!branch || (Array.isArray(branch) && branch.length === 0)) {
+  //     branch = null
+  //   } else if (!Array.isArray(branch)) {
+  //     branch = branch === 'all' ? null : [branch]
+  //   }
+
+  //   return {
+  //     ...localFilters,
+  //     departure_date: depISO,
+  //     cutoff_date: cutISO,
+  //     branch_id: branch, // <-- array or null
+  //     commit: !!commitFlag,
+  //   }
+  // }
 
   const buildNormalized = (commitFlag) => {
     const f = { ...localFilters }
@@ -125,8 +149,10 @@ const AssignmentForm = ({ id, onCancel }) => {
       placeholder: 'e.g., Thursdays Plan',
       required: true,
     },
+
     {
       type: 'select',
+      //multiple: true, // <--- new flag
       htmlFor: 'branch_id',
       label: 'Branch Name *',
       placeholder: 'Select branch',
@@ -138,17 +164,17 @@ const AssignmentForm = ({ id, onCancel }) => {
     },
     {
       type: 'date',
-      htmlFor: 'departure_date',
-      label: 'Departure date',
-      value: localFilters.departure_date,
-      placeholder: 'Select date of departure',
-    },
-    {
-      type: 'date',
       htmlFor: 'cutoff_date',
       label: 'Cut off date',
       value: localFilters.cutoff_date,
       placeholder: 'Select date cut off date',
+    },
+    {
+      type: 'date',
+      htmlFor: 'departure_date',
+      label: 'Departure date',
+      value: localFilters.departure_date,
+      placeholder: 'Select date of departure',
     },
   ]
 
@@ -244,88 +270,3 @@ const AssignmentForm = ({ id, onCancel }) => {
 }
 
 export default AssignmentForm
-
-// const handleFilterChange = (key, value) => {
-//   const next = { ...localFilters, [key]: value }
-//   setLocalFilters(next)
-//   onFiltersChange?.(next)
-// }
-
-// const handleDatePick = (key, date, close) => {
-//   if (date) {
-//     handleFilterChange(key, formatDateForInput(date))
-//   } else {
-//     handleFilterChange(key, '')
-//   }
-//   close(false)
-// }
-
-// const branchOptions =
-//   branches?.data?.map((b) => ({
-//     value: b.id,
-//     label: b.name?.slice(26) || b.name || 'Unnamed',
-//   })) || []
-//console.log('assignment :>> ', assignment)
-
-// const plan = assignment?.plan || {}
-// const assigned_units = assignment?.assigned_units || []
-// const idle_units_by_branch = assignment?.idle_units_by_branch || []
-// const unassigned = assignment?.unassigned || []
-
-// const plans = {
-//   date_from: yesterday,
-//   date_to: tomorrow,
-//   branch_id: current_user?.branch_id,
-//   customer_id: null,
-//   include_units: true,
-//   include_counts: true,
-//   include_branch_name: true,
-// }
-// const auto_assign = {
-//   departure_date: tomorrow, // default: tomorrow
-//   cutoff_date: today, // default: today
-//   branch_id: current_user?.branch_id,
-//   customer_id: null,
-//   commit: false, // preview (no DB writes) if false
-//   notes: null,
-//   routeAffinitySlop: 0.25,
-//   capacityHeadroom: 0.1,
-//   lengthBufferMm: 600,
-//   maxTrucksPerZone: 2,
-//   ignoreLengthIfMissing: false,
-//   ignoreDepartment: false,
-//   customerUnitCap: 2,
-//   routeAffinitySlop: 0.25, // NEW
-// }
-// const manual_assign = {
-//   item_id: null,
-//   weight_kg: 0,
-//   note: 'manual',
-// }
-
-// const [formData, setFormData] = useState({
-//   departure_date: tomorrow, // default: tomorrow
-//   cutoff_date: today, // default: today
-//   branch_id: current_user?.branch_id,
-//   customer_id: null,
-//   commit: false, // preview (no DB writes) if false
-//   notes: null,
-//   routeAffinitySlop: 0.25,
-//   capacityHeadroom: 0.1,
-//   lengthBufferMm: 600,
-//   maxTrucksPerZone: 2,
-//   ignoreLengthIfMissing: false,
-//   ignoreDepartment: false,
-//   customerUnitCap: 2,
-//   routeAffinitySlop: 0.25, // NEW
-// })
-
-// const tabs = [
-//   { name: 'Assignment Plans', value: 'plans' },
-//   { name: 'Auto Assignment', value: 'auto_assign' },
-//   { name: 'Manual Assignment', value: 'manual_assign' },
-// ]
-
-// const plans_details = []
-// const auto_assign_details = []
-// const manual_assign_details = []

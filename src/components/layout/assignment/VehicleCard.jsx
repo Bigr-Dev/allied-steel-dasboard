@@ -56,6 +56,7 @@ export const VehicleCard = memo(function VehicleCard({
   })
 
   const capacityPercentage = (unit.used_capacity_kg / unit.capacity_kg) * 100
+
   const isOverCapacity = capacityPercentage > 100
   const isNearCapacity = capacityPercentage >= 85
 
@@ -414,7 +415,10 @@ export const VehicleCard = memo(function VehicleCard({
                       {/* Customers in Suburb */}
                       {suburb.customers.map((customer) => (
                         <div
-                          key={customer.customer_id || customer.customer_name}
+                          key={`${unit.plan_unit_id}:${customer?.customer_id}:${
+                            customer.route_name || ''
+                          }:${customer.suburb_name || ''}`}
+                          //  key={customer.customer_id || customer.customer_name}
                           className="ml-4 space-y-2"
                         >
                           {/* Customer Header */}
@@ -435,16 +439,18 @@ export const VehicleCard = memo(function VehicleCard({
                           {/* Orders and Items */}
                           {customer.orders.map((order) => (
                             <div
-                              key={order.order_id}
+                              key={`${unit.plan_unit_id}:${order.order_id}`}
+                              // key={order.order_id}
                               className="ml-4 space-y-1"
                             >
                               {order.items.map((item) => (
                                 <DraggableItemRow
-                                  key={item.item_id}
+                                  key={`${unit.plan_unit_id}:${order.order_id}:${item.item_id}`}
+                                  // key={`${unit.plan_unit_id}:${order.order_id}:${item.item_id}`}
                                   item={item}
                                   customer={customer}
                                   containerId={`unit:${unit.plan_unit_id}`}
-                                  isDraggable={true}
+                                  isDraggable
                                 />
                               ))}
 

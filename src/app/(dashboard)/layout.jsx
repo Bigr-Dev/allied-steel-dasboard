@@ -57,13 +57,17 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       //console.log('current_user :>> ', current_user?.branch_id)
 
       const plans = await fetchServerData('plans', 'GET')
-      const assignment = await fetchServerData('auto-assign-loads', 'POST', {
-        departure_date: tomorrow, // default: tomorrow
-        //   "cutoff_date": "2025-09-18",     // default: today
-        branch_id: current_user?.branch_id,
-        commit: false, // preview (no DB writes) if false
-        routeAffinitySlop: 0.25,
-      })
+      // const assignment = await fetchServerData(`plans/${id}/get`, 'POST', {})
+      // console.log('object :>> ', object)
+
+      // const assignment = await fetchServerData('auto-assign', 'POST', {
+      //   departure_date: tomorrow, // default: tomorrow
+      //   //   "cutoff_date": "2025-09-18",     // default: today
+      //   branch_id: current_user?.branch_id,
+      //   commit: false, // preview (no DB writes) if false
+      //   routeAffinitySlop: 0.25,
+      // })
+      // console.log('assignment :>> ', assignment)
 
       let AssignedLoads = {}
       if (Users?.message) {
@@ -90,7 +94,7 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
           //   "notes": "optional plan note"
         }
         //  console.log('AssignedLoads :>> ', load_params)
-        AssignedLoads = await fetchServerData('auto-assign-loads', 'POST', {
+        AssignedLoads = await fetchServerData('plans/auto-assign', 'POST', {
           ...load_params,
         })
       }
@@ -100,8 +104,9 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       data = {
         load_assignment: {
           ...plans?.data,
-          ...assignment?.data,
+          // ...assignment?.data,
         },
+        current_user,
         branches: Branches?.message,
         customers: Customers?.data,
         drivers: Drivers,

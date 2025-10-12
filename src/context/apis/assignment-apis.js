@@ -32,9 +32,27 @@ export const autoAssignLoads = async (assignmentDispatch, data) =>
     successMsg: 'success',
     failure: assignment_actions.autoAssignLoadsFailure,
     errorMsg: 'Something went wrong, while fetching the assignment preview',
-    url: `plans`,
+    url: `/plans/auto-assign`,
     data,
   })
+
+// *****************************
+// auto assign loads
+// *****************************
+export const addPlan = async (assignmentDispatch, data) =>
+  postApi({
+    dispatch: assignmentDispatch,
+    start: assignment_actions.addPlanStart,
+    success: assignment_actions.addPlanSuccess,
+    successMsg: 'success',
+    failure: assignment_actions.addPlanFailure,
+    errorMsg: `Something went wrong, while adding ${
+      data?.notes || 'the assignment plan'
+    }`,
+    url: `/plans/auto-assign`,
+    data,
+  })
+
 //   {
 //   //assignmentDispatch(assignment_actions.autoAssignLoadsStart())
 //   try {
@@ -47,6 +65,7 @@ export const autoAssignLoads = async (assignmentDispatch, data) =>
 //     // assignmentDispatch(assignment_actions.autoAssignLoadsFailure(error))
 //   }
 // }
+// export
 // postApi({
 //   dispatch: assignmentDispatch,
 //   Start: assignment_actions.autoAssignLoadsStart,

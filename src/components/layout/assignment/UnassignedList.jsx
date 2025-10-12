@@ -24,9 +24,11 @@ export const UnassignedList = memo(function UnassignedList({
   const [selectedSuburbs, setSelectedSuburbs] = useState(new Set())
   const [selectedCustomers, setSelectedCustomers] = useState(new Set())
 
-  const { isOver, setNodeRef } = useDroppable({
-    id: 'unassigned',
-  })
+  const { isOver, setNodeRef } = useDroppable({ id: 'bucket:unassigned' })
+
+  // const { isOver, setNodeRef } = useDroppable({
+  //   id: 'unassigned',
+  // })
 
   // Get unique filter options
   const filterOptions = useMemo(() => {
@@ -300,12 +302,19 @@ export const UnassignedList = memo(function UnassignedList({
           ) : (
             filteredItems.map((item) => (
               <DraggableItemRow
-                key={item.item_id}
+                key={`unassigned:${item.item_id}`}
                 item={item}
-                containerId="unassigned"
-                isDraggable={true}
-                isUnassigned={true}
+                containerId="bucket:unassigned"
+                isDraggable
+                isUnassigned
               />
+              // <DraggableItemRow
+              //   key={`unassigned:${item.item_id}`}
+              //   item={item}
+              //   containerId="bucket:unassigned"
+              //   isDraggable={true}
+              //   isUnassigned={true}
+              // />
             ))
           )}
         </div>

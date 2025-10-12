@@ -56,10 +56,14 @@ const SinglePage = async ({ params }) => {
       return <LoadsPage id={id} />
 
     case 'load-assignment':
-      const assignment = await fetchServerData(`plans/${id}`, 'GET')
-
+      const assignment = await fetchServerData(`plans/`, 'POST', {
+        plan_id: id, // required
+        include_nested: true, // false => plan header only
+        include_idle: true, // only if include_nested=true
+      })
+      console.log('assignment :>> ', assignment)
       const plan = assignment?.data
-
+      console.log('plan :>> ', plan)
       // *********************
       // Helper functions for load assignment stats
       // *********************

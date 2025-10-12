@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import DetailActionBar from '../layout/detail-action-bar'
 import { UnassignedList } from '../layout/assignment/UnassignedList'
 import { VehicleCard } from '../layout/assignment/VehicleCard'
@@ -23,22 +23,275 @@ import { DraggableItemRow } from '../layout/assignment/DraggableItemRow'
 import { createPortal } from 'react-dom'
 import { useAssignmentPlan } from '@/hooks/assignment-plan/use-assignment-plan'
 
+// helpers
+function removeItemFromUnitCustomers(customers = [], item_id) {
+  let removedWeight = 0
+  const nextCustomers = customers
+    .map((c) => {
+      const nextOrders = (c.orders || [])
+        .map((o) => {
+          const before = o.items || []
+          const kept = before.filter((it) => it.item_id !== item_id)
+          if (kept.length !== before.length) {
+            const removed = before.find((it) => it.item_id === item_id)
+            removedWeight += Number(removed?.assigned_weight_kg || 0)
+          }
+          return {
+            ...o,
+            items: kept,
+            total_assigned_weight_kg:
+              Number(o.total_assigned_weight_kg || 0) -
+              Number(
+                (o.items || []).find((it) => it.item_id === item_id)
+                  ?.assigned_weight_kg || 0
+              ),
+          }
+        })
+        .filter((o) => (o.items || []).length > 0)
+      return { ...c, orders: nextOrders }
+    })
+    .filter((c) => (c.orders || []).length > 0)
+
+  return { nextCustomers, removedWeight }
+}
+
+const norm = (s) => (s == null ? '' : String(s).trim().toLowerCase())
+const sameCustomerIdOrName = (aId, aName, bId, bName) => {
+  const aHas = aId != null && aId !== ''
+  const bHas = bId != null && bId !== ''
+  if (aHas && bHas) return String(aId) === String(bId)
+  // fallback to name if id missing on either side
+  return norm(aName) === norm(bName)
+}
+const sameGroup = (c, meta) =>
+  sameCustomerIdOrName(
+    c.customer_id,
+    c.customer_name,
+    meta.customer_id,
+    meta.customer_name
+  ) &&
+  norm(c.route_name) === norm(meta.route_name) &&
+  norm(c.suburb_name) === norm(meta.suburb_name)
+
+function addItemIntoUnitCustomers(customers = [], meta) {
+  // meta must include: customer_id, customer_name, route_name, suburb_name, order_id, item_id, description, weight_left
+  const {
+    customer_id,
+    customer_name,
+    route_name,
+    suburb_name,
+    order_id,
+    item_id,
+    description,
+    weight_left,
+  } = meta
+
+  // deep-ish copy to preserve immutability
+  let next = customers.map((c) => ({
+    ...c,
+    orders: (c.orders || []).map((o) => ({
+      ...o,
+      items: [...(o.items || [])],
+    })),
+  }))
+
+  // 1) Try to find an exact group match (id/name + route/suburb)
+  let cIdx = next.findIndex((c) => sameGroup(c, meta))
+
+  // 2) If not found, try to find the same customer by id OR name, then prefer route/suburb, else first
+  if (cIdx === -1) {
+    const candidates = next
+      .map((c, idx) => ({ c, idx }))
+      .filter(({ c }) =>
+        sameCustomerIdOrName(
+          c.customer_id,
+          c.customer_name,
+          customer_id,
+          customer_name
+        )
+      )
+    if (candidates.length) {
+      const rn = norm(route_name)
+      const sn = norm(suburb_name)
+      const exactBoth = candidates.find(
+        ({ c }) => norm(c.route_name) === rn && norm(c.suburb_name) === sn
+      )
+      const exactRoute = candidates.find(({ c }) => norm(c.route_name) === rn)
+      const exactSuburb = candidates.find(({ c }) => norm(c.suburb_name) === sn)
+      cIdx = (exactBoth || exactRoute || exactSuburb || candidates[0]).idx
+    }
+  }
+
+  // 3) Still not found? Create the customer group
+  if (cIdx === -1) {
+    next = [
+      ...next,
+      {
+        customer_id,
+        customer_name, // keep for rendering; never for keys
+        route_name: route_name || null,
+        suburb_name: suburb_name || null,
+        orders: [],
+      },
+    ]
+    cIdx = next.length - 1
+  }
+
+  // 4) Find or create the order group
+  const cust = next[cIdx]
+  let oIdx = (cust.orders || []).findIndex(
+    (o) => String(o.order_id) === String(order_id)
+  )
+  if (oIdx === -1) {
+    next[cIdx] = {
+      ...cust,
+      orders: [
+        ...(cust.orders || []),
+        { order_id, total_assigned_weight_kg: 0, items: [] },
+      ],
+    }
+    oIdx = next[cIdx].orders.length - 1
+  }
+
+  // 5) Duplicate guard at item level
+  const order = next[cIdx].orders[oIdx]
+  if (
+    (order.items || []).some((it) => String(it.item_id) === String(item_id))
+  ) {
+    return { nextCustomers: next, addedWeight: 0 } // no-op if already present
+  }
+
+  const w = Number(weight_left || 0)
+  const nextItems = [
+    ...(order.items || []),
+    {
+      item_id,
+      description,
+      assigned_weight_kg: w,
+      assignment_id: `local-${item_id}`,
+    },
+  ]
+  const nextOrder = {
+    ...order,
+    items: nextItems,
+    total_assigned_weight_kg: Number(order.total_assigned_weight_kg || 0) + w,
+  }
+
+  const ordersCopy = [...next[cIdx].orders]
+  ordersCopy[oIdx] = nextOrder
+  next[cIdx] = { ...next[cIdx], orders: ordersCopy }
+
+  return { nextCustomers: next, addedWeight: w }
+}
+
+async function commitChangesWithFetchData(
+  planId,
+  changes,
+  fetchData,
+  opts = {}
+) {
+  // Build payloads from local ops
+  const assignsByUnit = new Map()
+  const unassignList = []
+
+  for (const c of changes) {
+    if (c.op === 'assign') {
+      if (!assignsByUnit.has(c.plan_unit_id))
+        assignsByUnit.set(c.plan_unit_id, [])
+      assignsByUnit
+        .get(c.plan_unit_id)
+        .push({ item_id: c.item_id, weight_kg: c.weight_kg })
+    } else if (c.op === 'unassign') {
+      unassignList.push({ plan_unit_id: c.plan_unit_id, item_id: c.item_id })
+    } else if (c.op === 'move') {
+      unassignList.push({
+        plan_unit_id: c.from_plan_unit_id,
+        item_id: c.item_id,
+      })
+      if (!assignsByUnit.has(c.to_plan_unit_id))
+        assignsByUnit.set(c.to_plan_unit_id, [])
+      assignsByUnit
+        .get(c.to_plan_unit_id)
+        .push({ item_id: c.item_id, weight_kg: c.weight_kg })
+    }
+  }
+
+  // 1) bulk-assign (if any)
+  if (assignsByUnit.size) {
+    const bulkAssignPayload = {
+      assignments: Array.from(assignsByUnit.entries()).map(
+        ([plan_unit_id, items]) => ({
+          plan_unit_id,
+          items,
+        })
+      ),
+      // tune if your backend expects these:
+      customerUnitCap: opts.customerUnitCap ?? 2,
+      enforce_family: opts.enforce_family ?? false,
+    }
+    await fetchData(
+      `/api/plans/${planId}/bulk-assign`,
+      'POST',
+      bulkAssignPayload
+    )
+    // If you call the Express API directly, drop the /api prefix:
+    // await fetchData(`/plans/${planId}/bulk-assign`, 'POST', bulkAssignPayload);
+  }
+
+  // 2) unassign (if any)
+  if (unassignList.length) {
+    const unassignPayload = {
+      items: unassignList,
+      to_bucket: true,
+      bucket_reason: 'manual',
+      remove_empty_unit: true,
+    }
+    await fetchData(`plans/${planId}/unassign`, 'POST', unassignPayload)
+    // Or: await fetchData(`/plans/${planId}/unassign`, 'POST', unassignPayload);
+  }
+
+  return true
+}
+
 const LoadAssignmentSingle = ({ id, data }) => {
   const {
     // assignment: { data },
   } = useGlobalContext()
   const { error, refresh, assignItem, unassignItem, unassignAllFromUnit } =
     useAssignmentPlan()
+  const { fetchData } = useGlobalContext()
   const { toast } = useToast()
   //console.log('data :>> ', data)
 
   const [assignedUnits, setAssignedUnits] = useState(data?.assigned_units || [])
   const [unassigned, setUnassigned] = useState(data?.unassigned || [])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [plan, setPlan] = useState(data?.plan || null)
   const [activeItem, setActiveItem] = useState(null)
   const [undoStack, setUndoStack] = useState([])
   const [changes, setChanges] = useState([])
+
+  const CAPACITY_BUFFER = 0.1 // 10% leeway
+
+  const initialSnapshotRef = useRef({
+    plan: data?.plan || null,
+    assigned_units: JSON.parse(JSON.stringify(data?.assigned_units || [])),
+    unassigned: JSON.parse(JSON.stringify(data?.unassigned || [])),
+  })
+
+  // If the page receives new data (e.g., navigation), refresh the snapshot
+  useEffect(() => {
+    initialSnapshotRef.current = {
+      plan: data?.plan || null,
+      assigned_units: JSON.parse(JSON.stringify(data?.assigned_units || [])),
+      unassigned: JSON.parse(JSON.stringify(data?.unassigned || [])),
+    }
+    setAssignedUnits(data?.assigned_units || [])
+    setUnassigned(data?.unassigned || [])
+    setPlan(data?.plan || null)
+    setChanges([])
+    setUndoStack([])
+  }, [data])
 
   const planned_unit = assignedUnits?.find((v) => v.plan_unit_id === id)
 
@@ -139,32 +392,36 @@ const LoadAssignmentSingle = ({ id, data }) => {
     }
   }
 
-  const handleDragEnd = async (event) => {
+  const handleDragEnd = (event) => {
     const { active, over } = event
     setActiveItem(null)
-
     if (!over) return
-
     const dragData = active.data.current
     if (!dragData) return
 
     const from = dragData.containerId
     const to = over.id
-
     if (from === to) return
 
+    // Target capacity guard
     if (to.startsWith('unit:')) {
       const targetUnitId = to.slice(5)
       const targetUnit = assignedUnits.find(
-        (unit) => unit.plan_unit_id === targetUnitId
+        (u) => u.plan_unit_id === targetUnitId
       )
-
       if (targetUnit) {
-        const newUsedCapacity = targetUnit.used_capacity_kg + dragData.weight
-        if (newUsedCapacity > targetUnit.capacity_kg) {
+        const newUsed =
+          Number(targetUnit.used_capacity_kg || 0) +
+          Number(dragData.weight || 0)
+        const maxAllowed =
+          Number(targetUnit.capacity_kg || 0) * (1 + CAPACITY_BUFFER)
+        if (newUsed > maxAllowed) {
           toast({
             title: 'Over Capacity',
-            description: 'Cannot assign item - would exceed vehicle capacity',
+            // description: 'Cannot assign item - would exceed vehicle capacity',
+            description: `Cannot assign item — would exceed ${Math.round(
+              CAPACITY_BUFFER * 100
+            )}% leeway`,
             variant: 'destructive',
           })
           return
@@ -172,299 +429,156 @@ const LoadAssignmentSingle = ({ id, data }) => {
       }
     }
 
-    const movePayload = {
-      item_id: dragData.item_id,
-      assignment_id: dragData.assignment_id || null,
-      from_plan_unit_id: from.startsWith('unit:') ? from.slice(5) : null,
-      to_plan_unit_id: to.startsWith('unit:') ? to.slice(5) : null,
-      weight: dragData.weight,
-    }
-
-    // Create undo state with deep copy only when needed
+    // Save undo point (deep copy)
     const undoState = {
       assignedUnits: JSON.parse(JSON.stringify(assignedUnits)),
       unassigned: JSON.parse(JSON.stringify(unassigned)),
       timestamp: Date.now(),
     }
 
-    handleOptimisticMove(movePayload)
-
-    try {
-      const data = await assignmentAPI.moveItem(movePayload)
-
-      setAssignedUnits(data.assigned_units || assignedUnits)
-      setUnassigned(data.unassigned || unassigned)
-
-      setChanges((prev) => [...prev, movePayload])
-
-      setUndoStack((prev) => [...prev.slice(-9), undoState])
-
-      toast({
-        title: 'Item Moved',
-        description: 'Assignment updated successfully',
-      })
-    } catch (error) {
-      setAssignedUnits(undoState.assignedUnits)
-      setUnassigned(undoState.unassigned)
-      handleAPIError(error, toast)
+    // Apply local move
+    const move = {
+      item_id: dragData.item_id,
+      weight_kg: dragData.weight, // normalized key
+      from_plan_unit_id: from.startsWith('unit:') ? from.slice(5) : null,
+      to_plan_unit_id: to.startsWith('unit:') ? to.slice(5) : null,
     }
+    handleOptimisticMove(move)
+
+    // Track the change as an op we can send later
+    setChanges((prev) => [
+      ...prev,
+      move.to_plan_unit_id && !move.from_plan_unit_id
+        ? {
+            op: 'assign',
+            plan_unit_id: move.to_plan_unit_id,
+            item_id: move.item_id,
+            weight_kg: move.weight_kg,
+          }
+        : !move.to_plan_unit_id && move.from_plan_unit_id
+        ? {
+            op: 'unassign',
+            plan_unit_id: move.from_plan_unit_id,
+            item_id: move.item_id,
+          }
+        : {
+            op: 'move',
+            from_plan_unit_id: move.from_plan_unit_id,
+            to_plan_unit_id: move.to_plan_unit_id,
+            item_id: move.item_id,
+            weight_kg: move.weight_kg,
+          },
+    ])
+
+    // Keep the last 10 undo points
+    setUndoStack((prev) => [...prev.slice(-9), undoState])
+    toast({
+      title: 'Locally updated',
+      description: 'Change recorded. Commit to save.',
+    })
   }
-
-  // const handleDragStart = (event) => {
-  //   const { active } = event
-
-  //   let draggedItem = null
-  //   let sourceType = null
-  //   let sourceVehicleId = null
-
-  //   const unassignedItem = unassigned.find((item) => item.item_id === active.id)
-  //   if (unassignedItem) {
-  //     draggedItem = unassignedItem
-  //     sourceType = 'unassigned'
-  //   } else {
-  //     for (const unit of assignedUnits) {
-  //       for (const customer of unit.customers) {
-  //         for (const order of customer.orders) {
-  //           const item = order.items.find((item) => item.item_id === active.id)
-  //           if (item) {
-  //             draggedItem = {
-  //               ...item,
-  //               customer_name: customer.customer_name,
-  //               route_name: customer.route_name,
-  //               suburb_name: customer.suburb_name,
-  //             }
-  //             sourceType = 'assigned'
-  //             sourceVehicleId = unit.plan_unit_id
-  //             break
-  //           }
-  //         }
-  //         if (draggedItem) break
-  //       }
-  //       if (draggedItem) break
-  //     }
-  //   }
-
-  //   setActiveItem({ item: draggedItem, sourceType, sourceVehicleId })
-  // }
-
-  // const handleDragEnd = async (event) => {
-  //   const { active, over } = event
-  //   setActiveItem(null)
-
-  //   if (!over) return
-
-  //   const dragData = active.data.current
-  //   if (!dragData) return
-
-  //   const from = dragData.containerId
-  //   const to = over.id
-
-  //   if (from === to) return
-
-  //   if (to.startsWith('unit:')) {
-  //     const targetUnitId = to.slice(5)
-  //     const targetUnit = assignedUnits.find(
-  //       (unit) => unit.plan_unit_id === targetUnitId
-  //     )
-
-  //     if (targetUnit) {
-  //       const newUsedCapacity = targetUnit.used_capacity_kg + dragData.weight
-  //       if (newUsedCapacity > targetUnit.capacity_kg) {
-  //         toast({
-  //           title: 'Over Capacity',
-  //           description: 'Cannot assign item - would exceed vehicle capacity',
-  //           variant: 'destructive',
-  //         })
-  //         return
-  //       }
-  //     }
-  //   }
-
-  //   const movePayload = {
-  //     item_id: dragData.item_id,
-  //     assignment_id: dragData.assignment_id || null,
-  //     from_plan_unit_id: from.startsWith('unit:') ? from.slice(5) : null,
-  //     to_plan_unit_id: to.startsWith('unit:') ? to.slice(5) : null,
-  //     weight: dragData.weight,
-  //   }
-
-  //   const undoState = {
-  //     assignedUnits: [...assignedUnits],
-  //     unassigned: [...unassigned],
-  //     timestamp: Date.now(),
-  //   }
-
-  //   await handleOptimisticMove(movePayload)
-
-  //   try {
-  //     const data = await assignmentAPI.moveItem(movePayload)
-
-  //     setAssignedUnits(data.assigned_units || assignedUnits)
-  //     setUnassigned(data.unassigned || unassigned)
-
-  //     setChanges((prev) => [...prev, movePayload])
-
-  //     setUndoStack((prev) => [...prev.slice(-9), undoState])
-
-  //     toast({
-  //       title: 'Item Moved',
-  //       description: 'Assignment updated successfully',
-  //     })
-  //   } catch (error) {
-  //     setAssignedUnits(undoState.assignedUnits)
-  //     setUnassigned(undoState.unassigned)
-  //     handleAPIError(error, toast)
-  //   }
-  // }
 
   const handleOptimisticMove = async (payload) => {
     const { item_id, from_plan_unit_id, to_plan_unit_id } = payload
 
     if (!from_plan_unit_id && to_plan_unit_id) {
-      await handleAssignItem(item_id, to_plan_unit_id)
+      // await handleAssignItem(item_id, to_plan_unit_id)
+      handleAssignItem(item_id, to_plan_unit_id)
     } else if (from_plan_unit_id && !to_plan_unit_id) {
-      await handleUnassignItem(item_id)
+      // await handleUnassignItem(item_id)
+      handleUnassignItem(item_id)
     } else if (
       from_plan_unit_id &&
       to_plan_unit_id &&
       from_plan_unit_id !== to_plan_unit_id
     ) {
-      await handleUnassignItem(item_id)
-      await handleAssignItem(item_id, to_plan_unit_id)
+      handleUnassignItem(item_id)
+      handleAssignItem(item_id, to_plan_unit_id)
+      //  await handleUnassignItem(item_id)
+      //  await handleAssignItem(item_id, to_plan_unit_id)
     }
   }
 
-  const handleAssignItem = async (itemId, vehicleId) => {
-    const item = unassigned.find((item) => item.item_id === itemId)
-    if (!item) return
+  const handleAssignItem = (itemId, vehicleId) => {
+    const meta = unassigned.find((x) => String(x.item_id) === String(itemId))
+    if (!meta) return
 
-    const previousUnassigned = [...unassigned]
-    const previousAssigned = [...assignedUnits]
+    // remove from unassigned
+    setUnassigned((prev) =>
+      prev.filter((x) => String(x.item_id) !== String(itemId))
+    )
 
-    setUnassigned((prev) => prev.filter((item) => item.item_id !== itemId))
-
+    // add into the destination unit immutably
     setAssignedUnits((prev) =>
-      prev.map((unit) => {
-        if (unit.plan_unit_id === vehicleId) {
-          const updatedUnit = { ...unit }
-          updatedUnit.used_capacity_kg += item.weight_left
-
-          let customerGroup = updatedUnit.customers.find(
-            (c) => c.customer_name === item.customer_name
-          )
-          if (!customerGroup) {
-            customerGroup = {
-              customer_id: null,
-              customer_name: item.customer_name,
-              suburb_name: item.suburb_name,
-              route_name: item.route_name,
-              orders: [],
-            }
-            updatedUnit.customers.push(customerGroup)
-          }
-
-          let order = customerGroup.orders.find(
-            (o) => o.order_id === item.order_id
-          )
-          if (!order) {
-            order = {
-              order_id: item.order_id,
-              total_assigned_weight_kg: 0,
-              items: [],
-            }
-            customerGroup.orders.push(order)
-          }
-
-          order.items.push({
-            item_id: item.item_id,
-            description: item.description,
-            assigned_weight_kg: item.weight_left,
-            assignment_id: `assign-${Date.now()}`,
-          })
-          order.total_assigned_weight_kg += item.weight_left
-
-          return updatedUnit
+      prev.map((u) => {
+        if (String(u.plan_unit_id) !== String(vehicleId)) return u
+        const { nextCustomers, addedWeight } = addItemIntoUnitCustomers(
+          u.customers || [],
+          meta
+        )
+        return {
+          ...u,
+          customers: nextCustomers,
+          used_capacity_kg:
+            Number(u.used_capacity_kg || 0) + Number(addedWeight || 0),
         }
-        return unit
       })
     )
   }
 
-  const handleUnassignItem = async (itemId) => {
-    let foundItem = null
-    let sourceUnit = null
+  const handleUnassignItem = (itemId) => {
+    // find meta from units so we can re-add to unassigned
+    const metaFromUnits =
+      assignedUnits.flatMap((u) =>
+        (u.customers || []).flatMap((c) =>
+          (c.orders || []).flatMap((o) =>
+            (o.items || [])
+              .filter((it) => String(it.item_id) === String(itemId))
+              .map((it) => ({
+                item_id: it.item_id,
+                description: it.description,
+                weight_left: it.assigned_weight_kg,
+                customer_id: c.customer_id,
+                customer_name: c.customer_name,
+                route_name: c.route_name,
+                suburb_name: c.suburb_name,
+                order_id: o.order_id,
+              }))
+          )
+        )
+      )[0] || null
 
-    for (const unit of assignedUnits) {
-      for (const customer of unit.customers) {
-        for (const order of customer.orders) {
-          const item = order.items.find((item) => item.item_id === itemId)
-          if (item) {
-            foundItem = {
-              ...item,
-              customer_name: customer.customer_name,
-              route_name: customer.route_name,
-              suburb_name: customer.suburb_name,
-              weight_left: item.assigned_weight_kg,
-            }
-            sourceUnit = unit
-            break
-          }
-        }
-        if (foundItem) break
-      }
-      if (foundItem) break
-    }
-
-    if (!foundItem || !sourceUnit) return
-
-    const previousUnassigned = [...unassigned]
-    const previousAssigned = [...assignedUnits]
-
-    setUnassigned((prev) => [
-      ...prev,
-      {
-        load_id: `load-${Date.now()}`,
-        order_id: foundItem.order_id || `order-${Date.now()}`,
-        item_id: foundItem.item_id,
-        customer_name: foundItem.customer_name,
-        suburb_name: foundItem.suburb_name,
-        route_name: foundItem.route_name,
-        weight_left: foundItem.assigned_weight_kg,
-        description: foundItem.description,
-      },
-    ])
-
+    // remove from whichever unit has it, immutably (and prune empties)
     setAssignedUnits((prev) =>
-      prev.map((unit) => {
-        if (unit.plan_unit_id === sourceUnit.plan_unit_id) {
-          const updatedUnit = { ...unit }
-          updatedUnit.used_capacity_kg -= foundItem.assigned_weight_kg
-
-          updatedUnit.customers = updatedUnit.customers
-            .map((customer) => {
-              const updatedCustomer = { ...customer }
-              updatedCustomer.orders = updatedCustomer.orders
-                .map((order) => {
-                  const updatedOrder = { ...order }
-                  updatedOrder.items = updatedOrder.items.filter(
-                    (item) => item.item_id !== itemId
-                  )
-                  updatedOrder.total_assigned_weight_kg =
-                    updatedOrder.items.reduce(
-                      (sum, item) => sum + item.assigned_weight_kg,
-                      0
-                    )
-                  return updatedOrder
-                })
-                .filter((order) => order.items.length > 0)
-              return updatedCustomer
-            })
-            .filter((customer) => customer.orders.length > 0)
-
-          return updatedUnit
+      prev.map((u) => {
+        const { nextCustomers, removedWeight } = removeItemFromUnitCustomers(
+          u.customers || [],
+          itemId
+        )
+        if (!removedWeight) return u
+        return {
+          ...u,
+          customers: nextCustomers,
+          used_capacity_kg: Math.max(
+            0,
+            Number(u.used_capacity_kg || 0) - Number(removedWeight || 0)
+          ),
         }
-        return unit
       })
+    )
+
+    // add back to unassigned (guard duplicate)
+    setUnassigned((prev) =>
+      prev.some((x) => String(x.item_id) === String(itemId))
+        ? prev
+        : [
+            ...prev,
+            metaFromUnits || {
+              item_id: itemId,
+              description: '',
+              weight_left: 0,
+            },
+          ]
     )
   }
 
@@ -505,7 +619,7 @@ const LoadAssignmentSingle = ({ id, data }) => {
       handleAPIError(error, toast)
     }
   }
-
+  console.log('planned_unit :>> ', planned_unit)
   return (
     <DndContext
       sensors={sensors}
@@ -517,36 +631,6 @@ const LoadAssignmentSingle = ({ id, data }) => {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveItem(null)}
-      // onDragEnd={async (evt) => {
-      //   const { active, over } = evt
-      //   //  console.log('evt :>> ', evt)
-      //   setActiveItem(null)
-      //   if (!active) return
-
-      //   const item = active.data?.current?.item_id
-
-      //   const from = 'bucket:unassigned' | `unit:${id}`
-
-      //   const overId = getDropTargetId(over)
-
-      //   if (!item || !overId || overId === from) return
-
-      //   try {
-      //     if (overId.startsWith('unit:')) {
-      //       const plan_unit_id = overId.split(':')[1]
-      //       await onAssignItem({ plan_unit_id, item })
-      //       toast({ title: 'Assigned', description: `Moved item to vehicle` })
-      //     } else if (overId === 'unassigned') {
-      //       await onUnassignItem(item.item_id)
-      //       toast({
-      //         title: 'Unassigned',
-      //         description: `Item returned to bucket`,
-      //       })
-      //     }
-      //   } catch (e) {
-      //     // error toast handled upstream if needed
-      //   }
-      // }}
     >
       <div className="space-y-6">
         <DetailActionBar
@@ -556,6 +640,140 @@ const LoadAssignmentSingle = ({ id, data }) => {
           }
           description={planned_unit?.rigid ? planned_unit?.rigid?.plate : 'N/A'}
         />
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            className="rounded-md border px-3 py-2 text-sm"
+            onClick={async () => {
+              if (!plan?.id) return
+              if (!changes.length) {
+                toast({
+                  title: 'No changes',
+                  description: 'Nothing to commit.',
+                })
+                return
+              }
+
+              try {
+                setLoading(true)
+                await commitChangesWithFetchData(plan.id, changes, fetchData, {
+                  customerUnitCap: 2,
+                  enforce_family: false, // this page allows mixing families
+                })
+
+                // (Optional) refetch your plan if you want fresh server truth:
+                // const refreshed = await fetchData(`/api/plans/${plan.id}`, 'GET');
+                // setAssignedUnits(refreshed.assigned_units || []);
+                // setUnassigned(refreshed.unassigned || []);
+                // setPlan(refreshed.plan);
+                // initialSnapshotRef.current = refreshed;
+
+                setChanges([])
+                setUndoStack([])
+                toast({ title: 'Committed', description: 'Assignments saved.' })
+              } catch (e) {
+                toast({
+                  title: 'Commit failed',
+                  description: e.message,
+                  variant: 'destructive',
+                })
+              } finally {
+                setLoading(false)
+              }
+            }}
+
+            // onClick={async () => {
+            //   if (!plan?.id) return
+            //   if (!changes.length) {
+            //     toast({
+            //       title: 'No changes',
+            //       description: 'Nothing to commit.',
+            //     })
+            //     return
+            //   }
+
+            //   // Build a backend-friendly payload
+            //   // You can adapt this to your bulk APIs:
+            //   // - POST /plans/:planId/bulk-assign  { assignments: [{ plan_unit_id, items:[{item_id, weight_kg}] }], ... }
+            //   // - POST /plans/:planId/unassign     { items: [{ plan_unit_id, item_id }], ... }
+            //   const assignsByUnit = new Map()
+            //   const unassignList = []
+
+            //   for (const c of changes) {
+            //     if (c.op === 'assign') {
+            //       if (!assignsByUnit.has(c.plan_unit_id))
+            //         assignsByUnit.set(c.plan_unit_id, [])
+            //       assignsByUnit
+            //         .get(c.plan_unit_id)
+            //         .push({ item_id: c.item_id, weight_kg: c.weight_kg })
+            //     } else if (c.op === 'unassign') {
+            //       unassignList.push({
+            //         plan_unit_id: c.plan_unit_id,
+            //         item_id: c.item_id,
+            //       })
+            //     } else if (c.op === 'move') {
+            //       // Split into unassign + assign for server
+            //       unassignList.push({
+            //         plan_unit_id: c.from_plan_unit_id,
+            //         item_id: c.item_id,
+            //       })
+            //       if (!assignsByUnit.has(c.to_plan_unit_id))
+            //         assignsByUnit.set(c.to_plan_unit_id, [])
+            //       assignsByUnit
+            //         .get(c.to_plan_unit_id)
+            //         .push({ item_id: c.item_id, weight_kg: c.weight_kg })
+            //     }
+            //   }
+
+            //   const bulkAssignPayload = {
+            //     assignments: Array.from(assignsByUnit.entries()).map(
+            //       ([plan_unit_id, items]) => ({ plan_unit_id, items })
+            //     ),
+            //     customerUnitCap: 2, // optional: align with your rules
+            //     enforce_family: false, // single-unit page → usually false
+            //   }
+
+            //   const unassignPayload = {
+            //     items: unassignList,
+            //     to_bucket: true,
+            //     bucket_reason: 'manual',
+            //     remove_empty_unit: true,
+            //   }
+
+            //   try {
+            //     // 🔁 Placeholders — wire to your client fetch layer
+            //     // await fetch(`/api/plans/${plan.id}/bulk-assign`, { method:'POST', body: JSON.stringify(bulkAssignPayload) })
+            //     // await fetch(`/api/plans/${plan.id}/unassign`, { method:'POST', body: JSON.stringify(unassignPayload) })
+
+            //     // On success, clear the local change log and snapshot new server state if you refetch:
+            //     setChanges([])
+            //     setUndoStack([])
+            //     toast({ title: 'Committed', description: 'Assignments saved.' })
+
+            //     // (Optional) Refetch plan → setAssignedUnits/setUnassigned/setPlan and refresh snapshot
+            //   } catch (e) {
+            //     handleAPIError(e, toast)
+            //   }
+            // }}
+          >
+            Commit ({changes.length})
+          </button>
+
+          <button
+            className="rounded-md border px-3 py-2 text-sm"
+            onClick={() => {
+              const snap = initialSnapshotRef.current
+              setPlan(snap.plan)
+              setAssignedUnits(JSON.parse(JSON.stringify(snap.assigned_units)))
+              setUnassigned(JSON.parse(JSON.stringify(snap.unassigned)))
+              setChanges([])
+              setUndoStack([])
+              toast({ title: 'Reset', description: 'Local changes discarded.' })
+            }}
+          >
+            Reset
+          </button>
+        </div>
+
         <div className="grid gap-6  ">
           <div className="grid gap-6  md:grid-cols-4">
             <div className="md:col-span-3">
@@ -573,16 +791,9 @@ const LoadAssignmentSingle = ({ id, data }) => {
                         )
                       )
                     }}
-                    // onUnitChange={(updatedUnit) => {
-                    //   setAssignedUnits((prev) =>
-                    //     prev.map((u) =>
-                    //       u.plan_unit_id === updatedUnit.plan_unit_id
-                    //         ? updatedUnit
-                    //         : u
-                    //     )
-                    //   )
-                    // }}
-                    onUnassignAll={() => onUnassignAll(u.plan_unit_id)}
+                    onUnassignAll={() =>
+                      onUnassignAll(planned_unit.plan_unit_id)
+                    }
                   />
                 )}
               </div>
@@ -602,7 +813,7 @@ const LoadAssignmentSingle = ({ id, data }) => {
           <DragOverlay>
             {activeItem ? (
               <div className="rounded-md border bg-popover px-2 py-1 text-sm shadow">
-                {activeItem.description}
+                {activeItem.item?.description || activeItem.item?.item_id}
               </div>
             ) : null}
           </DragOverlay>,
