@@ -25,16 +25,14 @@ const assignmentReducer = (state, action) => {
     case assignment.ADD_PLAN:
       return {
         ...state,
-        data: { ...state.data, plans: plans.push(action.payload) },
+
+        data: {
+          plans: Array.isArray(state.data.plans)
+            ? [...state.data.plans, action.payload]
+            : [action.payload],
+        },
         loading: false,
       }
-    // return {
-    //   ...state,
-    //   data: {
-    //     ...state.data,
-    //     plans: { ...state?.data?.plans, ...action.payload },
-    //   },
-    // }
     case assignment.MANUAL_ASSIGN_LOADS:
       return {
         ...state,
@@ -66,39 +64,29 @@ const assignmentReducer = (state, action) => {
         loading: false,
       }
     case assignment.DELETE_PLANNED_ASSIGNMENT_BY_ID:
+      // return {
+      //   ...state,
+      //   data: Array.isArray(state.data.plans)
+      //     ? state.data.filter((item) => item.id !== action.payload)
+      //     : [],
+
+      //   loading: false,
+      // }
+      const id =
+        typeof action.payload === 'string'
+          ? action.payload
+          : action.payload?.plan_id
+          ? action.payload?.id
+          : action.payload
+      console.log('id :>> ', id)
+      const previous = Array.isArray(state?.data?.plans) ? state.data.plans : []
+      const new_state = previous.filter((p) => String(p.id) !== String(id))
+
       return {
         ...state,
-        datadata: {
-          ...state.data,
-          ...state.data.plans?.filter((p) => p.id == action.payload),
-        },
-        // data: {
-        //   plans: Array.isArray(state.data?.plans)
-        //     ? state.data?.plans.filter((item) => item.id !== action.payload)
-        //     : state?.data?.plans,
-        //   // currentDriver:
-        //   //   state.currentDriver?.id === action.payload
-        //   //     ? null
-        //   //     : state.currentDriver,
-        // },
-
+        data: { ...state.data, plans: new_state },
         loading: false,
       }
-    // const id =
-    //   typeof action.payload === 'string'
-    //     ? action.payload
-    //     : action.payload?.plan_id
-    //     ? action.payload?.id
-    //     : action.payload
-    // console.log('id :>> ', id)
-    // const previous = Array.isArray(state?.data?.plans) ? state.data.plans : []
-    // const new_state = previous.filter((p) => String(p.id) !== String(id))
-
-    // return {
-    //   ...state,
-    //   data: { ...state.data, plans: new_state },
-    //   loading: false,
-    // }
 
     default:
       return state

@@ -85,16 +85,20 @@ export const postApi = async ({
       return
     }
     const response = await fetchData(url, 'POST', data)
-
+    console.log('url :>> ', url)
+    console.log('response :>> ', response)
     // Handle new standardized response format
     const responseData = response
+    if (url === '/plans/auto-assign') {
+      dispatch(success(responseData))
+    }
     // if (responseData && responseData !== undefined) {
     //   dispatch(success(responseData))
     // } else {
     //   // Fallback for old format
     //   dispatch(success(responseData))
     // }
-    console.log('url :>> ', url)
+
     toast({
       title: successMsg || 'Operation was successful',
       description: responseData?.message || '',
@@ -182,6 +186,7 @@ export const deleteApi = async ({
 
     // Handle new standardized response format
     const responseData = response
+    console.log('response :>> ', response)
     // if (responseData && responseData !== undefined) {
     dispatch(success(responseData))
     // } else {

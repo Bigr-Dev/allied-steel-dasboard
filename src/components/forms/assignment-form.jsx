@@ -52,10 +52,10 @@ const AssignmentForm = ({ id, onCancel }) => {
     // routeAffinitySlop: 0.25,
     capacityHeadroom: 0.1,
     lengthBufferMm: 600,
-    maxTrucksPerZone: 2,
+    //  maxTrucksPerZone: 2,
     // ignoreLengthIfMissing: false,
     // ignoreDepartment: false,
-    customerUnitCap: 2,
+    // customerUnitCap: 2,
     // routeAffinitySlop: 0.25, // NEW
   })
   const [depOpen, setDepOpen] = useState(false)
@@ -194,20 +194,20 @@ const AssignmentForm = ({ id, onCancel }) => {
       value: localFilters.lengthBufferMm,
       placeholder: 'Adjust the length buffer',
     },
-    {
-      type: 'number',
-      htmlFor: 'maxTrucksPerZone',
-      label: 'Max truck Per Zone',
-      value: localFilters.maxTrucksPerZone,
-      placeholder: 'Adjust max per zone',
-    },
-    {
-      type: 'number',
-      htmlFor: 'customerUnitCap',
-      label: 'Max trucks per Customer',
-      value: localFilters.customerUnitCap,
-      placeholder: 'Adjust the customer cap',
-    },
+    // {
+    //   type: 'number',
+    //   htmlFor: 'maxTrucksPerZone',
+    //   label: 'Max truck Per Zone',
+    //   value: localFilters.maxTrucksPerZone,
+    //   placeholder: 'Adjust max per zone',
+    // },
+    // {
+    //   type: 'number',
+    //   htmlFor: 'customerUnitCap',
+    //   label: 'Max trucks per Customer',
+    //   value: localFilters.customerUnitCap,
+    //   placeholder: 'Adjust the customer cap',
+    // },
   ]
 
   return (

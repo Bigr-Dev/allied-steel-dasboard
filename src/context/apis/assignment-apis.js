@@ -28,10 +28,10 @@ export const autoAssignLoads = async (assignmentDispatch, data) =>
   postApi({
     dispatch: assignmentDispatch,
     start: assignment_actions.autoAssignLoadsStart,
-    success: assignment_actions.autoAssignLoadsSuccess,
+    success: assignment_actions.addPlanSuccess,
     successMsg: 'success',
     failure: assignment_actions.autoAssignLoadsFailure,
-    errorMsg: 'Something went wrong, while fetching the assignment preview',
+    errorMsg: 'Something went wrong, while fetching the assignment plan',
     url: `/plans/auto-assign`,
     data,
   })

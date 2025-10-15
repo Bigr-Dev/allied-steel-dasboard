@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/data-table'
 
 // data
-const data = {}
+const data = { plans: [], loading: false }
 
 // page title
 const titleSection = {
