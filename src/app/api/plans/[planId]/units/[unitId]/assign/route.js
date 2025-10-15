@@ -21,21 +21,102 @@ export async function GET(req, { params }) {
 // *****************************
 // get plans by planId
 // *****************************
-export async function POST(req, { params }) {
-  const { planId, unitId } = await params
+// export async function POST(req, { params }) {
+//   const { planId, unitId } = await params
 
-  const body = await req.json()
+//   const body = await req.json()
+//   try {
+//     const response = await fetchServerData(
+//       `${url}/${planId}/units/${unitId}/assign`,
+//       'POST',
+//       body
+//     )
+//     return NextResponse.json(response?.message || response?.data, {
+//       status: 200,
+//     })
+//   } catch (error) {
+//     console.error('Error fetching data:', error)
+//     return NextResponse.json({ error: error.message }, { status: 500 })
+//   }
+// }
+
+// POST /api/plans/:planId/units/:unitId/assign
+export async function POST(req, ctx) {
   try {
-    const response = await fetchServerData(
-      `${url}/${planId}/units/${unitId}/assign`,
+    // ⬇️ params must be awaited in Next.js 15 dynamic API routes
+    const { planId, unitId } = await ctx.params
+
+    if (!planId || !unitId) {
+      return NextResponse.json(
+        { error: 'planId and unitId required' },
+        { status: 400 }
+      )
+    }
+
+    const incoming = await req.json()
+    const items = Array.isArray(incoming?.items)
+      ? incoming.items
+      : incoming?.items
+      ? [incoming.items]
+      : []
+
+    const body = {
+      plan_id: planId,
+      plan_unit_id: unitId,
+      items, // [{ item_id, weight_kg?, note? }]
+      // intentionally no customerUnitCap
+    }
+
+    const resp = await fetchServerData(
+      `plans/${planId}/units/${unitId}/assign`,
       'POST',
       body
     )
-    return NextResponse.json(response?.message || response?.data, {
-      status: 200,
-    })
+
+    return NextResponse.json(resp?.message ?? resp, { status: 200 })
   } catch (error) {
-    console.error('Error fetching data:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(
+      { error: String(error?.message ?? error) },
+      { status: 500 }
+    )
   }
 }
+
+// // POST /api/plans/:planId/units/:unitId/assign
+// export async function POST(req, { params }) {
+//   try {
+//     const { planId, unitId } = (await params) || {}
+//     if (!planId || !unitId) {
+//       return NextResponse.json(
+//         { error: 'planId and unitId required' },
+//         { status: 400 }
+//       )
+//     }
+
+//     const incoming = await req.json()
+//     // Force the shape your server expects AND remove any cap knobs
+//     const body = {
+//       plan_id: planId,
+//       plan_unit_id: unitId,
+//       items: Array.isArray(incoming?.items)
+//         ? incoming.items
+//         : incoming?.items
+//         ? [incoming.items]
+//         : [],
+//       // intentionally no customerUnitCap
+//     }
+
+//     const resp = await fetchServerData(
+//       `plans/${planId}/units/${unitId}/assign`,
+//       'POST',
+//       body
+//     )
+
+//     return NextResponse.json(resp?.message ?? resp, { status: 200 })
+//   } catch (error) {
+//     return NextResponse.json(
+//       { error: String(error?.message ?? error) },
+//       { status: 500 }
+//     )
+//   }
+// }

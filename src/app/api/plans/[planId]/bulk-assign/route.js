@@ -16,12 +16,13 @@ export async function POST(req, { params }) {
     //   customerUnitCap?: number,
     //   enforce_family?: boolean
     // }
-
+    console.log('body :>> ', body)
     const resp = await fetchServerData(
       `${base}/${planId}/bulk-assign`,
       'POST',
       body
     )
+    console.log('resp :>> ', resp)
     // Your controller usually returns { message, ...data }
     return NextResponse.json(resp?.message ?? resp, { status: 200 })
   } catch (error) {

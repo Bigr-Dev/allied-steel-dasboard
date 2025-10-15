@@ -2,7 +2,7 @@
 
 import { useGlobalContext } from '@/context/global-context'
 import { AssignmentBoard } from './AssignmentBoard'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import DetailCard from '@/components/ui/detail-card'
 import {
   Card,
@@ -17,6 +17,7 @@ import { ProgressBar } from './ProgressBar'
 import { Separator } from '@/components/ui/separator'
 import { usePathname, useRouter } from 'next/navigation'
 import { UnassignedList } from './UnassignedList'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function LoadAssignment({ id, assignment, onEdit, preview }) {
   const router = useRouter()
@@ -26,9 +27,15 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
   const {
     assignment: { data: context_data },
     assignment_preview,
+    setAssignmentPreview,
   } = useGlobalContext()
-  const data = preview ? assignment_preview : assignment?.data
-  // console.log('data :>> ', data)
+
+  useEffect(() => {
+    setAssignmentPreview(assignment?.data)
+  }, [assignment?.data])
+  // console.log('assignment_preview :>> ', assignment_preview)
+  const data = assignment_preview
+
   const assigned_units = data?.assigned_units || []
   // const unassigned = data?.unassigned || []
   const plan = data?.plan || {}
@@ -42,6 +49,19 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
     includeExisting: true,
     unit_type: 'all',
   })
+
+  const tableInfo = {
+    tabs: [
+      {
+        value: 'plan',
+        title: `Vehicle Assignment `,
+      },
+      {
+        value: 'unassigned',
+        title: `Unassigned Items `,
+      },
+    ],
+  }
 
   const getVehicleDisplay = (unit) => {
     if (unit.unit_type === 'rigid' && unit.rigid) {
@@ -154,164 +174,197 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
   // }
   //console.log('commit :>> ', assignment?.data?.plan)
   const handleClick = ({ unit, preview, onEdit, id }) => {
-    //console.log('unit :>> ', unit)
     if (pathname.includes('create-plan')) {
       router.push(`${pathname}/${unit}`)
     } else {
       router.push(`/load-assignment/${unit}/${id}`)
     }
-    // switch (pathname) {
-    //   case true:
-    //     router.push(`${pathname}/${unit}`)
-    //     break
-
-    //   default:
-    //     router.push(`/load-assignment/${unit}/${id}`)
-    //     break
-    // }
   }
   return (
     <div>
       <div className="grid gap-6 grid-cols-12  ">
         <div className="grid col-span-12  ">
-          <Card className={'h-fit'}>
-            <CardHeader>
-              <CardTitle>
-                {assignment?.data?.plan?.id
-                  ? `Vehicle Assignment - ${assignment?.data?.plan?.notes}`
-                  : 'Tomorrows Assignment Preview'}
-              </CardTitle>
-              <CardDescription>
-                {assignment?.data?.plan?.id
-                  ? 'Manually assign loads for this plan'
-                  : 'Adjust the preview, commit, then manual assign your loads from "Assignment Plans Tab"'}
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent
-              className={
-                'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 max-h-screen overflow-y-auto'
-              }
+          <Tabs defaultValue={tableInfo?.tabs?.[0]?.value} className="w-full">
+            <TabsList
+              className={`grid w-full grid-cols-${tableInfo?.tabs?.length} gap-6`}
             >
-              {assigned_units.length > 0 &&
-                assigned_units.map((unit, index) => {
-                  const vehicle = getVehicleDisplay(unit)
-                  const driverInfo = getDriverInfo(unit)
-                  const groupedData = getGroupUnitData(unit)
-                  const capacityPercentage =
-                    (unit.used_capacity_kg / unit.capacity_kg) * 100
-                  const isOverCapacity = capacityPercentage > 100
-                  const isNearCapacity = capacityPercentage >= 85
+              {tableInfo?.tabs.map((trigger, index) => {
+                return (
+                  <TabsTrigger key={index} value={trigger.value}>
+                    <h6 className="capitalize font-bold">{trigger.title}</h6>
+                  </TabsTrigger>
+                )
+              })}
+            </TabsList>
+            <TabsContent
+              // key={index}
+              value={tableInfo?.tabs?.[0]?.value}
+              className="space-y-4 "
+            >
+              <Card className={'h-fit'}>
+                <CardHeader>
+                  <CardTitle>
+                    {assignment?.data?.plan?.id
+                      ? `Vehicle Assignment - ${assignment?.data?.plan?.notes}`
+                      : 'Tomorrows Assignment Preview'}
+                  </CardTitle>
+                  <CardDescription>
+                    {assignment?.data?.plan?.id
+                      ? 'Manually assign loads for this plan'
+                      : 'Adjust the preview, commit, then manual assign your loads from "Assignment Plans Tab"'}
+                  </CardDescription>
+                </CardHeader>
 
-                  //`/assignments/${plan.plan_id}/units/${unit.plan_unit_id}`
-                  return (
-                    <Card
-                      key={unit?.plan_unit_id || index}
-                      onClick={() => {
-                        handleClick({
-                          unit: unit.plan_unit_id,
-                          preview,
-                          onEdit,
-                          id,
-                        })
-                      }}
-                      className="cursor-pointer hover:shadow-lg transition-shadow"
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-end justify-between">
-                          <div className="flex items-center gap-2">
-                            {vehicle.icon}
-                            <div>
-                              <h3 className="font-semibold text-sm">
-                                {vehicle.name}
-                              </h3>
-                              <p className="text-xs text-muted-foreground">
-                                {vehicle.plate}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 mt-2">
-                            <User className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
-                              {driverInfo.name}
-                              {/* {driverInfo.source && (
+                <CardContent
+                  className={
+                    'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 max-h-screen overflow-y-auto'
+                  }
+                >
+                  {assigned_units.length > 0 &&
+                    assigned_units.map((unit, index) => {
+                      const vehicle = getVehicleDisplay(unit)
+                      const driverInfo = getDriverInfo(unit)
+                      const groupedData = getGroupUnitData(unit)
+                      const capacityPercentage =
+                        (unit.used_capacity_kg / unit.capacity_kg) * 100
+                      const isOverCapacity = capacityPercentage > 100
+                      const isNearCapacity = capacityPercentage >= 85
+
+                      //`/assignments/${plan.plan_id}/units/${unit.plan_unit_id}`
+                      return (
+                        <Card
+                          key={unit?.plan_unit_id || index}
+                          onClick={() => {
+                            handleClick({
+                              unit: unit.plan_unit_id,
+                              preview,
+                              onEdit,
+                              id,
+                            })
+                          }}
+                          className="cursor-pointer hover:shadow-lg transition-shadow"
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-end justify-between">
+                              <div className="flex items-center gap-2">
+                                {vehicle.icon}
+                                <div>
+                                  <h3 className="font-semibold text-sm">
+                                    {vehicle.name}
+                                  </h3>
+                                  <p className="text-xs text-muted-foreground">
+                                    {vehicle.plate}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 mt-2">
+                                <User className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">
+                                  {driverInfo.name}
+                                  {/* {driverInfo.source && (
                           <span className="ml-1 text-xs opacity-75">
                             ({driverInfo.source})
                           </span>
                         )} */}
-                            </span>
-                          </div>
-                        </div>
+                                </span>
+                              </div>
+                            </div>
 
-                        <div className="flex items-center justify-between gap-2 mt-2">
-                          <Badge variant="secondary" className="text-xs">
-                            {vehicle.type}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {unit.customers.length} customers
-                          </Badge>
-                        </div>
-                        <Separator className="mt-2" />
-                      </CardHeader>
+                            <div className="flex items-center justify-between gap-2 mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {vehicle.type}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {unit.customers.length} customers
+                              </Badge>
+                            </div>
+                            <Separator className="mt-2" />
+                          </CardHeader>
 
-                      <CardContent className="flex flex-col min-h-[150px] justify-between  ">
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          {groupedData.map((route) => (
-                            <Badge
-                              key={route.route_name}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {route.route_name}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="mt-3 ">
-                          <div className="flex items-center justify-between text-xs mb-1">
-                            <div className="flex items-center gap-1">
-                              <span className="text-muted-foreground">
-                                Capacity
-                              </span>
+                          <CardContent className="flex flex-col min-h-[150px] justify-between  ">
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              {groupedData.map((route) => (
+                                <Badge
+                                  key={route.route_name}
+                                  variant="outline"
+                                  className="text-xs"
+                                >
+                                  {route.route_name}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="mt-3 ">
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-muted-foreground">
+                                    Capacity
+                                  </span>
+                                  {isOverCapacity && (
+                                    <AlertTriangle className="h-3 w-3 text-destructive" />
+                                  )}
+                                </div>
+                                <span
+                                  className={`font-medium ${
+                                    isOverCapacity
+                                      ? 'text-destructive'
+                                      : isNearCapacity
+                                      ? 'text-amber-600'
+                                      : 'text-foreground'
+                                  }`}
+                                >
+                                  {unit.used_capacity_kg}kg / {unit.capacity_kg}
+                                  kg
+                                </span>
+                              </div>
+                              <ProgressBar
+                                value={capacityPercentage}
+                                className={
+                                  isOverCapacity
+                                    ? 'bg-destructive'
+                                    : isNearCapacity
+                                    ? 'bg-amber-500'
+                                    : 'bg-primary'
+                                }
+                              />
                               {isOverCapacity && (
-                                <AlertTriangle className="h-3 w-3 text-destructive" />
+                                <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Over capacity by{' '}
+                                  {(capacityPercentage - 100).toFixed(1)}%
+                                </p>
                               )}
                             </div>
-                            <span
-                              className={`font-medium ${
-                                isOverCapacity
-                                  ? 'text-destructive'
-                                  : isNearCapacity
-                                  ? 'text-amber-600'
-                                  : 'text-foreground'
-                              }`}
-                            >
-                              {unit.used_capacity_kg}kg / {unit.capacity_kg}kg
-                            </span>
-                          </div>
-                          <ProgressBar
-                            value={capacityPercentage}
-                            className={
-                              isOverCapacity
-                                ? 'bg-destructive'
-                                : isNearCapacity
-                                ? 'bg-amber-500'
-                                : 'bg-primary'
-                            }
-                          />
-                          {isOverCapacity && (
-                            <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              Over capacity by{' '}
-                              {(capacityPercentage - 100).toFixed(1)}%
-                            </p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-            </CardContent>
-          </Card>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent
+              value={tableInfo?.tabs?.[1]?.value}
+              className="space-y-4 "
+            >
+              <Card className={'h-fit'}>
+                <CardHeader>
+                  <CardTitle>
+                    {`Unassigned Items - ${assignment?.data?.plan?.notes}`}
+                  </CardTitle>
+                  <CardDescription>
+                    {assignment?.data?.plan?.id
+                      ? 'Manually assign loads for this plan'
+                      : 'Adjust the preview, commit, then manual assign your loads from "Assignment Plans Tab"'}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent
+                  className={
+                    'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 max-h-screen overflow-y-auto'
+                  }
+                ></CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* <div className="md:col-span-3">

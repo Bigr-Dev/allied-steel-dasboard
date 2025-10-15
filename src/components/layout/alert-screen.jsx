@@ -19,7 +19,7 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
   const pathname = usePathname().slice(1)
   const screen = replaceHyphenWithUnderscore(pathname)
   const { toast } = useToast()
-  console.log('screen :>> ', screen)
+  // console.log('screen :>> ', screen)
   //       orders,
   //       ordersDispatch,
   //       deleteOrder,

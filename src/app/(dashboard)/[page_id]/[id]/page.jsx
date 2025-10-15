@@ -23,8 +23,6 @@ const iconMap = {
 
 const SinglePage = async ({ params }) => {
   const { page_id, id } = await params
-  // const {} = useGlobalContext()
-  //console.log('id :>> ', page_id, id)
 
   function todayTomorrow() {
     const now = new Date()
@@ -61,9 +59,15 @@ const SinglePage = async ({ params }) => {
         include_nested: true, // false => plan header only
         include_idle: true, // only if include_nested=true
       })
-      console.log('assignment :>> ', assignment)
+      if (id) {
+        console.log('id :>> ', id)
+      } else {
+        console.log('plan :>> ')
+      }
+
+      //console.log('assignment :>> ', assignment)
       const plan = assignment?.data
-      console.log('plan :>> ', plan)
+      // console.log('plan :>> ', plan)
       // *********************
       // Helper functions for load assignment stats
       // *********************
@@ -145,16 +149,6 @@ const SinglePage = async ({ params }) => {
 
       const screenStats = [
         {
-          title: 'Active Routes',
-          value: getTotalRoutes(plan) || 0,
-          icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
-        },
-        {
-          title: 'Total Suburbs',
-          value: getTotalSuburbs(plan) || 0,
-          icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
-        },
-        {
           title: 'Assigned Vehicles',
           value: getTotalVehicles(plan) || 0,
           icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
@@ -165,6 +159,16 @@ const SinglePage = async ({ params }) => {
           icon: (
             <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
           ),
+        },
+        {
+          title: 'Assigned Items',
+          value: getTotalOrders(plan) || 0,
+          icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
+        },
+        {
+          title: 'Unassigned Items',
+          value: plan?.unassigned?.length || 0,
+          icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
       ]
 

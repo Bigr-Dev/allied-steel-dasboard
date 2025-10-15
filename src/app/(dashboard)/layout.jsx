@@ -56,36 +56,14 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       const current_user = Users?.message?.filter((u) => u.id == uid)?.[0]
       //console.log('current_user :>> ', current_user?.branch_id)
 
-      const plans = await fetchServerData('plans', 'GET')
-      // const assignment = await fetchServerData(`plans/${id}/get`, 'POST', {})
-      // console.log('object :>> ', object)
-
-      // const assignment = await fetchServerData('auto-assign', 'POST', {
-      //   departure_date: tomorrow, // default: tomorrow
-      //   //   "cutoff_date": "2025-09-18",     // default: today
-      //   branch_id: current_user?.branch_id,
-      //   commit: false, // preview (no DB writes) if false
-      //   routeAffinitySlop: 0.25,
-      // })
-      // console.log('assignment :>> ', assignment)
+      const plans = await fetchServerData(
+        'plans?include_unassigned=true&include_counts=true&include_units=true',
+        'GET'
+      )
 
       let AssignedLoads = {}
       if (Users?.message) {
         const load_params = {
-          // date: tomorrow,
-          // branch_ids: [
-          //   Users?.message?.filter((u) => u.id === uid)?.[0]?.managed_branches,
-          // ],
-          // order_status: 'Sales Order Open Printed',
-          // commit: false,
-          // detailLevel: 'item',
-          // maxItemsPerOrder: 200,
-          // ignoreDepartment: true,
-          // ignoreLengthIfMissing: true,
-          // defaultVehicleCapacityKg: 33000,
-          // defaultVehicleLengthMm: 13600,
-          // debug: true,
-
           departure_date: tomorrow, // default: tomorrow
           //   "cutoff_date": "2025-09-18",     // default: today
           //   "branch_id": "uuid-optional",
@@ -98,8 +76,6 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
           ...load_params,
         })
       }
-      //console.log('assignment :layout>> ', assignment?.data)
-      // const test = { ...plans?.data, ...assignment?.data }
 
       data = {
         load_assignment: {

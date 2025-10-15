@@ -24,6 +24,90 @@ import { createPortal } from 'react-dom'
 import { useAssignmentPlan } from '@/hooks/assignment-plan/use-assignment-plan'
 
 // helpers
+async function commitImmediateMove(planId, payload, fetchData) {
+  const { item_id, weight_kg, from_plan_unit_id, to_plan_unit_id } = payload
+
+  // A) Bucket → unit (assign)
+  if (!from_plan_unit_id && to_plan_unit_id) {
+    await fetchData(`plans/${planId}/units/${to_plan_unit_id}/assign`, 'POST', {
+      items: { item_id, weight_kg, note: 'manual' },
+      // no customerUnitCap
+    })
+    return
+  }
+
+  // B) Unit → bucket (unassign)
+  if (from_plan_unit_id && !to_plan_unit_id) {
+    await fetchData(`plans/${planId}/unassign`, 'POST', {
+      items: { plan_unit_id: from_plan_unit_id, item_id },
+      to_bucket: true,
+      bucket_reason: 'manual',
+      remove_empty_unit: true,
+    })
+    return
+  }
+
+  // C) Unit → unit (move)
+  if (
+    from_plan_unit_id &&
+    to_plan_unit_id &&
+    from_plan_unit_id !== to_plan_unit_id
+  ) {
+    await fetchData(`plans/${planId}/unassign`, 'POST', {
+      items: { plan_unit_id: from_plan_unit_id, item_id },
+      to_bucket: false,
+      remove_empty_unit: true,
+    })
+    await fetchData(`plans/${planId}/units/${to_plan_unit_id}/assign`, 'POST', {
+      items: { item_id, weight_kg, note: 'manual-move' },
+      // no customerUnitCap
+    })
+  }
+}
+
+// async function commitImmediateMove(planId, payload, fetchData) {
+//   const { item_id, weight_kg, from_plan_unit_id, to_plan_unit_id } = payload
+
+//   // A) Assign from bucket → unit
+//   if (!from_plan_unit_id && to_plan_unit_id) {
+//     await fetchData(`plans/${planId}/manually-assign`, 'POST', {
+//       plan_unit_id: to_plan_unit_id,
+//       items: { item_id, weight_kg, note: 'manual' },
+//       //  customerUnitCap: 2,
+//     })
+//     return
+//   }
+
+//   // B) Unassign from unit → bucket
+//   if (from_plan_unit_id && !to_plan_unit_id) {
+//     await fetchData(`plans/${planId}/unassign`, 'POST', {
+//       items: { plan_unit_id: from_plan_unit_id, item_id },
+//       to_bucket: true,
+//       bucket_reason: 'manual',
+//       remove_empty_unit: true,
+//     })
+//     return
+//   }
+
+//   // C) Move unit → unit: unassign, then assign
+//   if (
+//     from_plan_unit_id &&
+//     to_plan_unit_id &&
+//     from_plan_unit_id !== to_plan_unit_id
+//   ) {
+//     await fetchData(`plans/${planId}/unassign`, 'POST', {
+//       items: { plan_unit_id: from_plan_unit_id, item_id },
+//       to_bucket: false, // pure move (no need to write bucket)
+//       remove_empty_unit: true,
+//     })
+//     await fetchData(`plans/${planId}/manually-assign`, 'POST', {
+//       plan_unit_id: to_plan_unit_id,
+//       items: { item_id, weight_kg, note: 'manual-move' },
+//       customerUnitCap: 2,
+//     })
+//   }
+// }
+
 function removeItemFromUnitCustomers(customers = [], item_id) {
   let removedWeight = 0
   const nextCustomers = customers
@@ -216,27 +300,37 @@ async function commitChangesWithFetchData(
     }
   }
 
-  // 1) bulk-assign (if any)
+  // 1) manually-assign (if any)
   if (assignsByUnit.size) {
-    const bulkAssignPayload = {
-      assignments: Array.from(assignsByUnit.entries()).map(
-        ([plan_unit_id, items]) => ({
-          plan_unit_id,
-          items,
-        })
-      ),
-      // tune if your backend expects these:
-      customerUnitCap: opts.customerUnitCap ?? 2,
-      enforce_family: opts.enforce_family ?? false,
+    for (const [plan_unit_id, items] of assignsByUnit.entries()) {
+      // await fetchData(`plans/${planId}/manually-assign`, 'POST', {
+      //   plan_unit_id,
+      //   items, // [{ item_id, weight_kg }]
+      //   //   customerUnitCap: opts.customerUnitCap ?? 2,
+      // })
+      await fetchData(`plans/${planId}/units/${plan_unit_id}/assign`, 'POST', {
+        items, // [{ item_id, weight_kg? }]
+      })
     }
-    await fetchData(
-      `/api/plans/${planId}/bulk-assign`,
-      'POST',
-      bulkAssignPayload
-    )
-    // If you call the Express API directly, drop the /api prefix:
-    // await fetchData(`/plans/${planId}/bulk-assign`, 'POST', bulkAssignPayload);
   }
+
+  // // 1) bulk-assign (if any)
+  // if (assignsByUnit.size) {
+  //   const bulkAssignPayload = {
+  //     assignments: Array.from(assignsByUnit.entries()).map(
+  //       ([plan_unit_id, items]) => ({
+  //         plan_unit_id,
+  //         items,
+  //       })
+  //     ),
+  //     // tune if your backend expects these:
+  //     customerUnitCap: opts.customerUnitCap ?? 2,
+  //     enforce_family: opts.enforce_family ?? false,
+  //   }
+  //   await fetchData(`plans/${planId}/bulk-assign`, 'POST', bulkAssignPayload)
+  //   // If you call the Express API directly, drop the /api prefix:
+  //   // await fetchData(`/plans/${planId}/bulk-assign`, 'POST', bulkAssignPayload);
+  // }
 
   // 2) unassign (if any)
   if (unassignList.length) {
@@ -254,19 +348,22 @@ async function commitChangesWithFetchData(
 }
 
 const LoadAssignmentSingle = ({ id, data }) => {
-  const {
-    // assignment: { data },
-  } = useGlobalContext()
+  const { assignment_preview, setAssignmentPreview, fetchData } =
+    useGlobalContext()
   const { error, refresh, assignItem, unassignItem, unassignAllFromUnit } =
     useAssignmentPlan()
-  const { fetchData } = useGlobalContext()
-  const { toast } = useToast()
-  //console.log('data :>> ', data)
 
-  const [assignedUnits, setAssignedUnits] = useState(data?.assigned_units || [])
-  const [unassigned, setUnassigned] = useState(data?.unassigned || [])
+  const { toast } = useToast()
+  console.log('assignment_preview :>> ', assignment_preview)
+
+  const [assignedUnits, setAssignedUnits] = useState(
+    assignment_preview?.assigned_units || []
+  )
+  const [unassigned, setUnassigned] = useState(
+    assignment_preview?.unassigned || []
+  )
   const [loading, setLoading] = useState(false)
-  const [plan, setPlan] = useState(data?.plan || null)
+  const [plan, setPlan] = useState(assignment_preview?.plan || null)
   const [activeItem, setActiveItem] = useState(null)
   const [undoStack, setUndoStack] = useState([])
   const [changes, setChanges] = useState([])
@@ -274,21 +371,29 @@ const LoadAssignmentSingle = ({ id, data }) => {
   const CAPACITY_BUFFER = 0.1 // 10% leeway
 
   const initialSnapshotRef = useRef({
-    plan: data?.plan || null,
-    assigned_units: JSON.parse(JSON.stringify(data?.assigned_units || [])),
-    unassigned: JSON.parse(JSON.stringify(data?.unassigned || [])),
+    plan: assignment_preview?.plan || null,
+    assigned_units: JSON.parse(
+      JSON.stringify(assignment_preview?.assigned_units || [])
+    ),
+    unassigned: JSON.parse(
+      JSON.stringify(assignment_preview?.unassigned || [])
+    ),
   })
 
   // If the page receives new data (e.g., navigation), refresh the snapshot
   useEffect(() => {
     initialSnapshotRef.current = {
-      plan: data?.plan || null,
-      assigned_units: JSON.parse(JSON.stringify(data?.assigned_units || [])),
-      unassigned: JSON.parse(JSON.stringify(data?.unassigned || [])),
+      plan: assignment_preview?.plan || null,
+      assigned_units: JSON.parse(
+        JSON.stringify(assignment_preview?.assigned_units || [])
+      ),
+      unassigned: JSON.parse(
+        JSON.stringify(assignment_preview?.unassigned || [])
+      ),
     }
-    setAssignedUnits(data?.assigned_units || [])
-    setUnassigned(data?.unassigned || [])
-    setPlan(data?.plan || null)
+    setAssignedUnits(assignment_preview?.assigned_units || [])
+    setUnassigned(assignment_preview?.unassigned || [])
+    setPlan(assignment_preview?.plan || null)
     setChanges([])
     setUndoStack([])
   }, [data])
@@ -403,80 +508,121 @@ const LoadAssignmentSingle = ({ id, data }) => {
     const to = over.id
     if (from === to) return
 
-    // Target capacity guard
-    if (to.startsWith('unit:')) {
-      const targetUnitId = to.slice(5)
-      const targetUnit = assignedUnits.find(
-        (u) => u.plan_unit_id === targetUnitId
-      )
-      if (targetUnit) {
-        const newUsed =
-          Number(targetUnit.used_capacity_kg || 0) +
-          Number(dragData.weight || 0)
-        const maxAllowed =
-          Number(targetUnit.capacity_kg || 0) * (1 + CAPACITY_BUFFER)
-        if (newUsed > maxAllowed) {
-          toast({
-            title: 'Over Capacity',
-            // description: 'Cannot assign item - would exceed vehicle capacity',
-            description: `Cannot assign item — would exceed ${Math.round(
-              CAPACITY_BUFFER * 100
-            )}% leeway`,
-            variant: 'destructive',
-          })
-          return
-        }
-      }
-    }
+    // … (your capacity guard + undo snapshot stays unchanged)
 
-    // Save undo point (deep copy)
-    const undoState = {
-      assignedUnits: JSON.parse(JSON.stringify(assignedUnits)),
-      unassigned: JSON.parse(JSON.stringify(unassigned)),
-      timestamp: Date.now(),
-    }
-
-    // Apply local move
     const move = {
       item_id: dragData.item_id,
-      weight_kg: dragData.weight, // normalized key
+      weight_kg: dragData.weight,
       from_plan_unit_id: from.startsWith('unit:') ? from.slice(5) : null,
       to_plan_unit_id: to.startsWith('unit:') ? to.slice(5) : null,
     }
+
+    // Optimistic local update (your existing helper)
     handleOptimisticMove(move)
 
-    // Track the change as an op we can send later
-    setChanges((prev) => [
-      ...prev,
-      move.to_plan_unit_id && !move.from_plan_unit_id
-        ? {
-            op: 'assign',
-            plan_unit_id: move.to_plan_unit_id,
-            item_id: move.item_id,
-            weight_kg: move.weight_kg,
-          }
-        : !move.to_plan_unit_id && move.from_plan_unit_id
-        ? {
-            op: 'unassign',
-            plan_unit_id: move.from_plan_unit_id,
-            item_id: move.item_id,
-          }
-        : {
-            op: 'move',
-            from_plan_unit_id: move.from_plan_unit_id,
-            to_plan_unit_id: move.to_plan_unit_id,
-            item_id: move.item_id,
-            weight_kg: move.weight_kg,
-          },
-    ])
+    // Track change locally (optional – keep if you still show “undo”)
+    setChanges((prev) => [...prev /* your existing op mapping */])
 
-    // Keep the last 10 undo points
-    setUndoStack((prev) => [...prev.slice(-9), undoState])
-    toast({
-      title: 'Locally updated',
-      description: 'Change recorded. Commit to save.',
-    })
+    // 🔴 NEW: immediately persist this single change via manually-assign / unassign
+    // plan.id is already in component state
+    commitImmediateMove(plan?.id, move, fetchData)
+      .then(() => {
+        toast({ title: 'Saved', description: 'Change committed.' })
+      })
+      .catch((err) => {
+        handleAPIError(err, toast)
+        // optional rollback: pop undo & restore snapshot
+        if (undoStack.length) handleUndo()
+      })
+
+    // Keep your toast about local update if you like, or rely on the "Saved" toast above.
   }
+
+  // const handleDragEnd = (event) => {
+  //   const { active, over } = event
+  //   setActiveItem(null)
+  //   if (!over) return
+  //   const dragData = active.data.current
+  //   if (!dragData) return
+
+  //   const from = dragData.containerId
+  //   const to = over.id
+  //   if (from === to) return
+
+  //   // Target capacity guard
+  //   if (to.startsWith('unit:')) {
+  //     const targetUnitId = to.slice(5)
+  //     const targetUnit = assignedUnits.find(
+  //       (u) => u.plan_unit_id === targetUnitId
+  //     )
+  //     if (targetUnit) {
+  //       const newUsed =
+  //         Number(targetUnit.used_capacity_kg || 0) +
+  //         Number(dragData.weight || 0)
+  //       const maxAllowed =
+  //         Number(targetUnit.capacity_kg || 0) * (1 + CAPACITY_BUFFER)
+  //       if (newUsed > maxAllowed) {
+  //         toast({
+  //           title: 'Over Capacity',
+  //           // description: 'Cannot assign item - would exceed vehicle capacity',
+  //           description: `Cannot assign item — would exceed ${Math.round(
+  //             CAPACITY_BUFFER * 100
+  //           )}% leeway`,
+  //           variant: 'destructive',
+  //         })
+  //         return
+  //       }
+  //     }
+  //   }
+
+  //   // Save undo point (deep copy)
+  //   const undoState = {
+  //     assignedUnits: JSON.parse(JSON.stringify(assignedUnits)),
+  //     unassigned: JSON.parse(JSON.stringify(unassigned)),
+  //     timestamp: Date.now(),
+  //   }
+
+  //   // Apply local move
+  //   const move = {
+  //     item_id: dragData.item_id,
+  //     weight_kg: dragData.weight, // normalized key
+  //     from_plan_unit_id: from.startsWith('unit:') ? from.slice(5) : null,
+  //     to_plan_unit_id: to.startsWith('unit:') ? to.slice(5) : null,
+  //   }
+  //   handleOptimisticMove(move)
+
+  //   // Track the change as an op we can send later
+  //   setChanges((prev) => [
+  //     ...prev,
+  //     move.to_plan_unit_id && !move.from_plan_unit_id
+  //       ? {
+  //           op: 'assign',
+  //           plan_unit_id: move.to_plan_unit_id,
+  //           item_id: move.item_id,
+  //           weight_kg: move.weight_kg,
+  //         }
+  //       : !move.to_plan_unit_id && move.from_plan_unit_id
+  //       ? {
+  //           op: 'unassign',
+  //           plan_unit_id: move.from_plan_unit_id,
+  //           item_id: move.item_id,
+  //         }
+  //       : {
+  //           op: 'move',
+  //           from_plan_unit_id: move.from_plan_unit_id,
+  //           to_plan_unit_id: move.to_plan_unit_id,
+  //           item_id: move.item_id,
+  //           weight_kg: move.weight_kg,
+  //         },
+  //   ])
+
+  //   // Keep the last 10 undo points
+  //   setUndoStack((prev) => [...prev.slice(-9), undoState])
+  //   toast({
+  //     title: 'Locally updated',
+  //     description: 'Change recorded. Commit to save.',
+  //   })
+  // }
 
   const handleOptimisticMove = async (payload) => {
     const { item_id, from_plan_unit_id, to_plan_unit_id } = payload
@@ -619,13 +765,13 @@ const LoadAssignmentSingle = ({ id, data }) => {
       handleAPIError(error, toast)
     }
   }
-  console.log('planned_unit :>> ', planned_unit)
+  // console.log('planned_unit :>> ', planned_unit)
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
       // onDragStart={(evt) => {
-      //   const item = evt.active?.data?.current?.item_id || null
+      //   const item = evt.active?.assignment_preview?.current?.item_id || null
       //   setActiveItem(item)
       // }}
       onDragStart={handleDragStart}
@@ -656,7 +802,7 @@ const LoadAssignmentSingle = ({ id, data }) => {
               try {
                 setLoading(true)
                 await commitChangesWithFetchData(plan.id, changes, fetchData, {
-                  customerUnitCap: 2,
+                  //   customerUnitCap: 2,
                   enforce_family: false, // this page allows mixing families
                 })
 

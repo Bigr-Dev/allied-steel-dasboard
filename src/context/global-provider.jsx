@@ -129,6 +129,7 @@ const GlobalProvider = ({ children, data }) => {
     value: current_user?.currentUser?.branch_id || '',
     label: current_user?.currentUser?.branch_name || '',
   })
+  const [assignment_preview, setAssignmentPreview] = useState([])
   // console.log('data :>> ', data?.load_assignment)
   // load data on initial render
   useEffect(() => {
@@ -431,10 +432,10 @@ const GlobalProvider = ({ children, data }) => {
   //   }
   // }, [])
   // console.log('assignment :>> ', assignment)
-  const [assignment_preview, setAssignmentPreview] = useState([])
+
   const fetchAssignmentPreview = async (data) =>
     autoAssignLoads(assignmentDispatch, data)
-
+  console.log('assignment :>> ', assignment?.data)
   return (
     <GlobalContext.Provider
       value={{
@@ -442,6 +443,7 @@ const GlobalProvider = ({ children, data }) => {
         onEdit: onEdit(setModalOpen, modalOpen, setId),
         onDelete: onDelete(setAlertOpen, alertOpen, setId),
         assignment_preview,
+        setAssignmentPreview,
         setModalOpen,
         assignment,
 

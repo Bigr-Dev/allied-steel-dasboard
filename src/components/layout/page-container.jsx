@@ -170,66 +170,6 @@ const PageContainer = ({ children }) => {
                 })}
               </TabsList>
               {current_screen?.tableInfo?.tabs?.map((content, index) => {
-                // console.log('content :>> ', content)
-                // let data = current_screen?.data
-
-                // if (pathname == 'vehicles') {
-                //   const vehicles_data = current_screen?.data?.map((v) => {
-                //     const driver = drivers?.data?.filter(
-                //       (d) => d.id == v.current_driver
-                //     )?.[0]?.name
-                //     const link = vehicles?.data?.filter(
-                //       (link) => link.id == v.assigned_to
-                //     )?.[0]?.fleet_number
-                //     return { ...v, current_driver: driver, assigned_to: link }
-                //   })
-                //   data = vehicles_data
-                // } else if (pathname == 'drivers') {
-                //   console.log('pathname :>> ', pathname)
-                //   const driver_data = current_screen?.data?.map((d) => {
-                //     const d_vehicle = vehicles?.data?.filter(
-                //       (v) => v.id == d.current_vehicle
-                //     )?.[0]?.fleet_number
-                //     console.log('d_vehicle :>> ', d_vehicle)
-                //     return { ...d, current_vehicle: d_vehicle }
-                //   })
-                //   console.log('driver_data :>> ', driver_data)
-                //   data = driver_data
-                // }
-
-                // switch (pathname) {
-                //   case 'vehicles':
-                //     const vehicles_data = current_screen?.data?.map((v) => {
-                //       const driver = drivers?.data?.filter(
-                //         (d) => d.id == v.current_driver
-                //       )?.[0]?.name
-                //       const link = vehicles?.data?.filter(
-                //         (link) => link.id == v.assigned_to
-                //       )?.[0]?.fleet_number
-                //       return { ...v, current_driver: driver, assigned_to: link }
-                //     })
-                //     data = vehicles_data
-                //     // console.log('current_screen?.data :>> ', vehicles_data)
-                //     break
-
-                //   case 'drivers':
-                //     console.log('pathname :>> ', pathname)
-                //     const driver_data = current_screen?.data?.map((d) => {
-                //       const d_vehicle = vehicles?.data?.filter(
-                //         (v) => v.id == d.current_vehicle
-                //       )?.[0]?.fleet_number
-                //       console.log('d_vehicle :>> ', d_vehicle)
-                //       return { ...d, current_vehicle: d_vehicle }
-                //     })
-                //     console.log('driver_data :>> ', driver_data)
-                //     data = driver_data
-                //     break
-
-                //   default:
-                //     break
-                // }
-
-                //console.log('data :>> ', data)
                 return (
                   <TabsContent
                     key={index}
