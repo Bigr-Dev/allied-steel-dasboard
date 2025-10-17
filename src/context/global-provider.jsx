@@ -270,22 +270,22 @@ const GlobalProvider = ({ children, data }) => {
       onDelete: (o) =>
         branchesDispatch(branch_actions.deleteBranchSuccess(o.id)),
     },
-    {
-      table: 'assignment_plans',
-      onInsert: (r) => {
-        return console.log('r-insert assignment_plans:>> GlobalProvider', r)
-      },
-      //assignmentDispatch(assignment_actions.addPlanSuccess(r)),
-      onUpdate: (r) => {
-        return console.log('r-update assignment_plans:>> GlobalProvider', r)
-      },
-      //  onInsert: (r) => assignmentDispatch(assignment_actions. (r)),
-      //   onUpdate: (r) => assignmentDispatch(assignment_actions.updateBranchSuccess(r)),
-      onDelete: (o) =>
-        assignmentDispatch(
-          assignment_actions.deletePlannedAssignmentByIdSuccess(o.id)
-        ),
-    },
+    // {
+    //   table: 'assignment_plans',
+    //   onInsert: (r) => {
+    //     return console.log('r-insert assignment_plans:>> GlobalProvider', r)
+    //   },
+    //   //assignmentDispatch(assignment_actions.addPlanSuccess(r)),
+    //   onUpdate: (r) => {
+    //     return console.log('r-update assignment_plans:>> GlobalProvider', r)
+    //   },
+    //   //  onInsert: (r) => assignmentDispatch(assignment_actions. (r)),
+    //   //   onUpdate: (r) => assignmentDispatch(assignment_actions.updateBranchSuccess(r)),
+    //   onDelete: (o) =>
+    //     assignmentDispatch(
+    //       assignment_actions.deletePlannedAssignmentByIdSuccess(o.id)
+    //     ),
+    // },
     {
       table: 'customers',
       onInsert: (r) =>
@@ -435,7 +435,7 @@ const GlobalProvider = ({ children, data }) => {
 
   const fetchAssignmentPreview = async (data) =>
     autoAssignLoads(assignmentDispatch, data)
-  console.log('assignment :>> ', assignment?.data)
+  // console.log('assignment :>> ', assignment?.data)
   return (
     <GlobalContext.Provider
       value={{

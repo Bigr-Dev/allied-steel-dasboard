@@ -1,21 +1,394 @@
+// 'use client'
+
+// import CardsView from '@/components/layout/dashboard/card-view'
+// import { Button } from '@/components/ui/button'
+// import DynamicInput from '@/components/ui/dynamic-input'
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from '@/components/ui/select'
+// import { useGlobalContext } from '@/context/global-context'
+// import { fetchData } from '@/lib/fetch'
+// import { LayoutGrid, Map } from 'lucide-react'
+// import { useEffect, useMemo, useRef, useState } from 'react'
+
+// /* ---------------- Helpers ---------------- */
+
+// // Build a plate-like identifier from a generic vehicle record
+// function pickPlateFromVehicle(v) {
+//   const s =
+//     v?.license_plate ??
+//     v?.reg_number ??
+//     v?.fleet_number ??
+//     v?.plate ??
+//     v?.id ??
+//     ''
+//   return String(s).trim().toUpperCase()
+// }
+
+// // Extract plates from assigned_units: prefer horse.plate, else rigid.plate
+// function extractPlatesFromAssignedUnits(assignedUnits = []) {
+//   const set = new Set()
+//   for (const u of assignedUnits) {
+//     const plate =
+//       u?.horse?.plate ?? u?.rigid?.plate ?? u?.trailer?.plate ?? u?.plan_unit_id
+//     if (!plate) continue
+//     set.add(String(plate).trim().toUpperCase())
+//   }
+//   return Array.from(set)
+// }
+
+// // Extract plates from current vehicles dataset (for 'all' mode)
+// function extractPlatesFromVehiclesList(vehicles = []) {
+//   const set = new Set()
+//   for (const v of vehicles) {
+//     const plate = pickPlateFromVehicle(v)
+//     if (plate) set.add(plate)
+//   }
+//   return Array.from(set)
+// }
+
+// // Merge helper: creates a vehicle card for each target plate and overlays live data
+// function buildVehicleCards(targetPlates = [], liveByPlate = {}) {
+//   return targetPlates.map((plate) => ({
+//     plate,
+//     live: liveByPlate[plate] || null,
+//   }))
+// }
+
+// // --- Safe JSON parse
+// function safeParseJSON(str) {
+//   try {
+//     return JSON.parse(str)
+//   } catch {
+//     return null
+//   }
+// }
+
+// // Old-dashboard style inner parser for a rawMessage string
+// function parseRawTcpData(raw) {
+//   if (typeof raw !== 'string') return []
+//   const parsed = safeParseJSON(raw)
+//   if (!parsed) return []
+//   if (Array.isArray(parsed)) return parsed
+//   if (parsed && typeof parsed === 'object' && parsed.Plate) return [parsed]
+//   return []
+// }
+
+// // Normalize misaligned keys coming from TCP feed
+// function remapTcpFields(pkt = {}) {
+//   const out = { ...pkt }
+//   if (pkt.DriverName != null) out.Address = pkt.DriverName // Address <- DriverName
+//   if (pkt.Geozone != null) out.DriverName = pkt.Geozone // DriverName <- Geozone
+//   const headQuality = pkt.HeadQuality ?? pkt['Head Quality']
+//   if (headQuality != null) out.Geozone = headQuality // Geozone <- Head Quality
+//   const pocsag = pkt.Pocsagstr ?? pkt.PocsagStr
+//   if (pocsag != null) out.Head = pocsag // Head <- Pocsagstr
+//   if (pkt.Distance != null) out.Mileage = pkt.Distance // Mileage <- Distance
+//   else if (pkt.ODO != null) out.Mileage = pkt.ODO
+//   return out
+// }
+
+// // Upsert packets (by Plate) into live map
+// function upsertLivePackets(liveByPlateRef, packets) {
+//   if (!Array.isArray(packets) || packets.length === 0) return false
+//   let changed = false
+//   for (const pkt of packets) {
+//     const plate = String(pkt.Plate || '')
+//       .trim()
+//       .toUpperCase()
+//     if (!plate) continue
+//     const prev = liveByPlateRef.current[plate] || {}
+//     const next = { ...prev, ...pkt }
+//     liveByPlateRef.current[plate] = next
+//     changed = true
+//   }
+//   return changed
+// }
+
+// const Dashboard = () => {
+//   const { vehicles, assignment } = useGlobalContext()
+//   const loading = assignment?.loading
+
+//   const [localFilters, setLocalFilters] = useState({
+//     currentVehicles: vehicles?.data ?? [],
+//     assignmentData: assignment?.data ?? null,
+//     plans: assignment?.data?.plans ?? [],
+//     selectedPlanId: 'all', // compatible with your checks
+//     assignedUnits: [],
+//     currentView: 'cards',
+//   })
+//   const [tcpError, setTcpError] = useState(null)
+
+//   // ----- Live TCP store (keyed by Plate) -----
+//   const liveByPlateRef = useRef(Object.create(null))
+//   const [, forceRender] = useState(0)
+
+//   // ----- Plan change -> fetch units -----
+//   const onPlanChange = async (value) => {
+//     setLocalFilters((prev) => ({ ...prev, selectedPlanId: value }))
+//     if (value == 'all' || value == null) {
+//       setLocalFilters((prev) => ({ ...prev, assignedUnits: [] }))
+//       return
+//     }
+//     try {
+//       const r = await fetchData(`plans/`, 'POST', {
+//         plan_id: value,
+//         include_nested: true,
+//         include_idle: true,
+//       })
+//       const units = Array.isArray(r?.assigned_units) ? r.assigned_units : []
+//       setLocalFilters((prev) => ({ ...prev, assignedUnits: units }))
+//     } catch (e) {
+//       console.warn('onSelectPlan failed', e)
+//       setLocalFilters((prev) => ({ ...prev, assignedUnits: [] }))
+//     }
+//   }
+
+//   // ----- WS URL -----
+//   const computedWsUrl = useMemo(() => {
+//     if (typeof window === 'undefined') return null
+
+//     // Support full ws:// or wss:// URL in env
+//     const envUrl =
+//       process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_WS_PATH || ''
+
+//     if (/^wss?:\/\//i.test(envUrl)) {
+//       return envUrl
+//     }
+
+//     // Otherwise build from current page + path
+//     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+//     const host = window.location.host
+//     const path = (envUrl || '/ws/').replace(/([^/])$/, '$1/') // ensure trailing /
+//     return `${proto}://${host}${path}`
+//   }, [])
+
+//   // ----- Keep context in sync -----
+//   useEffect(() => {
+//     const plans = assignment?.data?.plans ?? []
+//     setLocalFilters((prev) => ({
+//       ...prev,
+//       assignmentData: assignment?.data ?? null,
+//       plans,
+//     }))
+//   }, [assignment])
+
+//   useEffect(() => {
+//     setLocalFilters((prev) => ({
+//       ...prev,
+//       currentVehicles: vehicles?.data ?? [],
+//     }))
+//   }, [vehicles])
+
+//   // ----- Compute active target plates -----
+//   const targetPlates = useMemo(() => {
+//     if (
+//       localFilters?.selectedPlanId === 'all' ||
+//       localFilters?.selectedPlanId === null
+//     ) {
+//       return extractPlatesFromVehiclesList(localFilters?.currentVehicles)
+//     }
+//     return extractPlatesFromAssignedUnits(localFilters?.assignedUnits)
+//   }, [
+//     localFilters?.selectedPlanId,
+//     localFilters?.currentVehicles,
+//     localFilters?.assignedUnits,
+//   ])
+
+//   // Ref for filtering without reconnect
+//   const targetPlatesRef = useRef([])
+//   useEffect(() => {
+//     targetPlatesRef.current = Array.isArray(targetPlates) ? targetPlates : []
+//   }, [targetPlates])
+
+//   // ----- WebSocket: tolerant parser, filter to target plates, upsert live -----
+//   useEffect(() => {
+//     const url = computedWsUrl
+//     console.log('url :>> ', url)
+//     if (!url) return
+//     let ws
+//     try {
+//       ws = new WebSocket(url)
+//     } catch (e) {
+//       setTcpError('⚠️ Could not open WebSocket')
+//       return
+//     }
+
+//     ws.onmessage = (event) => {
+//       try {
+//         const raw = JSON.parse(event.data)
+//         console.log('[WS raw]', raw)
+
+//         // normalize to array of packets
+//         const parsed = raw?.rawMessage
+//           ? parseRawTcpData(raw.rawMessage)
+//           : raw?.Plate
+//           ? [raw]
+//           : Array.isArray(raw)
+//           ? raw
+//           : []
+
+//         if (!parsed.length) return
+
+//         // remap misaligned keys
+//         const remapped = parsed.map(remapTcpFields)
+
+//         // optional filter to current plates
+//         const plates = targetPlatesRef.current
+//         // const finalPackets =
+//         //   Array.isArray(plates) && plates.length > 0
+//         //     ? remapped.filter((p) =>
+//         //         plates.includes(
+//         //           String(p.Plate || '')
+//         //             .trim()
+//         //             .toUpperCase()
+//         //         )
+//         //       )
+//         //     : remapped
+//         const finalPackets = remapped
+
+//         const changed = upsertLivePackets(liveByPlateRef, finalPackets)
+//         if (changed) {
+//           // Debug the *matched* live data snapshot
+//           // console.log('[TCP matched snapshot]', { ...liveByPlateRef.current })
+//           forceRender((n) => n + 1)
+//         }
+//       } catch {
+//         setTcpError('❌ Invalid JSON received')
+//       }
+//     }
+
+//     ws.onerror = () => setTcpError('⚠️ WebSocket connection error')
+//     ws.onclose = () => {}
+
+//     return () => {
+//       try {
+//         ws && ws.close()
+//       } catch {}
+//     }
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [computedWsUrl])
+
+//   // ----- Build merged cards (this is where UI will read from) -----
+//   const vehicleCards = useMemo(() => {
+//     return buildVehicleCards(targetPlates, liveByPlateRef.current)
+//   }, [targetPlates, liveByPlateRef.current])
+
+//   // ----- Handlers for toolbar -----
+//   const handleChange = (e) => {
+//     const { name, value } = e.target
+//     setLocalFilters((prev) => ({ ...prev, [name]: value }))
+//   }
+//   const handleSelectChange = (name, value) => {
+//     setLocalFilters((prev) => ({ ...prev, [name]: value }))
+//   }
+
+//   // ----- Plan options (keeps your null 'All' for compatibility) -----
+//   const plans_options = [
+//     {
+//       type: 'select',
+//       htmlFor: 'selectedPlanId',
+//       placeholder: 'select a plan',
+//       value: localFilters?.selectedPlanId,
+//       options:
+//         localFilters.plans?.length > 0
+//           ? [
+//               { value: null, label: 'All' },
+//               ...localFilters?.plans?.map((p) => ({
+//                 value: p.id,
+//                 label: p.notes || `Plan ${p.id}`,
+//               })),
+//             ]
+//           : [{ value: null, label: 'All' }],
+//     },
+//   ]
+
+//   /* ---------- Debug you’ll want to see while testing ---------- */
+//   useEffect(() => {
+//     console.log('[Target Plates]', targetPlates)
+//   }, [targetPlates])
+
+//   useEffect(() => {
+//     console.log('[Vehicle Cards]', vehicleCards)
+//   }, [vehicleCards])
+
+//   useEffect(() => {
+//     if (tcpError) console.warn('[TCP Error]', tcpError)
+//   }, [tcpError])
+
+// return (
+//   <div className="h-full space-y-6 p-4 md:p-6">
+//     <div
+//       className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+//         localFilters.currentView === 'map' && 'fixed left-18 right-6'
+//       }`}
+//     >
+//       <div className="flex items-center gap-2 w-full md:w-auto">
+//         <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+//           Plan:
+//         </span>
+//         <DynamicInput
+//           inputs={plans_options}
+//           handleSelectChange={handleSelectChange}
+//           handleChange={handleChange}
+//         />
+//       </div>
+//       <div
+//         className="flex items-center gap-1 bg-muted p-1 rounded-lg"
+//         data-testid="toolbar-view"
+//       >
+//         <Button
+//           variant={localFilters.currentView === 'cards' ? 'default' : 'ghost'}
+//           size="sm"
+//           onClick={() => handleSelectChange('currentView', 'cards')}
+//           className="gap-2"
+//         >
+//           <LayoutGrid className="h-4 w-4" />
+//           <span className="hidden sm:inline">Cards</span>
+//         </Button>
+//         <Button
+//           variant={localFilters.currentView === 'map' ? 'default' : 'ghost'}
+//           size="sm"
+//           onClick={() => handleSelectChange('currentView', 'map')}
+//           className="gap-2"
+//         >
+//           <Map className="h-4 w-4" />
+//           <span className="hidden sm:inline">Map</span>
+//         </Button>
+//       </div>
+//     </div>
+//     {loading ? (
+//       <div className="flex items-center justify-center">loading</div>
+//     ) : (
+//       <div>
+//         {localFilters.currentView === 'cards' ? (
+//           <CardsView
+//             vehicleCards={vehicleCards}
+//             selectedPlanId={localFilters.selectedPlanId}
+//             targetPlates={targetPlates}
+//             assignedUnits={localFilters.assignedUnits}
+//           />
+//         ) : (
+//           <div>Map</div>
+//         )}
+//       </div>
+//     )}
+//   </div>
+// )
+// }
+
+// export default Dashboard
+
 'use client'
 
-/**
- * Dashboard: Vehicles Routes Live TCP overlay
- * - Expects you provide the auto-assign payload in global context: load_assignment?.data
- * - Reads: data.plan, data.plans (list), data.assigned_units
- * - Builds "route cards" from assigned_units (vehicle_id, total weight, load count, loads[])
- * - Plan selector: lets the user switch the current view; includes placeholders to fetch selected plan.
- * - Live TCP: WebSocket upsert by Plate without changing styling.
- */
-
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import Image from 'next/image'
-
-// shadcn/ui
+import CardsView from '@/components/layout/dashboard/card-view'
+import MapView from '@/components/layout/dashboard/MapView'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import DynamicInput from '@/components/ui/dynamic-input'
 import {
   Select,
   SelectContent,
@@ -23,45 +396,154 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
-// icons (avoid naming collisions with mapbox-gl.Map)
-import {
-  MapPin,
-  Truck,
-  Clock,
-  Gauge,
-  Route as RouteIcon,
-  Navigation,
-  Zap,
-  Eye,
-  Map as MapIcon,
-} from 'lucide-react'
-
-// app context helpers
 import { useGlobalContext } from '@/context/global-context'
-import {
-  createVehicleMarker,
-  parseRawTcpData,
-} from '@/components/map/vehicle-marker'
-import { createRouteLayer, fitMapToRoutes } from '@/components/map/route-utils'
-import { FilterPanel, applyFilters } from '@/components/map/filter-panel'
+import { fetchData } from '@/lib/fetch'
+import { LayoutGrid, Map } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-// mapbox css (prevents the warning you saw)
-import 'mapbox-gl/dist/mapbox-gl.css'
+/* ---------------- Helpers ---------------- */
 
-// bg
-import page_bg from '@/assets/page_bg.png'
+// Build a plate-like identifier from a generic vehicle record
+function pickPlateFromVehicle(v) {
+  const s =
+    v?.license_plate ??
+    v?.registration ??
+    v?.reg ??
+    v?.reg_no ??
+    v?.regNo ??
+    v?.vehicle_reg ??
+    v?.vehicleRegistration ??
+    v?.fleet_number ??
+    v?.plate ??
+    v?.id ??
+    ''
+  return String(s).trim().toUpperCase()
+}
 
-export default function VehicleDashboard({
-  // optional: let parent handle plan fetch on selection
-  onSelectPlan, // (planId) => Promise<{ plan, assigned_units, ... }>
-  // optional: pass a ws url override or initial tcp payload
-  // tcpSocketUrl = 'ws://64.227.138.235:8001',
-  tcpSocketUrl = null,
-  initialTcp = null,
-} = {}) {
-  const { load_assignment = {}, vehicles, assignment } = useGlobalContext()
-  console.log('vehicles :>> ', assignment?.data)
+// Extract plates from assigned_units: prefer horse.plate, else rigid.plate
+function extractPlatesFromAssignedUnits(assignedUnits = []) {
+  const set = new Set()
+  for (const u of assignedUnits) {
+    const plate =
+      u?.horse?.plate ?? u?.rigid?.plate ?? u?.trailer?.plate ?? u?.plan_unit_id
+    if (!plate) continue
+    set.add(String(plate).trim().toUpperCase())
+  }
+  return Array.from(set)
+}
+
+// Extract plates from current vehicles dataset (for 'all' mode)
+function extractPlatesFromVehiclesList(vehicles = []) {
+  const set = new Set()
+  for (const v of vehicles) {
+    const plate = pickPlateFromVehicle(v)
+    if (plate) set.add(plate)
+  }
+  return Array.from(set)
+}
+
+// Merge helper: creates a vehicle card for each target plate and overlays live data
+function buildVehicleCards(targetPlates = [], liveByPlate = {}) {
+  return targetPlates.map((plate) => ({
+    plate,
+    live: liveByPlate[plate] || null,
+  }))
+}
+
+// --- Safe JSON parse
+function safeParseJSON(str) {
+  try {
+    return JSON.parse(str)
+  } catch {
+    return null
+  }
+}
+
+// Old-dashboard style inner parser for a rawMessage string
+function parseRawTcpData(raw) {
+  if (typeof raw !== 'string') return []
+  const parsed = safeParseJSON(raw)
+  if (!parsed) return []
+  if (Array.isArray(parsed)) return parsed
+  if (parsed && typeof parsed === 'object' && parsed.Plate) return [parsed]
+  return []
+}
+
+// Normalize misaligned keys coming from TCP feed
+function remapTcpFields(pkt = {}) {
+  const out = { ...pkt }
+  if (pkt.DriverName != null) out.Address = pkt.DriverName // Address <- DriverName
+  if (pkt.Geozone != null) out.DriverName = pkt.Geozone // DriverName <- Geozone
+  const headQuality = pkt.HeadQuality ?? pkt['Head Quality']
+  if (headQuality != null) out.Geozone = headQuality // Geozone <- Head Quality
+  const pocsag = pkt.Pocsagstr ?? pkt.PocsagStr
+  if (pocsag != null) out.Head = pocsag // Head <- Pocsagstr
+  if (pkt.Distance != null) out.Mileage = pkt.Distance // Mileage <- Distance
+  else if (pkt.ODO != null) out.Mileage = pkt.ODO
+  return out
+}
+
+// Upsert packets (by Plate) into live map
+function upsertLivePackets(liveByPlateRef, packets) {
+  if (!Array.isArray(packets) || packets.length === 0) return false
+  let changed = false
+  for (const pkt of packets) {
+    const plate = String(pkt.Plate || '')
+      .trim()
+      .toUpperCase()
+    if (!plate) continue
+    const prev = liveByPlateRef.current[plate] || {}
+    const next = { ...prev, ...pkt }
+    liveByPlateRef.current[plate] = next
+    changed = true
+  }
+  return changed
+}
+
+const Dashboard = () => {
+  const { vehicles, assignment } = useGlobalContext()
+  const loading = assignment?.loading
+
+  const [localFilters, setLocalFilters] = useState({
+    currentVehicles: vehicles?.data ?? [],
+    assignmentData: assignment?.data ?? null,
+    plans: assignment?.data?.plans ?? [],
+    selectedPlanId: 'all', // uses 'all' or a plan id
+    assignedUnits: [],
+    currentView: 'cards',
+  })
+  const [tcpError, setTcpError] = useState(null)
+
+  // ----- Live TCP store (keyed by Plate) -----
+  const liveByPlateRef = useRef(Object.create(null))
+  const [liveTick, setLiveTick] = useState(0) // <— drives recompute of vehicleCards
+
+  // ----- Plan change -> fetch units -----
+  const onPlanChange = async (value) => {
+    setLocalFilters((prev) => ({ ...prev, selectedPlanId: value }))
+    if (value == 'all' || value == null) {
+      setLocalFilters((prev) => ({ ...prev, assignedUnits: [] }))
+      return
+    }
+    try {
+      const r = await fetchData(`plans/`, 'POST', {
+        plan_id: value,
+        include_nested: true,
+        include_idle: true,
+      })
+      const units = Array.isArray(r?.assigned_units) ? r.assigned_units : []
+      setLocalFilters((prev) => ({ ...prev, assignedUnits: units }))
+    } catch (e) {
+      console.warn('onSelectPlan failed', e)
+      setLocalFilters((prev) => ({ ...prev, assignedUnits: [] }))
+    }
+  }
+
+  // Call onPlanChange whenever selectedPlanId changes via the select
+  useEffect(() => {
+    onPlanChange(localFilters.selectedPlanId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localFilters.selectedPlanId])
 
   const computedWsUrl = useMemo(() => {
     if (typeof window === 'undefined') return null
@@ -81,65 +563,50 @@ export default function VehicleDashboard({
     return `${proto}://${host}${path}`
   }, [])
 
-  // Persist markers across renders
-  const markerByPlateRef = useRef(new Map()) // Map<PLATE, mapboxgl.Marker>
-  const prevSelectedPlateRef = useRef(null)
-
-  // Toggle selected styling on an existing marker element (uses your ring classes)
-  function setMarkerSelected(marker, isSelected) {
-    if (!marker) return
-    // const el = marker.getElement?.()
-    // if (!el) return
-    // el.classList.toggle('ring-2', !!isSelected)
-    // el.classList.toggle('ring-primary', !!isSelected)
-    const el = marker.getElement?.()
-    const inner = el?.querySelector?.('.marker-inner')
-    if (!inner) return
-    inner.classList.toggle('ring-2', !!isSelected)
-    inner.classList.toggle('ring-primary', !!isSelected)
-  }
-  // ---------- Source data ----------
-  // Prefer vehicles?.data; fall back to prior load_assignment shape if needed
-  const data = load_assignment?.data || {}
-  const vehiclesList = Array.isArray(vehicles?.data) ? vehicles.data : []
-  const usingVehiclesOnly = vehiclesList.length > 0
-
-  // legacy (only used if vehiclesList is empty)
-  const initialAssignedUnits = data?.assigned_units || []
-  const planList = Array.isArray(data?.plans) ? data.plans : []
-  const currentPlan = data?.plan || null
-  const [selectedPlanId, setSelectedPlanId] = useState(currentPlan?.id ?? '')
-  const [assignedUnits, setAssignedUnits] = useState(initialAssignedUnits)
-
-  // ---------- Live TCP upsert by Plate ----------
-  const [liveVehicles, setLiveVehicles] = useState([]) // array of {Plate, Speed, Lat, Lng, ...}
-  const [isLiveTracking, setIsLiveTracking] = useState(true)
-  const [tcpError, setTcpError] = useState(null)
-
-  // Boot with any initial one-off payload you might pass
+  // ----- Keep context in sync -----
   useEffect(() => {
-    if (!initialTcp) return
-    try {
-      if (typeof initialTcp === 'string') {
-        const parsed = parseRawTcpData(initialTcp)
-        upsertLive(parsed)
-      } else if (initialTcp?.Plate) {
-        upsertLive([initialTcp])
-      }
-    } catch (e) {
-      // ignore
+    const plans = assignment?.data?.plans ?? []
+    setLocalFilters((prev) => ({
+      ...prev,
+      assignmentData: assignment?.data ?? null,
+      plans,
+    }))
+  }, [assignment])
+
+  useEffect(() => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      currentVehicles: vehicles?.data ?? [],
+    }))
+  }, [vehicles])
+
+  // ----- Compute active target plates -----
+  const targetPlates = useMemo(() => {
+    if (
+      localFilters?.selectedPlanId === 'all' ||
+      localFilters?.selectedPlanId === null
+    ) {
+      return extractPlatesFromVehiclesList(localFilters?.currentVehicles)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    return extractPlatesFromAssignedUnits(localFilters?.assignedUnits)
+  }, [
+    localFilters?.selectedPlanId,
+    localFilters?.currentVehicles,
+    localFilters?.assignedUnits,
+  ])
 
-  // WebSocket → upsert by Plate
+  // Ref for filtering without reconnect
+  const targetPlatesRef = useRef([])
   useEffect(() => {
-    // if (!tcpSocketUrl) return
-    const url = tcpSocketUrl || computedWsUrl
+    targetPlatesRef.current = Array.isArray(targetPlates) ? targetPlates : []
+  }, [targetPlates])
+
+  // ----- WebSocket: tolerant parser, filter to target plates, upsert live -----
+  useEffect(() => {
+    const url = computedWsUrl
     if (!url) return
     let ws
     try {
-      // ws = new WebSocket(tcpSocketUrl)
       ws = new WebSocket(url)
     } catch (e) {
       setTcpError('⚠️ Could not open WebSocket')
@@ -149,788 +616,486 @@ export default function VehicleDashboard({
     ws.onmessage = (event) => {
       try {
         const raw = JSON.parse(event.data)
-        // your TCP sometimes arrives as one object, sometimes as a rawMessage string
-        // normalize:
-        const parsed = raw?.rawMessage
-          ? parseRawTcpData(raw.rawMessage)
-          : raw?.Plate
-          ? [raw]
-          : []
-
-        if (Array.isArray(parsed) && parsed.length) {
-          upsertLive(parsed)
+        console.log('raw :>> ', raw)
+        // normalize to array of packets
+        // Normalize to an array of packets.
+        // If rawMessage exists but isn't JSON (pipe-delimited), fall back to the top-level object.
+        let parsed = []
+        if (raw && typeof raw === 'object' && 'rawMessage' in raw) {
+          const inner = parseRawTcpData(raw.rawMessage) // returns [] if not JSON
+          if (inner.length) parsed = inner
         }
-      } catch (e) {
+        if (!parsed.length) {
+          if (raw && typeof raw === 'object' && raw.Plate) parsed = [raw]
+          else if (Array.isArray(raw)) parsed = raw
+          else parsed = []
+        }
+        // const parsed = raw?.rawMessage
+        //   ? parseRawTcpData(raw.rawMessage)
+        //   : raw?.Plate
+        //   ? [raw]
+        //   : Array.isArray(raw)
+        //   ? raw
+        //   : []
+
+        if (!parsed.length) return
+
+        // remap misaligned keys
+        const remapped = parsed
+        // const remapped = parsed.map(remapTcpFields)
+        console.log('remapped :>> ', remapped)
+        // filter to current plates (MATCHING STEP)
+        const plates = targetPlatesRef.current
+        const finalPackets =
+          Array.isArray(plates) && plates.length > 0
+            ? remapped.filter((p) =>
+                plates.includes(
+                  String(p.Plate || '')
+                    .trim()
+                    .toUpperCase()
+                )
+              )
+            : remapped
+
+        const changed = upsertLivePackets(liveByPlateRef, finalPackets)
+        if (changed) {
+          // For debugging: see keys that are alive vs targets
+          const liveKeys = Object.keys(liveByPlateRef.current)
+          console.log('[TCP live keys]', liveKeys.slice(0, 20), '…')
+          console.log('[Target Plates]', plates.slice(0, 20), '…')
+          setLiveTick((n) => n + 1) // <— triggers vehicleCards recompute
+        }
+      } catch {
         setTcpError('❌ Invalid JSON received')
       }
     }
 
     ws.onerror = () => setTcpError('⚠️ WebSocket connection error')
-    ws.onclose = () => {
-      // no-op
-    }
+    ws.onclose = () => {}
+
     return () => {
       try {
         ws && ws.close()
       } catch {}
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tcpSocketUrl, computedWsUrl])
+  }, [computedWsUrl])
 
-  function upsertLive(newPackets) {
-    setLiveVehicles((prev) => {
-      if (!Array.isArray(prev)) prev = []
-      const byPlate = new Map(prev.map((v) => [v.Plate, v]))
-      for (const pkt of newPackets) {
-        if (!pkt?.Plate) continue
-        byPlate.set(pkt.Plate, { ...(byPlate.get(pkt.Plate) || {}), ...pkt })
-      }
-      return Array.from(byPlate.values())
-    })
-  }
-
-  // ---------- Map & filters ----------
-  const [selectedVehicle, setSelectedVehicle] = useState(null)
-  const [showAllVehicles, setShowAllVehicles] = useState(true)
-  const [showRoutes, setShowRoutes] = useState(true)
-  const [showFilters, setShowFilters] = useState(false)
-  const [mapboxgl, setMapboxgl] = useState(null)
-  const [map, setMap] = useState(null)
-  const [markers, setMarkers] = useState([])
-
-  const [filters, setFilters] = useState({
-    search: '',
-    status: 'all',
-    vehicleType: 'all',
-    route: 'all',
-    speedRange: { min: 0, max: 200 },
-  })
-  const [filteredData, setFilteredData] = useState({
-    filteredLive: [],
-    filteredRoutes: [],
-  })
-  const mapContainer = useRef(null)
-
-  // Helper to choose a plate-like identifier from vehicle record
-  const pickPlate = (v) =>
-    String(
-      v?.license_plate || v?.reg_number || v?.fleet_number || v?.id || ''
-    ).toUpperCase()
-
-  // Transform either vehicles?.data or assigned_units → cards the UI expects
-  const routeCards = useMemo(() => {
-    if (usingVehiclesOnly) {
-      // Build "vehicle cards" from vehicles list (no route info available here)
-      return vehiclesList.map((v) => ({
-        vehicle_id: pickPlate(v), // aligns with live marker Plate
-        assigned_load_count: 0, // unknown without load_assignment
-        total_assigned_kg: 0, // unknown without load_assignment
-        loads: [], // unknown; keep shape for filters/UI
-        _vehicle: v, // keep raw ref for future use
-      }))
-    }
-    // legacy path: assigned_units → route cards (unchanged)
-    return (assignedUnits || []).map((u) => {
-      const plate =
-        u?.rigid?.plate ||
-        u?.horse?.plate ||
-        u?.trailer?.plate ||
-        u?.plan_unit_id
-      let total_kg = 0
-      let loadCount = 0
-      const loads = []
-      const seenRoutes = new Set()
-      for (const cust of u.customers || []) {
-        for (const order of cust.orders || []) {
-          total_kg += Number(order.total_assigned_weight_kg || 0)
-          loadCount += 1
-        }
-        const rn = (cust.route_name || '').trim()
-        if (rn && !seenRoutes.has(rn)) {
-          seenRoutes.add(rn)
-          loads.push({ route_name: rn })
-        }
-      }
-      return {
-        vehicle_id: plate,
-        assigned_load_count: loadCount,
-        total_assigned_kg: total_kg,
-        loads,
-        _unit: u,
-      }
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assignedUnits, vehiclesList, usingVehiclesOnly])
-
-  // Initial mapbox glue
-  useEffect(() => {
-    if (typeof window === 'undefined' || map) return
-    ;(async () => {
-      const mapboxModule = await import('mapbox-gl')
-      const _mapboxgl = mapboxModule.default
-      setMapboxgl(_mapboxgl)
-      _mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
-
-      if (mapContainer.current) {
-        mapContainer.current.innerHTML = ''
-      }
-
-      const mapInstance = new _mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [28.1396, -26.3071],
-        zoom: 10,
-      })
-
-      mapInstance.on('load', () => setMap(mapInstance))
-    })()
-
-    return () => {
-      try {
-        map && map.remove()
-      } catch {}
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map])
-
-  // Filter application → responds to live routeCards filters
-  useEffect(() => {
-    const result = applyFilters(liveVehicles, routeCards, filters)
-    setFilteredData(result)
-  }, [liveVehicles, routeCards, filters])
-
-  // Use the already-filtered list you render on the left
-  const markersSig = useMemo(() => {
-    const live = filteredData.filteredLive || []
-    // only what affects position identity
-    return JSON.stringify(
-      live.map((v) => [
-        String(v.Plate || '').toUpperCase(),
-        Number(v.Latitude || 0).toFixed(5),
-        Number(v.Longitude || 0).toFixed(5),
-      ])
+  // ----- Build merged cards (now recomputes on liveTick) -----
+  const vehicleCards = useMemo(() => {
+    const livePlates = Object.keys(liveByPlateRef.current)
+    // Union so cards render for incoming live plates even if not in extracted targetPlates yet
+    const platesToShow = Array.from(
+      new Set([...(targetPlates || []), ...livePlates])
     )
-  }, [filteredData.filteredLive])
+    return buildVehicleCards(platesToShow, liveByPlateRef.current)
+  }, [targetPlates, liveTick])
+  // const vehicleCards = useMemo(() => {
+  //   return buildVehicleCards(targetPlates, liveByPlateRef.current)
+  // }, [targetPlates, liveTick])
 
-  // Route layer drawing
-  useEffect(() => {
-    if (map && mapboxgl && showRoutes) {
-      const vehicleToShow =
-        selectedVehicle &&
-        !filteredData.filteredLive.find((v) => v.Plate === selectedVehicle)
-          ? selectedVehicle
-          : null
-
-      createRouteLayer(map, filteredData.filteredRoutes, vehicleToShow)
-      if (vehicleToShow) {
-        fitMapToRoutes(map, filteredData.filteredRoutes, vehicleToShow)
-      }
-    } else if (map && !showRoutes) {
-      // remove layers if toggled off
-      if (map.getLayer('route-lines')) map.removeLayer('route-lines')
-      if (map.getSource('route-lines')) map.removeSource('route-lines')
-      if (map.getLayer('route-destinations'))
-        map.removeLayer('route-destinations')
-      if (map.getSource('route-destinations'))
-        map.removeSource('route-destinations')
-    }
-  }, [map, mapboxgl, selectedVehicle, showRoutes, filteredData])
-
-  // Live markers
-  useEffect(() => {
-    if (!map || !mapboxgl) return
-
-    const currentPlates = new Set()
-
-    for (const v of filteredData.filteredLive || []) {
-      const plate = String(v.Plate || '').toUpperCase()
-      const lat = Number(v.Latitude)
-      const lng = Number(v.Longitude)
-      if (!plate || !Number.isFinite(lat) || !Number.isFinite(lng)) continue
-
-      currentPlates.add(plate)
-
-      let marker = markerByPlateRef.current.get(plate)
-      if (!marker) {
-        // create once
-        marker = createVehicleMarker(mapboxgl, v, false)
-          .setLngLat([lng, lat])
-          .addTo(map)
-
-        marker.getElement()?.addEventListener('click', () => {
-          // NOTE: do NOT rebuild markers on click; just update state and highlight
-          setSelectedVehicle(plate)
-          // optional: center on click
-          map.flyTo({ center: [lng, lat], zoom: 15, duration: 900 })
-        })
-
-        markerByPlateRef.current.set(plate, marker)
-      } else {
-        // update position only
-        marker.setLngLat([lng, lat])
-      }
-    }
-
-    // remove stale markers no longer present
-    for (const [plate, marker] of markerByPlateRef.current.entries()) {
-      if (!currentPlates.has(plate)) {
-        marker.remove()
-        markerByPlateRef.current.delete(plate)
-      }
-    }
-  }, [map, mapboxgl, markersSig]) // <-- NOT on selectedVehicle anymore
-
-  useEffect(() => {
-    if (!map) return
-    // unhighlight previous
-    const prev = prevSelectedPlateRef.current
-    if (prev && markerByPlateRef.current.has(prev)) {
-      setMarkerSelected(markerByPlateRef.current.get(prev), false)
-    }
-    // highlight current
-    if (selectedVehicle && markerByPlateRef.current.has(selectedVehicle)) {
-      setMarkerSelected(markerByPlateRef.current.get(selectedVehicle), true)
-    }
-    prevSelectedPlateRef.current = selectedVehicle || null
-  }, [selectedVehicle, map])
-
-  const routeSig = useMemo(
-    () =>
-      JSON.stringify(
-        (filteredData.filteredRoutes || []).map((r) => [
-          r.vehicle_id,
-          r.loads?.length || 0,
-          Math.round(r.total_assigned_kg || 0),
-        ])
-      ),
-    [filteredData.filteredRoutes]
-  )
-
-  useEffect(() => {
-    if (!map || !mapboxgl) return
-    if (!showRoutes || !(filteredData.filteredRoutes?.length > 0)) {
-      if (map.getLayer('route-lines')) map.removeLayer('route-lines')
-      if (map.getSource('route-lines')) map.removeSource('route-lines')
-      if (map.getLayer('route-destinations'))
-        map.removeLayer('route-destinations')
-      if (map.getSource('route-destinations'))
-        map.removeSource('route-destinations')
-      return
-    }
-    createRouteLayer(map, filteredData.filteredRoutes, null)
-  }, [map, mapboxgl, showRoutes, routeSig])
-
-  // useEffect(() => {
-  //   if (!map || !filteredData.filteredLive?.length) return
-  //   markers.forEach((m) => m.remove())
-
-  //   const newMarkers = []
-  //   filteredData.filteredLive.forEach((vehicle) => {
-  //     if (!vehicle.Latitude || !vehicle.Longitude) return
-  //     ;(async () => {
-  //       const mapboxModule = await import('mapbox-gl')
-  //       const _mapboxgl = mapboxModule.default
-  //       const isSelected = selectedVehicle === vehicle.Plate
-  //       const marker = createVehicleMarker(_mapboxgl, vehicle, isSelected)
-  //         .setLngLat([vehicle.Longitude, vehicle.Latitude])
-  //         .setPopup(
-  //           new _mapboxgl.Popup({ offset: 25 }).setHTML(`
-  //             <div class="p-3 min-w-[200px]">
-  //               <div class="flex items-center justify-between mb-2">
-  //                 <h3 class="font-semibold text-sm">${vehicle.Plate}</h3>
-  //                 <span class="text-xs px-2 py-1 rounded-full ${
-  //                   vehicle.Speed > 0
-  //                     ? 'bg-green-100 text-green-800'
-  //                     : 'bg-red-100 text-red-800'
-  //                 }">${vehicle.Speed > 0 ? 'Moving' : 'Stopped'}</span>
-  //               </div>
-  //               <div class="space-y-1 text-xs text-gray-600">
-  //                 <div class="flex items-center gap-2">
-  //                   <span>Speed: ${Math.round(vehicle.Speed || 0)} km/h</span>
-  //                 </div>
-  //                 <div class="flex items-center gap-2">
-  //                   <span class="truncate">${
-  //                     vehicle.Geozone || 'Unknown location'
-  //                   }</span>
-  //                 </div>
-  //                 <div class="flex items-center gap-2">
-  //                   <span>${new Date(
-  //                     vehicle.LocTime || Date.now()
-  //                   ).toLocaleTimeString()}</span>
-  //                 </div>
-  //               </div>
-  //             </div>
-  //           `)
-  //         )
-  //         .addTo(map)
-
-  //       marker.getElement().addEventListener('click', () => {
-  //         setSelectedVehicle(vehicle.Plate)
-  //         setShowAllVehicles(false)
-  //       })
-  //       newMarkers.push(marker)
-  //     })()
-  //   })
-
-  //   setMarkers(newMarkers)
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [map, selectedVehicle, showAllVehicles, filteredData.filteredLive])
-
-  const centerOnVehicle = (v) => {
-    if (!map || !v?.Latitude || !v?.Longitude) return
-    map.flyTo({ center: [v.Longitude, v.Latitude], zoom: 15, duration: 900 })
+  // ----- Handlers for toolbar -----
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setLocalFilters((prev) => ({ ...prev, [name]: value }))
+  }
+  const handleSelectChange = (name, value) => {
+    setLocalFilters((prev) => ({ ...prev, [name]: value }))
   }
 
-  const getVehicleStatus = (speed) =>
-    speed > 0
-      ? { status: 'Moving', color: 'bg-green-500' }
-      : { status: 'Stopped', color: 'bg-red-500' }
+  // ----- Plan options -----
+  const plans_options = [
+    {
+      type: 'select',
+      htmlFor: 'selectedPlanId',
+      placeholder: 'select a plan',
+      value: localFilters?.selectedPlanId,
+      options:
+        localFilters.plans?.length > 0
+          ? [
+              { value: 'all', label: 'All' }, // keep as 'all' string for clarity
+              ...localFilters?.plans?.map((p) => ({
+                value: p.id,
+                label: p.notes || `Plan ${p.id}`,
+              })),
+            ]
+          : [{ value: 'all', label: 'All' }],
+    },
+  ]
 
-  const formatTime = (t) => new Date(t).toLocaleTimeString()
+  /* ---------- Debug while testing ---------- */
+  useEffect(() => {
+    console.log('[Vehicle Cards]', vehicleCards)
+  }, [vehicleCards])
 
-  const handleFilterChange = (newFilters) => setFilters(newFilters)
+  useEffect(() => {
+    if (tcpError) console.warn('[TCP Error]', tcpError)
+  }, [tcpError])
 
-  // ---------- Plan selection ----------
-  const prettyPlanLabel = (p) => {
-    if (!p) return '—'
-    const dep = p.departure_date
-      ? new Date(p.departure_date).toLocaleDateString()
-      : 'n/a'
-    const ran = p.run_at ? new Date(p.run_at).toLocaleString() : null
-    return ran ? `${dep} · run ${ran}` : dep
-  }
-
-  const onPlanChange = async (planId) => {
-    setSelectedPlanId(planId)
-    // If a handler is provided, let parent fetch details for that plan
-    if (onSelectPlan && planId) {
-      try {
-        const r = await onSelectPlan(planId)
-        // Expecting { plan, assigned_units, unassigned? }
-        if (r?.assigned_units) {
-          setAssignedUnits(r.assigned_units)
-        }
-      } catch (e) {
-        console.warn('onSelectPlan failed', e)
-      }
-      return
-    }
-
-    // Otherwise leave a placeholder you can replace with your API call:
-    // Example:
-    // const resp = await fetch(`/api/assignments/${planId}`)
-    // const json = await resp.json()
-    // setAssignedUnits(json?.data?.assigned_units || [])
-  }
-
+  console.log('localFilters :>> ', localFilters)
   return (
-    <div className="h-full bg-background">
-      {/* HEADER (kept lightweight to preserve your look/feel) */}
-      {/* <div className="border-b bg-transparent ">
-        <div className="flex h-16 items-center px-4 md:px-6 gap-3">
-      
-          <div className="ml-auto flex items-center gap-3">
-            {!usingVehiclesOnly && (
-              <Select value={selectedPlanId || ''} onValueChange={onPlanChange}>
-                <SelectTrigger className="w-[260px]">
-                  <SelectValue
-                    placeholder={
-                      currentPlan
-                        ? prettyPlanLabel(currentPlan)
-                        : 'Select plan…'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {planList.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {prettyPlanLabel(p)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            <Button
-              variant={showRoutes ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setShowRoutes(!showRoutes)}
-              className="hidden md:inline-flex items-center space-x-2"
-            >
-              <MapIcon className="h-4 w-4" />
-              <span>Routes</span>
-            </Button>
-
-            <Button
-              variant={isLiveTracking ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setIsLiveTracking(!isLiveTracking)}
-              className="hidden md:inline-flex items-center space-x-2"
-            >
-              <Zap className="h-4 w-4" />
-              <span>{isLiveTracking ? 'Live' : 'Paused'}</span>
-            </Button>
-          </div>
-        </div>
-      </div> */}
-
-      <div className="flex h-[calc(100vh-4rem)]">
-        {/* LEFT COLUMN: Live Fleet Scheduled Routes */}
-        <div className="w-80 border-r bg-card overflow-y-auto">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              {/* <div className="flex items-center gap-2">
-                <Truck className="h-5 w-5 text-primary" color="#003e69" />
-                <Badge variant="outline" className="text-xs md:text-sm">
-                  {liveVehicles.length +
-                    (usingVehiclesOnly
-                      ? vehiclesList.length
-                      : routeCards.length)}{' '}
-                  vehicles
-                </Badge>
-              </div> */}
-              <Button
-                variant={showRoutes ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setShowRoutes(!showRoutes)}
-                className="hidden md:inline-flex items-center space-x-2"
-              >
-                <MapIcon className="h-4 w-4" />
-                <span>Routes</span>
-              </Button>
-
-              <Button
-                variant={isLiveTracking ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setIsLiveTracking(!isLiveTracking)}
-                className="hidden md:inline-flex items-center space-x-2"
-              >
-                <Zap className="h-4 w-4" />
-                <span>{isLiveTracking ? 'Live' : 'Paused'}</span>
-              </Button>
-              <Button
-                variant={showAllVehicles ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setShowAllVehicles(true)
-                  setSelectedVehicle(null)
-                }}
-              >
-                Show All
-              </Button>
-            </div>
-
-            {/* {tcpError && (
-              <div className="text-xs text-red-600 mb-3">{tcpError}</div>
-            )} */}
-
-            {filteredData.filteredLive.map((vehicle) => (
-              <Card
-                key={vehicle.Plate}
-                className={`mb-4 cursor-pointer transition-all hover:shadow-md ${
-                  selectedVehicle === vehicle.Plate ? 'ring-2 ring-primary' : ''
-                }`}
-                onClick={() => {
-                  setSelectedVehicle(vehicle.Plate)
-                  setShowAllVehicles(false)
-                  centerOnVehicle(vehicle)
-                }}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium">
-                      {vehicle.Plate}
-                    </CardTitle>
-                    <div className="flex items-center space-x-1">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          getVehicleStatus(vehicle.Speed).color
-                        }`}
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        {getVehicleStatus(vehicle.Speed).status}
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center space-x-2">
-                      <Gauge className="h-3 w-3 text-muted-foreground" />
-                      <span>{Math.round(vehicle.Speed || 0)} km/h</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span className="truncate">
-                        {vehicle.Geozone || 'Unknown'}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Navigation className="h-3 w-3 text-muted-foreground" />
-                      <span className="truncate">
-                        {vehicle.Latitude?.toFixed(4)},{' '}
-                        {vehicle.Longitude?.toFixed(4)}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span>{formatTime(vehicle.LocTime || Date.now())}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            {filteredData.filteredLive?.length === 0 &&
-              liveVehicles?.length > 0 && (
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  No live vehicles match current filters
-                </div>
-              )}
-
-            <div className="border-t pt-4 mt-4">
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                {usingVehiclesOnly ? 'Vehicles' : 'Scheduled Routes'}
-              </h3>
-
-              {filteredData.filteredRoutes.slice(0, 3).map((vehicle, index) => (
-                <Card
-                  key={vehicle.vehicle_id}
-                  className={`mb-3 cursor-pointer transition-all hover:shadow-md ${
-                    selectedVehicle === vehicle.vehicle_id
-                      ? 'ring-2 ring-primary'
-                      : ''
-                  }`}
-                  onClick={() => {
-                    setSelectedVehicle(vehicle.vehicle_id)
-                    setShowAllVehicles(false)
-                  }}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-medium">
-                        Route {index}
-                      </CardTitle>
-                      <div className="flex items-center space-x-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {vehicle.assigned_load_count} loads
-                        </Badge>
-                        {showRoutes &&
-                          selectedVehicle === vehicle.vehicle_id && (
-                            <Eye className="h-3 w-3 text-primary" />
-                          )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-2 text-xs">
-                      <div className="flex items-center space-x-2">
-                        <RouteIcon className="h-3 w-3 text-muted-foreground" />
-                        <span>{Math.round(vehicle.total_assigned_kg)} kg</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                        <span className="truncate">
-                          {vehicle.loads?.[0]?.route_name || 'No route'}
-                        </span>
-                      </div>
-                      {vehicle.loads?.length > 1 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{vehicle.loads.length - 1} more destinations
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {filteredData.filteredRoutes?.length === 0 &&
-                routeCards?.length > 0 && (
-                  <div className="text-center py-4 text-sm text-muted-foreground">
-                    No routes match current filters
-                  </div>
-                )}
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT: Map info panel */}
-        <div className="flex-1 relative">
-          <div
-            ref={mapContainer}
-            className="w-full h-full"
-            style={{ minHeight: '100%' }}
+    <div className="h-full space-y-6 p-4 md:p-6">
+      <div
+        className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+          localFilters.currentView === 'map' && 'fixed left-18 right-6'
+        }`}
+      >
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+            Plan:
+          </span>
+          <DynamicInput
+            inputs={plans_options}
+            handleSelectChange={handleSelectChange}
+            handleChange={handleChange}
           />
-
-          <FilterPanel
-            liveVehicles={liveVehicles}
-            routeData={routeCards}
-            onFilterChange={handleFilterChange}
-            isOpen={showFilters}
-            onToggle={() => setShowFilters(!showFilters)}
-          />
-
-          <div className="absolute top-4 right-4 bg-card rounded-lg shadow-lg p-4 max-w-sm">
-            <h3 className="font-semibold mb-2 flex items-center space-x-2">
-              {selectedVehicle &&
-              filteredData.filteredLive.find(
-                (v) => v.Plate === selectedVehicle
-              ) ? (
-                <>
-                  <Zap className="h-4 w-4 text-green-500" />
-                  <span>{selectedVehicle} - Live Tracking</span>
-                </>
-              ) : selectedVehicle ? (
-                <>
-                  <RouteIcon className="h-4 w-4 text-primary" />
-                  <span>Route Details</span>
-                </>
-              ) : (
-                <span>Fleet Overview</span>
-              )}
-            </h3>
-
-            {selectedVehicle &&
-              (() => {
-                const liveVehicle = filteredData.filteredLive.find(
-                  (v) => v.Plate === selectedVehicle
-                )
-                if (liveVehicle) {
-                  return (
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Speed:</span>
-                        <span className="font-medium">
-                          {Math.round(liveVehicle.Speed || 0)} km/h
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Signal Quality:</span>
-                        <span className="font-medium">
-                          {liveVehicle.Quality || '—'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Location:</span>
-                        <span className="font-medium text-xs">
-                          {liveVehicle.Geozone || 'Unknown'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Last Update:</span>
-                        <span className="font-medium text-xs">
-                          {formatTime(liveVehicle.LocTime || Date.now())}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                }
-
-                const routeVehicle = filteredData.filteredRoutes.find(
-                  (v) => v.vehicle_id === selectedVehicle
-                )
-                return routeVehicle ? (
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Total Weight:</span>
-                      <span className="font-medium">
-                        {Math.round(routeVehicle.total_assigned_kg)} kg
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Load Count:</span>
-                      <span className="font-medium">
-                        {routeVehicle.assigned_load_count}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Destinations:</span>
-                      <span className="font-medium">
-                        {routeVehicle.loads?.length || 0}
-                      </span>
-                    </div>
-                    <div className="mt-3 pt-2 border-t">
-                      <div className="text-xs font-medium mb-1">
-                        Route Stops:
-                      </div>
-                      <div className="space-y-1">
-                        {(routeVehicle.loads || [])
-                          .slice(0, 3)
-                          .map((load, idx) => (
-                            <div
-                              key={idx}
-                              className="text-xs text-muted-foreground flex items-center space-x-1"
-                            >
-                              <div className="w-2 h-2 rounded-full bg-primary" />
-                              <span>{load.route_name}</span>
-                            </div>
-                          ))}
-                        {routeVehicle?.loads?.length > 3 && (
-                          <div className="text-xs text-muted-foreground">
-                            +{routeVehicle.loads.length - 3} more stops
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : null
-              })()}
-
-            {showAllVehicles && (
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Live Vehicles:</span>
-                  <span className="font-medium text-green-600">
-                    {filteredData.filteredLive?.length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Moving:</span>
-                  <span className="font-medium text-green-600">
-                    {
-                      filteredData.filteredLive.filter(
-                        (v) => (v.Speed || 0) > 0
-                      )?.length
-                    }
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Stopped:</span>
-                  <span className="font-medium text-red-600">
-                    {
-                      filteredData.filteredLive.filter(
-                        (v) => (v.Speed || 0) === 0
-                      )?.length
-                    }
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Scheduled Routes:</span>
-                  <span className="font-medium">
-                    {filteredData.filteredRoutes?.length}
-                  </span>
-                </div>
-                {showRoutes && (
-                  <div className="mt-3 pt-2 border-t">
-                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                      <MapIcon className="h-3 w-3" />
-                      <span>Route visualization active</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+        </div>
+        <div
+          className="flex items-center gap-1 bg-muted p-1 rounded-lg"
+          data-testid="toolbar-view"
+        >
+          <Button
+            variant={localFilters.currentView === 'cards' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => handleSelectChange('currentView', 'cards')}
+            className="gap-2"
+          >
+            <LayoutGrid className="h-4 w-4" />
+            <span className="hidden sm:inline">Cards</span>
+          </Button>
+          <Button
+            variant={localFilters.currentView === 'map' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => handleSelectChange('currentView', 'map')}
+            className="gap-2"
+          >
+            <Map className="h-4 w-4" />
+            <span className="hidden sm:inline">Map</span>
+          </Button>
         </div>
       </div>
-
-      {/* Page BG to preserve visual feel */}
-      <Image
-        src={page_bg}
-        alt=""
-        aria-hidden
-        className="pointer-events-none select-none fixed bottom-4 right-4 opacity-5 w-40 h-auto"
-      />
+      {loading ? (
+        <div className="flex items-center justify-center">loading</div>
+      ) : (
+        <div>
+          {localFilters.currentView === 'cards' ? (
+            <CardsView
+              vehicleCards={vehicleCards}
+              selectedPlanId={localFilters.selectedPlanId}
+              targetPlates={targetPlates}
+              assignedUnits={localFilters.assignedUnits}
+            />
+          ) : (
+            <div className="h-screen">
+              <MapView vehicleCards={vehicleCards} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
+
+export default Dashboard
+
+// 'use client'
+
+// import { Button } from '@/components/ui/button'
+// import DynamicInput from '@/components/ui/dynamic-input'
+
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from '@/components/ui/select'
+// import { useGlobalContext } from '@/context/global-context'
+// import { fetchData } from '@/lib/fetch'
+// import { LayoutGrid, Map } from 'lucide-react'
+// import { useEffect, useMemo, useState } from 'react'
+
+// // Build a plate-like identifier from a generic vehicle record
+// function pickPlateFromVehicle(v) {
+//   const s =
+//     v?.license_plate ??
+//     v?.reg_number ??
+//     v?.fleet_number ??
+//     v?.plate ??
+//     v?.id ??
+//     ''
+//   return String(s).trim().toUpperCase()
+// }
+
+// // Extract plates from assigned_units: prefer horse.plate, else rigid.plate
+// function extractPlatesFromAssignedUnits(assignedUnits = []) {
+//   const set = new Set()
+
+//   for (const u of assignedUnits) {
+//     const plate =
+//       u?.horse?.plate ?? u?.rigid?.plate ?? u?.trailer?.plate ?? u?.plan_unit_id
+//     if (!plate) continue
+//     set.add(String(plate).trim().toUpperCase())
+//   }
+//   return Array.from(set)
+// }
+
+// // Extract plates from current vehicles dataset (for 'all' mode)
+// function extractPlatesFromVehiclesList(vehicles = []) {
+//   const set = new Set()
+//   for (const v of vehicles) {
+//     const plate = pickPlateFromVehicle(v)
+//     if (plate) set.add(plate)
+//   }
+//   return Array.from(set)
+// }
+
+// // Merge helper: creates a vehicle card for each target plate and overlays live data
+// function buildVehicleCards(targetPlates = [], liveByPlate = {}) {
+//   return targetPlates.map((plate) => {
+//     const live = liveByPlate[plate] || null
+//     return {
+//       plate,
+//       live, // {Plate, Latitude, Longitude, Speed, etc.} (remapped)
+//       // add more computed fields here later (e.g., status, lastSeen, etc.)
+//     }
+//   })
+// }
+
+// const Dashboard = () => {
+//   const { vehicles, assignment } = useGlobalContext()
+
+//   const loading = assignment?.loading
+//   const [localFilters, setLocalFilters] = useState({
+//     currentVehicles: vehicles?.data,
+//     assignmentData: assignment?.data,
+//     plans: assignment?.data?.plans,
+//     selectedPlanId: 'all',
+//     assignedUnits: [],
+//     currentView: 'cards',
+//   })
+//   const [tcpError, setTcpError] = useState(null)
+
+//   const onPlanChange = async (value) => {
+//     if (value == 'all' || value == null) return
+//     try {
+//       const r = await fetchData(`plans/`, 'POST', {
+//         plan_id: value, // required
+//         include_nested: true, // false => plan header only
+//         include_idle: true, // only if include_nested=true
+//       }) // Expect: { plan, assigned_units, ... }
+
+//       if (r?.assigned_units)
+//         setLocalFilters((prev) => ({
+//           ...prev,
+//           assignedUnits: r.assigned_units,
+//         }))
+//     } catch (e) {
+//       console.warn('onSelectPlan failed', e)
+//     }
+//   }
+
+// const computedWsUrl = useMemo(() => {
+//   if (typeof window === 'undefined') return null
+
+//   // Support full ws:// or wss:// URL in env
+//   const envUrl =
+//     process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_WS_PATH || ''
+
+//   if (/^wss?:\/\//i.test(envUrl)) {
+//     return envUrl
+//   }
+
+//   // Otherwise build from current page + path
+//   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+//   const host = window.location.host
+//   const path = (envUrl || '/ws/').replace(/([^/])$/, '$1/') // ensure trailing /
+//   return `${proto}://${host}${path}`
+// }, [])
+
+//   useEffect(() => {
+//     const url = computedWsUrl
+//     if (!url) return
+//     let ws
+//     try {
+//       ws = new WebSocket(url)
+//     } catch (e) {
+//       setTcpError('⚠️ Could not open WebSocket')
+//       return
+//     }
+
+//     ws.onmessage = (event) => {
+//       try {
+//         const raw = JSON.parse(event.data)
+//         console.log('raw :>> ', raw)
+//         // your TCP sometimes arrives as one object, sometimes as a rawMessage string
+//         // normalize:
+//         const parsed = raw?.rawMessage
+//           ? parseRawTcpData(raw.rawMessage)
+//           : raw?.Plate
+//           ? [raw]
+//           : []
+
+//         // if (Array.isArray(parsed) && parsed.length) {
+//         //   upsertLive(parsed)
+//         // }
+//         if (Array.isArray(parsed) && parsed.length) {
+//           const remapped = parsed.map(remapTcpFields)
+//           upsertLive(remapped)
+//         }
+//       } catch (e) {
+//         setTcpError('❌ Invalid JSON received')
+//       }
+//     }
+
+//     ws.onerror = () => setTcpError('⚠️ WebSocket connection error')
+//     ws.onclose = () => {
+//       // no-op
+//     }
+//     return () => {
+//       try {
+//         ws && ws.close()
+//       } catch {}
+//     }
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [computedWsUrl])
+
+//   useEffect(() => {
+//     const plans = assignment?.data?.plans ?? []
+//     setLocalFilters((prev) => ({
+//       ...prev,
+//       assignmentData: assignment?.data ?? null,
+//       plans,
+//       // selectedPlanId: prev.selectedPlanId ?? plans[0]?.id ?? null,
+//     }))
+//   }, [assignment])
+
+//   useEffect(() => {
+//     setLocalFilters((prev) => ({
+//       ...prev,
+//       currentVehicles: vehicles?.data ?? [],
+//     }))
+//   }, [vehicles])
+
+//   useEffect(() => {
+//     if (localFilters.selectedPlanId) onPlanChange(localFilters.selectedPlanId)
+//     else setLocalFilters((prev) => ({ ...prev, assignedUnits: null }))
+//   }, [localFilters.selectedPlanId])
+
+//   // ---------- Compute the active list of target plates ----------
+//   const targetPlates = useMemo(() => {
+//     if (
+//       localFilters?.selectedPlanId === 'all' ||
+//       localFilters?.selectedPlanId === null
+//     ) {
+//       //      console.log('vehicleList :>> ')
+//       return extractPlatesFromVehiclesList(localFilters?.currentVehicles)
+//     }
+//     // plan mode
+//     //   console.log('extract :>> ')
+//     return extractPlatesFromAssignedUnits(localFilters?.assignedUnits)
+//   }, [
+//     localFilters?.selectedPlanId,
+//     localFilters?.currentVehicles,
+//     localFilters?.assignedUnits,
+//   ])
+//   console.log('targetPlates :>> ', targetPlates)
+//   const handleChange = (e) => {
+//     console.log('e.target :>> ', e.target)
+//     const { name, value } = e.target
+//     setLocalFilters((prev) => ({
+//       ...prev,
+//       [name]: value,
+//     }))
+//   }
+
+//   const handleSelectChange = (name, value) => {
+//     setLocalFilters((prev) => ({
+//       ...prev,
+//       [name]: value,
+//     }))
+//   }
+
+//   const plans_options = [
+//     {
+//       type: 'select',
+//       htmlFor: 'selectedPlanId',
+//       // label: 'Plans *',
+//       placeholder: 'selected a plan',
+//       value: localFilters?.selectedPlanId,
+//       // required: true,
+//       options:
+//         localFilters.plans?.length > 0
+//           ? [
+//               { value: null, label: 'All' },
+//               ...localFilters?.plans?.map((p) => {
+//                 return { value: p.id, label: p.notes }
+//               }),
+//             ]
+//           : [{ value: null, label: 'All' }],
+//     },
+//   ]
+
+//   return (
+//     <div className="h-full space-y-6 p-4 md:p-6">
+//       <div
+//         className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+//           localFilters.currentView === 'map' && 'fixed left-18 right-6'
+//         }`}
+//       >
+//         <div className="flex items-center gap-2 w-full md:w-auto">
+//           <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+//             Plan:
+//           </span>
+//           <DynamicInput
+//             inputs={plans_options}
+//             handleSelectChange={handleSelectChange}
+//             handleChange={handleChange}
+//           />
+//         </div>
+//         <div
+//           className="flex items-center gap-1 bg-muted p-1 rounded-lg"
+//           data-testid="toolbar-view"
+//         >
+//           <Button
+//             variant={localFilters.currentView === 'cards' ? 'default' : 'ghost'}
+//             size="sm"
+//             onClick={() => handleSelectChange('currentView', 'cards')}
+//             className="gap-2"
+//           >
+//             <LayoutGrid className="h-4 w-4" />
+//             <span className="hidden sm:inline">Cards</span>
+//           </Button>
+//           <Button
+//             variant={localFilters.currentView === 'map' ? 'default' : 'ghost'}
+//             size="sm"
+//             onClick={() => handleSelectChange('currentView', 'map')}
+//             className="gap-2"
+//           >
+//             <Map className="h-4 w-4" />
+//             <span className="hidden sm:inline">Map</span>
+//           </Button>
+//         </div>
+//       </div>
+//       {loading ? (
+//         <div className="flex items-center justify-center">loading</div>
+//       ) : (
+//         <div>
+//           {localFilters.currentView === 'cards' ? (
+//             <div>Cards</div>
+//           ) : (
+//             //    <CardsView
+//             //   vehicleCards={vehicleCards}
+//             //   selectedPlanId={localFilters.selectedPlanId}
+//             //   targetPlates={targetPlates}
+//             //   assignedUnits={localFilters.assignedUnits}
+//             // />
+//             <div>Map</div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   )
+// }
+
+// export default Dashboard
