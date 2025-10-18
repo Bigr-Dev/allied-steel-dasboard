@@ -60,6 +60,7 @@ import supabase from '@/config/supabase'
 import { fetchData } from '@/lib/fetch'
 import assignmentReducer from './reducers/assignment-reducer'
 import { autoAssignLoads, loadAssignments } from './apis/assignment-apis'
+import { useLiveStore } from '@/config/zustand'
 
 const GlobalProvider = ({ children, data }) => {
   const pathname = usePathname().slice(1)
@@ -446,7 +447,7 @@ const GlobalProvider = ({ children, data }) => {
         setAssignmentPreview,
         setModalOpen,
         assignment,
-
+        useLiveStore,
         fetchAssignmentPreview,
         assignmentDispatch,
         deletePlannedAssignmentById,
@@ -489,6 +490,7 @@ const GlobalProvider = ({ children, data }) => {
         upsertRoute,
         deleteRoute,
         fetchData,
+        //useLiveStore
       }}
     >
       {children}

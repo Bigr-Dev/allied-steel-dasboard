@@ -1,4 +1,8 @@
 'use client'
+// store
+import { useLiveStore } from '@/config/zustand'
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,6 +24,8 @@ import {
   TrendingUp,
 } from 'lucide-react'
 
+//const liveByPlate = useLiveStore((s) => s.liveByPlate)
+
 /**
  * CardsView — presentational only
  * Props (from page.jsx):
@@ -36,6 +42,7 @@ export default function CardsView({
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('lastSeen') // 'lastSeen' | 'speed'
+  const liveByPlate = useLiveStore((s) => s.liveByPlate)
 
   // Robust timestamp getter (ms since epoch) from live.Time (ISO) or live.Timestamp (ms)
   const getTimestampMs = (card) => {
@@ -62,17 +69,6 @@ export default function CardsView({
     }
     return null
   }
-  // const getTimestampMs = (card) => {
-  //   const live = card?.live
-  //   if (!live) return null
-  //   if (typeof live.Timestamp === 'number' && Number.isFinite(live.Timestamp))
-  //     return live.Timestamp
-  //   if (typeof live.Time === 'string') {
-  //     const t = Date.parse(live.Time)
-  //     return Number.isFinite(t) ? t : null
-  //   }
-  //   return null
-  // }
 
   // Derive vehicle status (moving/idle/offline)
   const getVehicleStatus = (card) => {
@@ -101,7 +97,12 @@ export default function CardsView({
   // Filter + sort
   const filteredAndSortedCards = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
-    const filtered = vehicleCards.filter((card) => {
+    // always read freshest live snapshot from store
+    const withFresh = vehicleCards.map((c) => ({
+      ...c,
+      live: liveByPlate[c.plate] ?? c.live,
+    }))
+    const filtered = withFresh.filter((card) => {
       const plate = (card?.plate || '').toLowerCase()
       const driver = (card?.live?.DriverName || '').toLowerCase()
       return q ? plate.includes(q) || driver.includes(q) : true
@@ -122,7 +123,7 @@ export default function CardsView({
     })
 
     return filtered
-  }, [vehicleCards, searchQuery, sortBy])
+  }, [vehicleCards, searchQuery, sortBy, liveByPlate])
 
   // Emit focus event for the map
   const handleCardClick = (plate) => {
@@ -166,7 +167,7 @@ export default function CardsView({
     <div className="h-full flex flex-col">
       {/* Search + Sort */}
       <div className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container p-4 md:p-6">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -192,7 +193,7 @@ export default function CardsView({
 
       {/* Cards */}
       <div className="flex-1 overflow-auto">
-        <div className="container mx-auto px-4 py-6">
+        <div className="flex p-4 md:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredAndSortedCards.map((card) => {
               const status = getVehicleStatus(card)

@@ -54,7 +54,7 @@ import page_bg from '@/assets/page_bg.png'
 import { fetchData } from '@/lib/fetch'
 
 // Normalizes misaligned keys coming from TCP feed
-function remapTcpFields(pkt = {}) {
+function remapTcpFields(pkt) {
   const out = { ...pkt }
 
   // Address should be what is currently DriverName
