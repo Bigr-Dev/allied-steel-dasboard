@@ -1,292 +1,1053 @@
-'use client'
-// store
-import { useLiveStore } from '@/config/zustand'
-import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+// 'use client'
 
-import { useState, useMemo } from 'react'
+// import React, { useMemo, useRef, useState } from 'react'
+// import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+// import { Badge } from '@/components/ui/badge'
+// import { Input } from '@/components/ui/input'
+// import { Button } from '@/components/ui/button'
+// import { Search, User, Gauge, MapPin, Navigation, Truck } from 'lucide-react'
+// import { useLiveStore } from '@/config/zustand'
+
+// /**
+//  * Tunables
+//  */
+// const OFFLINE_MIN = 10 // minutes without any packet -> offline
+// const DELAYED_MIN = 15 // minutes stationary since last movement -> delayed
+// const DEPOT_COLOR = '#003e69'
+
+// // status keys we expose to the filter
+// const STATUS_KEYS = [
+//   'moving',
+//   'stationary',
+//   'delayed',
+//   'depot',
+//   'offline',
+//   'unknown',
+// ]
+
+// /**
+//  * Robust timestamp extraction: prioritise live.timestamp (ISO string).
+//  */
+// function getTimestampMs(live) {
+//   if (!live) return null
+
+//   // Priority: lowercase ISO e.g. "2025-10-19T10:17:14.982Z"
+//   if (typeof live.timestamp === 'string') {
+//     const t = Date.parse(live.timestamp)
+//     if (Number.isFinite(t)) return t
+//   }
+
+//   // Numeric variants (epoch/ms)
+//   const numeric = [
+//     live.TimestampMs,
+//     live.timestampMs,
+//     live.ts,
+//     live.TS,
+//     live.epoch,
+//     live.Epoch,
+//   ].find((v) => Number.isFinite(Number(v)))
+//   if (numeric != null) return Number(numeric)
+
+//   // Other ISO-ish strings
+//   const isoCandidates = [
+//     live.Timestamp,
+//     live.Time,
+//     live.time,
+//     live.ReceivedAt,
+//     live.ServerTime,
+//     live.PacketTime,
+//     live.LastSeenAt,
+//   ].filter(Boolean)
+//   for (const t of isoCandidates) {
+//     const p = Date.parse(String(t))
+//     if (Number.isFinite(p)) return p
+//   }
+
+//   // LocTime "YYYY-MM-DD HH:mm:ss"
+//   if (typeof live.LocTime === 'string') {
+//     const tryLocal = Date.parse(live.LocTime.replace(' ', 'T'))
+//     if (Number.isFinite(tryLocal)) return tryLocal
+//     const tryUTC = Date.parse(live.LocTime.replace(' ', 'T') + 'Z')
+//     if (Number.isFinite(tryUTC)) return tryUTC
+//   }
+
+//   return null
+// }
+
+// /**
+//  * Best-effort geozone considering misaligned feeds.
+//  */
+// function getGeoZone(live) {
+//   const candidates = [
+//     live?.Geozone,
+//     live?.zone,
+//     live?.Head, // sometimes zone is placed in Head
+//     live?.Quality, // misalignment mentioned previously
+//   ]
+//   for (const c of candidates) {
+//     const s = String(c ?? '').trim()
+//     if (s) return s
+//   }
+//   return ''
+// }
+
+// function isDepot(geo) {
+//   const s = String(geo || '')
+//     .trim()
+//     .toUpperCase()
+//   return s === 'ASSM' || s === 'ALRODE DEPOT'
+// }
+
+// function deriveStatus(plate, live, lastMoveRef) {
+//   const now = Date.now()
+//   const ts = getTimestampMs(live)
+//   const speed = Number(live?.Speed ?? 0)
+//   const depot = isDepot(getGeoZone(live))
+
+//   // If we have live but no timestamp, degrade to 'unknown' (not offline)
+//   if (live && ts == null) {
+//     if (speed > 0) return { key: 'moving', color: '#10b981', flash: false }
+//     return { key: 'unknown', color: '#9ca3af', flash: false }
+//   }
+
+//   if (ts == null || (now - ts) / 60000 > OFFLINE_MIN) {
+//     return { key: 'offline', color: '#9ca3af', flash: false }
+//   }
+
+//   const prevMove = lastMoveRef.current.get(plate) ?? ts
+//   if (speed > 0) {
+//     lastMoveRef.current.set(plate, ts)
+//   } else if (!lastMoveRef.current.has(plate)) {
+//     lastMoveRef.current.set(plate, prevMove) // seed once
+//   }
+
+//   if (depot) return { key: 'depot', color: DEPOT_COLOR, flash: false }
+
+//   const lastMoveTs = lastMoveRef.current.get(plate) ?? ts
+//   const minutesSinceMove = (now - lastMoveTs) / 60000
+//   if (speed === 0 && minutesSinceMove >= DELAYED_MIN) {
+//     return { key: 'delayed', color: '#f59e0b', flash: true } // orange
+//   }
+
+//   if (speed > 0) return { key: 'moving', color: '#10b981', flash: false } // green
+//   return { key: 'stationary', color: '#ef4444', flash: false } // red
+// }
+
+// function lastSeen(live) {
+//   const ts = getTimestampMs(live)
+//   if (ts == null) return 'Unknown'
+//   const d = Date.now() - ts
+//   if (d < 60_000) return 'Live'
+//   if (d < 3_600_000) return `${Math.floor(d / 60_000)}m ago`
+//   if (d < 86_400_000) return `${Math.floor(d / 3_600_000)}h ago`
+//   return `${Math.floor(d / 86_400_000)}d ago`
+// }
+
+// // normalise suburb_name with common typos
+// function getSuburbName(c) {
+//   return c?.suburb_name ?? c?.surburb_name ?? c?.subrub_name ?? ''
+// }
+
+// export default function CardView({
+//   vehicleCards = [],
+//   selectedPlanId = 'all',
+//   assignedUnits = [],
+// }) {
+//   const [q, setQ] = useState('')
+//   const liveByPlate = useLiveStore((s) => s.liveByPlate)
+//   const lastMoveRef = useRef(new Map()) // plate -> timestamp(ms)
+//   const prevOrderRef = useRef(new Map()) // plate -> last on-screen index
+//   const sortBy = 'lastSeen' // or 'speed'
+
+//   // ✅ FIX: initialize as a Set (not an array)
+//   const [statusFilter, setStatusFilter] = useState(new Set(STATUS_KEYS))
+
+//   // Index assigned plan units by plate (horse or rigid)
+//   const unitByPlate = useMemo(() => {
+//     const map = new Map()
+//     for (const u of assignedUnits || []) {
+//       const horsePlate = u?.horse?.plate?.trim()?.toUpperCase?.()
+//       const rigidPlate = u?.rigid?.plate?.trim()?.toUpperCase?.()
+//       if (horsePlate) map.set(horsePlate, u)
+//       if (rigidPlate) map.set(rigidPlate, u)
+//     }
+//     return map
+//   }, [assignedUnits])
+
+//   // Build array with derived status first, then filter by search + status, then sort (stably)
+//   const cards = useMemo(() => {
+//     const query = q.trim().toLowerCase()
+
+//     // Always merge in freshest live from Zustand
+//     const augmented = vehicleCards.map((c) => {
+//       const live = liveByPlate[c.plate] ?? c.live
+//       const status = deriveStatus(c.plate, live, lastMoveRef)
+//       return { ...c, live, __status: status }
+//     })
+
+//     const filtered = augmented.filter((card) => {
+//       // search filter
+//       const plate = (card?.plate || '').toLowerCase()
+//       const driver = (card?.live?.DriverName || '').toLowerCase()
+//       const textOk = query
+//         ? plate.includes(query) || driver.includes(query)
+//         : true
+//       // status filter
+//       const statusOk = statusFilter.has(card.__status.key)
+//       return textOk && statusOk
+//     })
+
+//     filtered.sort((a, b) => {
+//       if (sortBy === 'lastSeen') {
+//         const at = getTimestampMs(a.live) ?? -Infinity
+//         const bt = getTimestampMs(b.live) ?? -Infinity
+//         if (bt !== at) return bt - at
+//       } else if (sortBy === 'speed') {
+//         const as = Number(a?.live?.Speed ?? 0)
+//         const bs = Number(b?.live?.Speed ?? 0)
+//         if (bs !== as) return bs - as
+//       }
+
+//       // Secondary: preserve previous visual order
+//       const ai = prevOrderRef.current.get(a.plate) ?? Infinity
+//       const bi = prevOrderRef.current.get(b.plate) ?? Infinity
+//       if (ai !== bi) return ai - bi
+
+//       // Tertiary: deterministic fallback
+//       return String(a.plate).localeCompare(String(b.plate))
+//     })
+
+//     // Remember current order for next render
+//     prevOrderRef.current = new Map(filtered.map((c, i) => [c.plate, i]))
+//     return filtered
+//   }, [vehicleCards, q, liveByPlate, sortBy, statusFilter])
+
+//   const focus = (plate) =>
+//     window.dispatchEvent(
+//       new CustomEvent('fleet:focusPlate', { detail: { plate } })
+//     )
+
+//   // --- UI helpers for status filter
+//   const allSelected = statusFilter.size === STATUS_KEYS.length
+//   const toggleAll = () => {
+//     setStatusFilter(allSelected ? new Set() : new Set(STATUS_KEYS))
+//   }
+//   const toggleOne = (k) => {
+//     setStatusFilter((prev) => {
+//       const next = new Set(prev)
+//       if (next.has(k)) next.delete(k)
+//       else next.add(k)
+//       return next
+//     })
+//   }
+//   const statusLabel = {
+//     moving: 'Moving',
+//     stationary: 'Stationary',
+//     delayed: 'Delayed',
+//     depot: 'Depot',
+//     offline: 'Offline',
+//     unknown: 'Unknown',
+//   }
+
+//   return (
+//     <div className="h-full flex flex-col">
+//       {/* Search + Status filter row */}
+//       <div className="border-b border-border bg-card">
+//         <div className="px-3 py-3 space-y-2">
+//           <div className="relative">
+//             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+//             <Input
+//               value={q}
+//               onChange={(e) => setQ(e.target.value)}
+//               placeholder="Search plate or driver…"
+//               className="pl-8 h-8"
+//             />
+//           </div>
+
+//           {/* Status filter chips */}
+//           <div className="flex flex-wrap items-center gap-1.5">
+//             <Button
+//               type="button"
+//               variant={allSelected ? 'default' : 'outline'}
+//               size="sm"
+//               className="h-7"
+//               onClick={toggleAll}
+//             >
+//               All
+//             </Button>
+//             {STATUS_KEYS.map((k) => (
+//               <Button
+//                 key={k}
+//                 type="button"
+//                 size="sm"
+//                 variant={statusFilter.has(k) ? 'default' : 'outline'}
+//                 className="h-7"
+//                 onClick={() => toggleOne(k)}
+//                 title={statusLabel[k]}
+//               >
+//                 {statusLabel[k]}
+//               </Button>
+//             ))}
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Grid of cards */}
+//       <div className="flex-1 overflow-auto p-3">
+//         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+//           {cards.map((item) => {
+//             const s = item.__status // already computed
+//             const badgeStyle = {
+//               backgroundColor: s.color,
+//               animation: s.flash ? 'pulse 1s ease-in-out infinite' : undefined,
+//             }
+//             const speed = Number(item?.live?.Speed ?? 0)
+//             const unit = unitByPlate.get(String(item.plate).toUpperCase())
+//             const showPlanContext =
+//               selectedPlanId && selectedPlanId !== 'all' && unit
+//             const geozone = getGeoZone(item.live)
+
+//             // Branch name (prefer on vehicle card, then unit)
+//             const branchName =
+//               item?.branch_name ||
+//               item?.branch ||
+//               unit?.branch_name ||
+//               unit?.branch ||
+//               'Branch'
+
+//             // Dedup customers by name but keep the first object (for suburb)
+//             const customerObjs = (unit?.customers || []).filter(Boolean)
+//             const uniqueCustomers = Array.from(
+//               new Map(
+//                 customerObjs.map((c) => [
+//                   String(c.customer_name || '').trim(),
+//                   c,
+//                 ])
+//               ).values()
+//             )
+
+//             return (
+//               <Card
+//                 key={item.plate}
+//                 className="cursor-pointer hover:shadow-sm"
+//                 onClick={() => focus(item.plate)}
+//               >
+//                 <CardHeader className="py-2 px-3">
+//                   <div className="flex items-center justify-between">
+//                     <CardTitle className="text-base font-mono">
+//                       {item.plate}
+//                     </CardTitle>
+//                     <Badge
+//                       style={badgeStyle}
+//                       className="text-[10px] capitalize"
+//                     >
+//                       {s.key}
+//                     </Badge>
+//                   </div>
+//                 </CardHeader>
+
+//                 <CardContent className="px-3 pb-3 pt-0">
+//                   {/* Live block */}
+//                   {item.live ? (
+//                     <div className="space-y-1.5 text-xs">
+//                       <div className="flex items-center gap-2">
+//                         <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+//                         <span className="font-medium">
+//                           {speed.toFixed(1)} km/h
+//                         </span>
+//                       </div>
+
+//                       {item.live.DriverName && (
+//                         <div className="flex items-center gap-2">
+//                           <User className="h-3.5 w-3.5 text-muted-foreground" />
+//                           <span>{item.live.DriverName}</span>
+//                         </div>
+//                       )}
+
+//                       {item.live.Address && (
+//                         <div className="flex items-start gap-2">
+//                           <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
+//                           <span className="text-[11px] text-muted-foreground line-clamp-2">
+//                             {item.live.Address}
+//                           </span>
+//                         </div>
+//                       )}
+
+//                       {geozone && (
+//                         <div className="flex items-center gap-2">
+//                           <Navigation className="h-3.5 w-3.5 text-muted-foreground" />
+//                           <span className="text-[11px] text-muted-foreground">
+//                             {geozone}
+//                           </span>
+//                         </div>
+//                       )}
+
+//                       <div className="text-[11px] text-muted-foreground border-t pt-1">
+//                         Last seen: {lastSeen(item.live)}
+//                       </div>
+//                     </div>
+//                   ) : (
+//                     <div className="text-xs text-muted-foreground">
+//                       No live data.
+//                     </div>
+//                   )}
+
+//                   {/* Plan context block */}
+//                   {showPlanContext && (
+//                     <div className="mt-2 border-t pt-2 space-y-2">
+//                       {/* Horse+Trailer summary */}
+//                       {unit?.horse && unit?.trailer && (
+//                         <div className="flex items-center gap-2 text-xs">
+//                           <Truck className="h-3.5 w-3.5 text-muted-foreground" />
+//                           <span className="text-muted-foreground">
+//                             Trailer:{' '}
+//                             <span className="font-medium">
+//                               {unit.trailer.plate}
+//                             </span>
+//                             {unit.trailer.fleet_number
+//                               ? ` (${unit.trailer.fleet_number})`
+//                               : ''}
+//                           </span>
+//                         </div>
+//                       )}
+
+//                       {/* Route strip: Branch -> customers -> Branch */}
+//                       <div className="flex flex-wrap items-center gap-1">
+//                         {/* Start */}
+//                         <Badge variant="secondary" className="text-[10px]">
+//                           {branchName}
+//                         </Badge>
+
+//                         {/* Customers */}
+//                         {uniqueCustomers.length === 0 && (
+//                           <Badge variant="outline" className="text-[10px]">
+//                             No customers
+//                           </Badge>
+//                         )}
+//                         {uniqueCustomers.map((c, idx) => {
+//                           const name =
+//                             String(c.customer_name || '').trim() ||
+//                             `Customer ${idx + 1}`
+//                           const suburb = String(getSuburbName(c)).trim()
+//                           const match =
+//                             suburb &&
+//                             geozone &&
+//                             suburb.toUpperCase() === geozone.toUpperCase()
+
+//                           // Green when suburb matches geozone
+//                           const cls = match
+//                             ? 'bg-green-600 text-white hover:bg-green-600'
+//                             : 'bg-muted text-foreground hover:bg-muted'
+
+//                           return (
+//                             <Badge
+//                               key={name + idx}
+//                               className={`text-[10px] ${cls}`}
+//                             >
+//                               {name}
+//                             </Badge>
+//                           )
+//                         })}
+
+//                         {/* End */}
+//                         <Badge variant="secondary" className="text-[10px]">
+//                           {branchName}
+//                         </Badge>
+//                       </div>
+
+//                       {/* Optional: planned driver (if different from live) */}
+//                       {unit?.driver_name &&
+//                         unit?.driver_name !== item?.live?.DriverName && (
+//                           <div className="flex items-center gap-2 text-xs">
+//                             <User className="h-3.5 w-3.5 text-muted-foreground" />
+//                             <span className="text-muted-foreground">
+//                               Planned driver:{' '}
+//                               <span className="font-medium">
+//                                 {unit.driver_name}
+//                               </span>
+//                             </span>
+//                           </div>
+//                         )}
+//                     </div>
+//                   )}
+//                 </CardContent>
+//               </Card>
+//             )
+//           })}
+//         </div>
+//       </div>
+
+//       {/* simple pulse keyframes */}
+//       <style jsx global>{`
+//         @keyframes pulse {
+//           0%,
+//           100% {
+//             opacity: 1;
+//           }
+//           50% {
+//             opacity: 0.45;
+//           }
+//         }
+//       `}</style>
+//     </div>
+//   )
+// }
+'use client'
+
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Search,
-  Navigation,
-  User,
-  MapPin,
-  Gauge,
-  TrendingUp,
-} from 'lucide-react'
-
-//const liveByPlate = useLiveStore((s) => s.liveByPlate)
+import { Button } from '@/components/ui/button'
+import { Search, User, Gauge, MapPin, Navigation, Truck } from 'lucide-react'
+import { useLiveStore } from '@/config/zustand'
+import { useGlobalContext } from '@/context/global-context'
 
 /**
- * CardsView — presentational only
- * Props (from page.jsx):
- *  - vehicleCards: [{ plate: string, live: { Plate, Latitude, Longitude, Speed, Address, DriverName, Geozone, Mileage, Timestamp|Time } | null }]
- *  - selectedPlanId: 'all' | <planId>
- *  - targetPlates: string[] (UPPERCASE)
- *  - assignedUnits: [] (empty when 'all')
+ * Tunables
  */
-export default function CardsView({
+const OFFLINE_MIN = 10 // minutes without any packet -> offline
+const DELAYED_MIN = 15 // minutes stationary since last movement -> delayed
+const DEPOT_COLOR = '#003e69'
+const ORDER_EVENT = 'fleet:cardOrder:update' // cross-view sync event
+
+// status keys we expose to the filter
+const STATUS_KEYS = [
+  'moving',
+  'stationary',
+  'delayed',
+  'depot',
+  'offline',
+  'unknown',
+]
+
+/* --------------------- Utilities --------------------- */
+
+function getTimestampMs(live) {
+  if (!live) return null
+  // Priority: lowercase ISO e.g. "2025-10-19T10:17:14.982Z"
+  if (typeof live.timestamp === 'string') {
+    const t = Date.parse(live.timestamp)
+    if (Number.isFinite(t)) return t
+  }
+  // Numeric variants (epoch/ms)
+  const numeric = [
+    live.TimestampMs,
+    live.timestampMs,
+    live.ts,
+    live.TS,
+    live.epoch,
+    live.Epoch,
+  ].find((v) => Number.isFinite(Number(v)))
+  if (numeric != null) return Number(numeric)
+
+  // Other ISO-ish strings
+  const isoCandidates = [
+    live.Timestamp,
+    live.Time,
+    live.time,
+    live.ReceivedAt,
+    live.ServerTime,
+    live.PacketTime,
+    live.LastSeenAt,
+  ].filter(Boolean)
+  for (const t of isoCandidates) {
+    const p = Date.parse(String(t))
+    if (Number.isFinite(p)) return p
+  }
+
+  // LocTime "YYYY-MM-DD HH:mm:ss"
+  if (typeof live.LocTime === 'string') {
+    const tryLocal = Date.parse(live.LocTime.replace(' ', 'T'))
+    if (Number.isFinite(tryLocal)) return tryLocal
+    const tryUTC = Date.parse(live.LocTime.replace(' ', 'T') + 'Z')
+    if (Number.isFinite(tryUTC)) return tryUTC
+  }
+  return null
+}
+
+function getGeoZone(live) {
+  const candidates = [live?.Geozone, live?.zone, live?.Head, live?.Quality]
+  for (const c of candidates) {
+    const s = String(c ?? '').trim()
+    if (s) return s
+  }
+  return ''
+}
+
+function isDepot(geo) {
+  const s = String(geo || '')
+    .trim()
+    .toUpperCase()
+  return s === 'ASSM' || s === 'ALRODE DEPOT'
+}
+
+function deriveStatus(plate, live, lastMoveRef) {
+  const now = Date.now()
+  const ts = getTimestampMs(live)
+  const speed = Number(live?.Speed ?? 0)
+  const depot = isDepot(getGeoZone(live))
+
+  if (live && ts == null) {
+    if (speed > 0) return { key: 'moving', color: '#10b981', flash: false }
+    return { key: 'unknown', color: '#9ca3af', flash: false }
+  }
+
+  if (ts == null || (now - ts) / 60000 > OFFLINE_MIN) {
+    return { key: 'offline', color: '#9ca3af', flash: false }
+  }
+
+  const prevMove = lastMoveRef.current.get(plate) ?? ts
+  if (speed > 0) {
+    lastMoveRef.current.set(plate, ts)
+  } else if (!lastMoveRef.current.has(plate)) {
+    lastMoveRef.current.set(plate, prevMove)
+  }
+
+  if (depot) return { key: 'depot', color: DEPOT_COLOR, flash: false }
+
+  const lastMoveTs = lastMoveRef.current.get(plate) ?? ts
+  const minutesSinceMove = (now - lastMoveTs) / 60000
+  if (speed === 0 && minutesSinceMove >= DELAYED_MIN) {
+    return { key: 'delayed', color: '#f59e0b', flash: true }
+  }
+
+  if (speed > 0) return { key: 'moving', color: '#10b981', flash: false }
+  return { key: 'stationary', color: '#ef4444', flash: false }
+}
+
+function lastSeen(live) {
+  const ts = getTimestampMs(live)
+  if (ts == null) return 'Unknown'
+  const d = Date.now() - ts
+  if (d < 60_000) return 'Live'
+  if (d < 3_600_000) return `${Math.floor(d / 60_000)}m ago`
+  if (d < 86_400_000) return `${Math.floor(d / 3_600_000)}h ago`
+  return `${Math.floor(d / 86_400_000)}d ago`
+}
+
+// normalise suburb_name with common typos
+function getSuburbName(c) {
+  return c?.suburb_name ?? c?.surburb_name ?? c?.subrub_name ?? ''
+}
+
+/* ---------------- Persistent order (per plan) ---------------- */
+
+function usePersistentOrder(planId) {
+  const key = `fleet:cardOrder:${planId || 'all'}`
+  const [order, setOrder] = useState(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const raw = localStorage.getItem(key)
+      const arr = raw ? JSON.parse(raw) : []
+      return Array.isArray(arr) ? arr : []
+    } catch {
+      return []
+    }
+  })
+
+  // listen for cross-view updates
+  useEffect(() => {
+    const handler = (e) => {
+      const { key: evtKey, order: arr } = e.detail || {}
+      if (evtKey === key && Array.isArray(arr)) setOrder(arr)
+    }
+    window.addEventListener(ORDER_EVENT, handler)
+    return () => window.removeEventListener(ORDER_EVENT, handler)
+  }, [key])
+
+  const saveOrder = (arr) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(arr))
+      setOrder(arr)
+      window.dispatchEvent(
+        new CustomEvent(ORDER_EVENT, { detail: { key, order: arr } })
+      )
+    } catch {}
+  }
+
+  return [order, saveOrder]
+}
+
+/* ---------------- Component ---------------- */
+
+export default function CardView({
   vehicleCards = [],
-  selectedPlanId,
-  targetPlates = [],
+  selectedPlanId = 'all',
   assignedUnits = [],
 }) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState('lastSeen') // 'lastSeen' | 'speed'
+  const { onEdit } = useGlobalContext()
+  const [q, setQ] = useState('')
   const liveByPlate = useLiveStore((s) => s.liveByPlate)
+  const lastMoveRef = useRef(new Map()) // plate -> timestamp(ms)
+  const prevOrderRef = useRef(new Map()) // plate -> last on-screen index (stability tiebreaker)
+  const sortBy = 'lastSeen' // or 'speed'
 
-  // Robust timestamp getter (ms since epoch) from live.Time (ISO) or live.Timestamp (ms)
-  const getTimestampMs = (card) => {
-    const live = card?.live
-    if (!live) return null
-    // Numeric ms epoch (rare in your feed)
-    if (typeof live.Timestamp === 'number' && Number.isFinite(live.Timestamp)) {
-      return live.Timestamp
-    }
-    // Capitalized ISO string
-    if (typeof live.Time === 'string') {
-      const t = Date.parse(live.Time)
-      if (Number.isFinite(t)) return t
-    }
-    // Lowercase ISO string from your feed
-    if (typeof live.timestamp === 'string') {
-      const t = Date.parse(live.timestamp)
-      if (Number.isFinite(t)) return t
-    }
-    // LocTime like "2025-10-16 23:30:12"
-    if (typeof live.LocTime === 'string') {
-      const t = Date.parse(live.LocTime.replace(' ', 'T') + 'Z')
-      if (Number.isFinite(t)) return t
-    }
-    return null
-  }
+  // status filter state
+  const [statusFilter, setStatusFilter] = useState(new Set(STATUS_KEYS))
 
-  // Derive vehicle status (moving/idle/offline)
-  const getVehicleStatus = (card) => {
-    const ts = getTimestampMs(card)
-    const speed = Number(card?.live?.Speed ?? 0)
-    if (ts == null) return 'offline'
-    const minutesSince = (Date.now() - ts) / 60000
-    if (minutesSince > 5) return 'offline'
-    if (speed > 0) return 'moving'
-    return 'idle'
-  }
+  // persistent order (shared across views via localStorage + event)
+  const [savedOrder, setSavedOrder] = usePersistentOrder(selectedPlanId)
 
-  // “Last seen” string from timestamp
-  const getLastSeen = (card) => {
-    const ts = getTimestampMs(card)
-    if (ts == null) return 'Unknown'
-    const minutes = Math.floor((Date.now() - ts) / 60000)
-    if (minutes < 1) return 'Live'
-    if (minutes < 60) return `${minutes}m ago`
-    const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `${hours}h ago`
-    const days = Math.floor(hours / 24)
-    return `${days}d ago`
-  }
+  // drag state
+  const dragFrom = useRef(null) // plate being dragged
 
-  // Filter + sort
-  const filteredAndSortedCards = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    // always read freshest live snapshot from store
-    const withFresh = vehicleCards.map((c) => ({
-      ...c,
-      live: liveByPlate[c.plate] ?? c.live,
-    }))
-    const filtered = withFresh.filter((card) => {
-      const plate = (card?.plate || '').toLowerCase()
-      const driver = (card?.live?.DriverName || '').toLowerCase()
-      return q ? plate.includes(q) || driver.includes(q) : true
+  // Index assigned plan units by plate (horse or rigid)
+  const unitByPlate = useMemo(() => {
+    const map = new Map()
+    for (const u of assignedUnits || []) {
+      const horsePlate = u?.horse?.plate?.trim()?.toUpperCase?.()
+      const rigidPlate = u?.rigid?.plate?.trim()?.toUpperCase?.()
+      if (horsePlate) map.set(horsePlate, u)
+      if (rigidPlate) map.set(rigidPlate, u)
+    }
+    return map
+  }, [assignedUnits])
+
+  // Merge live + derive status, then filter by search + status
+  const augmented = useMemo(() => {
+    const query = q.trim().toLowerCase()
+    return vehicleCards
+      .map((c) => {
+        const live = liveByPlate[c.plate] ?? c.live
+        const status = deriveStatus(c.plate, live, lastMoveRef)
+        return { ...c, live, __status: status }
+      })
+      .filter((card) => {
+        const plate = (card?.plate || '').toLowerCase()
+        const driver = (card?.live?.DriverName || '').toLowerCase()
+        const textOk = query
+          ? plate.includes(query) || driver.includes(query)
+          : true
+        const statusOk = statusFilter.has(card.__status.key)
+        return textOk && statusOk
+      })
+  }, [vehicleCards, q, liveByPlate, statusFilter])
+
+  // Apply saved order (if present), then stable sort as fallback
+  const cards = useMemo(() => {
+    const orderMap = new Map(savedOrder.map((p, i) => [p, i]))
+    const arr = [...augmented]
+
+    arr.sort((a, b) => {
+      // 1) Saved order (if both present)
+      const ai = orderMap.has(a.plate) ? orderMap.get(a.plate) : Infinity
+      const bi = orderMap.has(b.plate) ? orderMap.get(b.plate) : Infinity
+      if (ai !== bi) return ai - bi
+
+      // 2) Primary live sort (only for those NOT in saved order)
+      if (ai === Infinity && bi === Infinity) {
+        if (sortBy === 'lastSeen') {
+          const at = getTimestampMs(a.live) ?? -Infinity
+          const bt = getTimestampMs(b.live) ?? -Infinity
+          if (bt !== at) return bt - at
+        } else if (sortBy === 'speed') {
+          const as = Number(a?.live?.Speed ?? 0)
+          const bs = Number(b?.live?.Speed ?? 0)
+          if (bs !== as) return bs - as
+        }
+      }
+
+      // 3) Stability tiebreaker (previous on-screen order)
+      const aPrev = prevOrderRef.current.get(a.plate) ?? Infinity
+      const bPrev = prevOrderRef.current.get(b.plate) ?? Infinity
+      if (aPrev !== bPrev) return aPrev - bPrev
+
+      // 4) Deterministic fallback
+      return String(a.plate).localeCompare(String(b.plate))
     })
 
-    filtered.sort((a, b) => {
-      if (sortBy === 'lastSeen') {
-        const at = getTimestampMs(a) ?? -Infinity
-        const bt = getTimestampMs(b) ?? -Infinity
-        return bt - at // newest first
-      }
-      if (sortBy === 'speed') {
-        const as = Number(a?.live?.Speed ?? 0)
-        const bs = Number(b?.live?.Speed ?? 0)
-        return bs - as // fastest first
-      }
-      return 0
-    })
+    // Remember visual order for stability
+    prevOrderRef.current = new Map(arr.map((c, i) => [c.plate, i]))
+    return arr
+  }, [augmented, savedOrder, sortBy])
 
-    return filtered
-  }, [vehicleCards, searchQuery, sortBy, liveByPlate])
-
-  // Emit focus event for the map
-  const handleCardClick = (plate) => {
-    if (!plate) return
+  const focus = (plate) =>
     window.dispatchEvent(
       new CustomEvent('fleet:focusPlate', { detail: { plate } })
     )
+
+  // --- Status filter UI helpers
+  const allSelected = statusFilter.size === STATUS_KEYS.length
+  const toggleAll = () =>
+    setStatusFilter(allSelected ? new Set() : new Set(STATUS_KEYS))
+  const toggleOne = (k) =>
+    setStatusFilter((prev) => {
+      const next = new Set(prev)
+      if (next.has(k)) next.delete(k)
+      else next.add(k)
+      return next
+    })
+  const statusLabel = {
+    moving: 'Moving',
+    stationary: 'Stationary',
+    delayed: 'Delayed',
+    depot: 'Depot',
+    offline: 'Offline',
+    unknown: 'Unknown',
   }
 
-  // Status badge look
-  const getStatusBadge = (status) => {
-    const variants = {
-      moving: {
-        variant: 'default',
-        className: 'bg-green-500 hover:bg-green-600',
-      },
-      idle: {
-        variant: 'secondary',
-        className: 'bg-yellow-500 hover:bg-yellow-600',
-      },
-      offline: { variant: 'destructive', className: '' },
-    }
-    return variants[status] || variants.offline
+  // --- DnD handlers (HTML5)
+  const onDragStart = (plate) => (e) => {
+    dragFrom.current = plate
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', plate)
   }
+  const onDragOver = (plate) => (e) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+  const onDrop = (plate) => (e) => {
+    e.preventDefault()
+    const from = dragFrom.current || e.dataTransfer.getData('text/plain')
+    const to = plate
+    dragFrom.current = null
+    if (!from || !to || from === to) return
 
-  if (!Array.isArray(vehicleCards) || vehicleCards.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No vehicles to display</h3>
-          <p className="text-muted-foreground">
-            No vehicles found for this selection.
-          </p>
-        </div>
-      </div>
-    )
+    // Build next order from current rendered order
+    const current = cards.map((c) => c.plate)
+    const next = current.filter((p) => p !== from)
+    const toIndex = next.indexOf(to)
+    next.splice(toIndex, 0, from)
+
+    setSavedOrder(next)
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Search + Sort */}
-      <div className="border-b border-border bg-card">
-        <div className="container p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by plate or driver..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lastSeen">Last Seen</SelectItem>
-                <SelectItem value="speed">Speed</SelectItem>
-              </SelectContent>
-            </Select>
+    <div className="h-full flex flex-col mt-20">
+      {/* Search + Status filter row */}
+      <Card>
+        <div className="px-3 py-3 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search plate or driver…"
+              className="pl-8 h-8"
+            />
+          </div>
+
+          {/* Status filter chips */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Button
+              type="button"
+              variant={allSelected ? 'default' : 'outline'}
+              size="sm"
+              className="h-7"
+              onClick={toggleAll}
+            >
+              All
+            </Button>
+            {STATUS_KEYS.map((k) => (
+              <Button
+                key={k}
+                type="button"
+                size="sm"
+                variant={statusFilter.has(k) ? 'default' : 'outline'}
+                className="h-7"
+                onClick={() => toggleOne(k)}
+                title={statusLabel[k]}
+              >
+                {statusLabel[k]}
+              </Button>
+            ))}
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Cards */}
-      <div className="flex-1 overflow-auto">
-        <div className="flex p-4 md:p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredAndSortedCards.map((card) => {
-              const status = getVehicleStatus(card)
-              const lastSeen = getLastSeen(card)
-              const statusBadge = getStatusBadge(status)
-              const speed = Number(card?.live?.Speed ?? 0)
-              const mileage = Number(card?.live?.Mileage ?? 0)
-              const driver = card?.live?.DriverName || null
-              const zone = card?.live?.Geozone || null
-              const addr = card?.live?.Address || null
+      {/* Grid of cards (draggable) */}
+      <div className="flex-1 overflow-auto p-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          {cards.map((item) => {
+            const s = item.__status
+            const badgeStyle = {
+              backgroundColor: s.color,
+              animation: s.flash ? 'pulse 1s ease-in-out infinite' : undefined,
+            }
+            const speed = Number(item?.live?.Speed ?? 0)
+            const unit = unitByPlate.get(String(item.plate).toUpperCase())
+            const showPlanContext =
+              selectedPlanId && selectedPlanId !== 'all' && unit
+            const geozone = getGeoZone(item.live)
 
-              return (
-                <Card
-                  key={card.plate}
-                  data-testid={`vehicle-card-${card.plate}`}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => handleCardClick(card.plate)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-2xl font-mono font-bold">
-                        {card.plate}
-                      </CardTitle>
-                      <Badge {...statusBadge}>{status}</Badge>
-                    </div>
-                  </CardHeader>
+            const branchName =
+              item?.branch_name ||
+              item?.branch ||
+              unit?.branch_name ||
+              unit?.branch ||
+              'Branch'
 
-                  <CardContent className="space-y-3">
-                    {card.live ? (
-                      <>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Gauge className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">
-                              {speed.toFixed(1)} km/h
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground text-xs">
-                              {Number.isFinite(mileage)
-                                ? mileage.toLocaleString()
-                                : '—'}{' '}
-                              km
-                            </span>
-                          </div>
+            const customerObjs = (unit?.customers || []).filter(Boolean)
+            const uniqueCustomers = Array.from(
+              new Map(
+                customerObjs.map((c) => [
+                  String(c.customer_name || '').trim(),
+                  c,
+                ])
+              ).values()
+            )
+
+            return (
+              <Card
+                key={item.plate}
+                className="cursor-grab hover:shadow-sm"
+                draggable
+                onDragStart={onDragStart(item.plate)}
+                onDragOver={onDragOver(item.plate)}
+                onDrop={onDrop(item.plate)}
+                // onClick={() => focus(item.plate)}
+                onClick={onEdit}
+              >
+                <CardHeader className="py-2 px-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-mono">
+                      {item.plate}
+                    </CardTitle>
+                    <Badge
+                      style={badgeStyle}
+                      className="text-[10px] capitalize"
+                    >
+                      {s.key}
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="px-3 pb-3 pt-0">
+                  {/* Live block */}
+                  {item.live ? (
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium">
+                          {speed.toFixed(1)} km/h
+                        </span>
+                      </div>
+
+                      {item.live.DriverName && (
+                        <div className="flex items-center gap-2">
+                          <User className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{item.live.DriverName}</span>
                         </div>
+                      )}
 
-                        {driver && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span>{driver}</span>
-                          </div>
-                        )}
-
-                        {zone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Navigation className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">
-                              {zone}
-                            </span>
-                          </div>
-                        )}
-
-                        {addr && (
-                          <div className="flex items-start gap-2 text-sm">
-                            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                            <span className="text-muted-foreground line-clamp-2">
-                              {addr}
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="pt-2 border-t border-border">
-                          <span className="text-xs text-muted-foreground">
-                            Last seen: {lastSeen}
+                      {item.live.Address && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
+                          <span className="text-[11px] text-muted-foreground line-clamp-2">
+                            {item.live.Address}
                           </span>
                         </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-4">
-                        <p className="text-sm text-muted-foreground">
-                          No live data available
-                        </p>
+                      )}
+
+                      {geozone && (
+                        <div className="flex items-center gap-2">
+                          <Navigation className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-[11px] text-muted-foreground">
+                            {geozone}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="text-[11px] text-muted-foreground border-t pt-1">
+                        Last seen: {lastSeen(item.live)}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">
+                      No live data.
+                    </div>
+                  )}
+
+                  {/* Plan context */}
+                  {showPlanContext && (
+                    <div className="mt-2 border-t pt-2 space-y-2">
+                      {unit?.horse && unit?.trailer && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <Truck className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground">
+                            Trailer:{' '}
+                            <span className="font-medium">
+                              {unit.trailer.plate}
+                            </span>
+                            {unit.trailer.fleet_number
+                              ? ` (${unit.trailer.fleet_number})`
+                              : ''}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Route strip: Branch -> customers -> Branch */}
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant="secondary" className="text-[10px]">
+                          {branchName}
+                        </Badge>
+
+                        {uniqueCustomers.length === 0 && (
+                          <Badge variant="outline" className="text-[10px]">
+                            No customers
+                          </Badge>
+                        )}
+                        {uniqueCustomers.map((c, idx) => {
+                          const name =
+                            String(c.customer_name || '').trim() ||
+                            `Customer ${idx + 1}`
+                          const suburb = String(getSuburbName(c)).trim()
+                          const match =
+                            suburb &&
+                            geozone &&
+                            suburb.toUpperCase() === geozone.toUpperCase()
+                          const cls = match
+                            ? 'bg-green-600 text-white hover:bg-green-600'
+                            : 'bg-muted text-foreground hover:bg-muted'
+                          return (
+                            <Badge
+                              key={name + idx}
+                              className={`text-[10px] ${cls}`}
+                            >
+                              {name}
+                            </Badge>
+                          )
+                        })}
+
+                        <Badge variant="secondary" className="text-[10px]">
+                          {branchName}
+                        </Badge>
+                      </div>
+
+                      {unit?.driver_name &&
+                        unit?.driver_name !== item?.live?.DriverName && (
+                          <div className="flex items-center gap-2 text-xs">
+                            <User className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              Planned driver:{' '}
+                              <span className="font-medium">
+                                {unit.driver_name}
+                              </span>
+                            </span>
+                          </div>
+                        )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       </div>
+
+      {/* simple pulse keyframes */}
+      <style jsx global>{`
+        @keyframes pulse {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.45;
+          }
+        }
+      `}</style>
     </div>
   )
 }

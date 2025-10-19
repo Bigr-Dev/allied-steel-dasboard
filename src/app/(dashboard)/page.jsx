@@ -11,6 +11,11 @@ import { fetchData } from '@/lib/fetch'
 import { LayoutGrid, Map } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+// image
+import page_bg from '@/assets/allied_plain_bg.png'
+import Image from 'next/image'
+import PageTitle from './[page_id]/@title/default'
+
 /* ---------------- Helpers ---------------- */
 
 // Build a plate-like identifier from a generic vehicle record
@@ -35,7 +40,10 @@ function extractPlatesFromAssignedUnits(assignedUnits = []) {
   const set = new Set()
   for (const u of assignedUnits) {
     const plate =
-      u?.horse?.plate ?? u?.rigid?.plate ?? u?.trailer?.plate ?? u?.plan_unit_id
+      u?.horse?.plate ??
+      u?.rigid?.plate ??
+      //  u?.trailer?.plate ??
+      u?.plan_unit_id
     if (!plate) continue
     set.add(String(plate).trim().toUpperCase())
   }
@@ -98,6 +106,7 @@ function remapTcpFields(pkt = {}) {
 const Dashboard = () => {
   const { vehicles, assignment } = useGlobalContext()
   const loading = assignment?.loading
+  // console.log('vehicles?.data :>> ', vehicles?.data)
 
   const [localFilters, setLocalFilters] = useState({
     currentVehicles: vehicles?.data ?? [],
@@ -108,7 +117,8 @@ const Dashboard = () => {
     currentView: 'cards',
   })
   const [tcpError, setTcpError] = useState(null)
-
+  const [mapShowTick, setMapShowTick] = useState(0)
+  //console.log('localFilters :>> ', localFilters)
   // Zustand actions/state
   const upsertPackets = useLiveStore((s) => s.upsertPackets)
   const liveByPlate = useLiveStore((s) => s.liveByPlate)
@@ -131,6 +141,7 @@ const Dashboard = () => {
         include_idle: true,
       })
       const units = Array.isArray(r?.assigned_units) ? r.assigned_units : []
+      //   console.log('r :>> ', r)
       setLocalFilters((prev) => ({ ...prev, assignedUnits: units }))
     } catch (e) {
       console.warn('onSelectPlan failed', e)
@@ -138,6 +149,17 @@ const Dashboard = () => {
     }
   }
 
+  useEffect(() => {
+    if (localFilters.currentView === 'map') {
+      // give layout a tick to settle, then nudge the map
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          setMapShowTick((n) => n + 1)
+          window.dispatchEvent(new CustomEvent('fleet:map:resize'))
+        }, 40)
+      })
+    }
+  }, [localFilters.currentView])
   // Call onPlanChange whenever selectedPlanId changes via the select
   useEffect(() => {
     onPlanChange(localFilters.selectedPlanId)
@@ -330,53 +352,74 @@ const Dashboard = () => {
 
   //console.log('localFilters :>> ', localFilters)
   return (
-    <div className="h-full space-y-6 p-0 md:p-0">
-      <div
-        className={`flex flex-col md:flex-row  items-center justify-between gap-4 h-4 pt-6 px-10   `}
-      >
-        <div className="flex items-center  gap-2  w-[300px]">
-          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-            Plan:
-          </span>
-
-          <div className="">
-            <DynamicInput
-              inputs={plans_options}
-              handleSelectChange={handleSelectChange}
-              handleChange={handleChange}
-            />
-          </div>
+    <div className="h-screen space-y-6 p-0 md:p-0 relative">
+      <div className="fixed h-full inset-0 -z-10 pointer-events-none">
+        <Image
+          src={page_bg}
+          alt="motion-live-bg"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
+      <div className="fixed w-full shadow-lg z-4 flex flex-col md:flex-row justify-between items-center gap-4 p-4 px-10 bg-white">
+        <div>
+          <h2 className="text-xl text-[#003e69]   font-bold tracking-tight uppercase">
+            {'Dashboard'}
+          </h2>
+          <p className="text-[#428bca]]">{'View current vehicle status'}</p>
         </div>
         <div
-          className="flex items-center gap-1 bg-muted p-1 rounded-lg"
-          data-testid="toolbar-view"
+          className={`flex flex-col md:flex-row  items-center justify-between gap-4   `}
         >
-          <Button
-            variant={localFilters.currentView === 'cards' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => handleSelectChange('currentView', 'cards')}
-            className="gap-2"
+          <div className="flex items-center  gap-2  w-[300px]">
+            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+              Plan:
+            </span>
+
+            <div className="">
+              <DynamicInput
+                inputs={plans_options}
+                handleSelectChange={handleSelectChange}
+                handleChange={handleChange}
+              />
+            </div>
+          </div>
+          <div
+            className="flex items-center gap-1 bg-muted p-1 mr-10 rounded-lg"
+            data-testid="toolbar-view"
           >
-            <LayoutGrid className="h-4 w-4" />
-            <span className="hidden sm:inline">Cards</span>
-          </Button>
-          <Button
-            variant={localFilters.currentView === 'map' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => handleSelectChange('currentView', 'map')}
-            className="gap-2"
-          >
-            <Map className="h-4 w-4" />
-            <span className="hidden sm:inline">Map</span>
-          </Button>
+            <Button
+              variant={
+                localFilters.currentView === 'cards' ? 'default' : 'ghost'
+              }
+              size="sm"
+              onClick={() => handleSelectChange('currentView', 'cards')}
+              className="gap-2"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">Cards</span>
+            </Button>
+            <Button
+              variant={localFilters.currentView === 'map' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleSelectChange('currentView', 'map')}
+              className="gap-2"
+            >
+              <Map className="h-4 w-4" />
+              <span className="hidden sm:inline">Map</span>
+            </Button>
+          </div>
         </div>
       </div>
+
       {loading ? (
         <div className="flex items-center justify-center">loading</div>
       ) : (
         <div>
           {localFilters.currentView === 'cards' ? (
-            <div className="p-4 md:p-6">
+            <div className=" p-4 md:p-6 ">
               <CardsView
                 vehicleCards={vehicleCards}
                 selectedPlanId={localFilters.selectedPlanId}
@@ -385,8 +428,9 @@ const Dashboard = () => {
               />
             </div>
           ) : (
-            <div className="w-full h-[calc(100vh-110px)] p-0 m-0">
+            <div className="w-full h-screen p-0 m-0">
               <MapWithCards
+                refreshKey={mapShowTick}
                 vehicleCards={vehicleCards}
                 selectedPlanId={localFilters.selectedPlanId}
                 targetPlates={targetPlates}

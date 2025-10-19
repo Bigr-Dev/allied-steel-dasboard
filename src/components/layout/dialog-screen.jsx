@@ -31,8 +31,8 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
   // const pathname = usePathname().slice(1)
   const pathname = href ? href : usePathname().split('/')[1]
   const screen = replaceHyphenWithUnderscore(pathname)
-  //  console.log('href :>> ', href)
-  //  console.log('screen :>> ', screen)
+  console.log('href :>> ', href)
+  console.log('screen :>> ', usePathname())
   const Modal = ({ children }) => (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
