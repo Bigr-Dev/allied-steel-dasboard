@@ -24,22 +24,33 @@ import { createPortal } from 'react-dom'
 import { useAssignmentPlan } from '@/hooks/assignment-plan/use-assignment-plan'
 
 // helpers
+// commitImmediateMove(planId, payload, fetchData)
+// payload: { item_id, weight_kg, from_plan_unit_id, to_plan_unit_id }
+
 async function commitImmediateMove(planId, payload, fetchData) {
   const { item_id, weight_kg, from_plan_unit_id, to_plan_unit_id } = payload
 
-  // A) Bucket → unit (assign)
+  // A) Bucket → Unit (assign)  ✅ working
   if (!from_plan_unit_id && to_plan_unit_id) {
-    await fetchData(`plans/${planId}/units/${to_plan_unit_id}/assign`, 'POST', {
-      items: { item_id, weight_kg, note: 'manual' },
-      // no customerUnitCap
+    await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
+      plan_id: planId, // REQUIRED by bulk-assign
+      assignments: [
+        {
+          plan_unit_id: to_plan_unit_id,
+          items: [{ item_id, weight_kg, note: 'manual' }],
+        },
+      ],
+      customerUnitCap: 0, // skip cap to avoid DB join ambiguity; set >0 if you want caps enforced
+      // enforce_family: false, // optional
     })
     return
   }
 
-  // B) Unit → bucket (unassign)
+  // B) Unit → Bucket (unassign)  ✅ normalized shape
   if (from_plan_unit_id && !to_plan_unit_id) {
     await fetchData(`plans/${planId}/unassign`, 'POST', {
-      items: { plan_unit_id: from_plan_unit_id, item_id },
+      plan_id: planId, // include plan_id for clarity
+      items: [{ plan_unit_id: from_plan_unit_id, item_id }], // send as ARRAY
       to_bucket: true,
       bucket_reason: 'manual',
       remove_empty_unit: true,
@@ -47,23 +58,83 @@ async function commitImmediateMove(planId, payload, fetchData) {
     return
   }
 
-  // C) Unit → unit (move)
+  // C) Unit → Unit (move)  ✅ robust: unassign then bulk-assign
   if (
     from_plan_unit_id &&
     to_plan_unit_id &&
     from_plan_unit_id !== to_plan_unit_id
   ) {
+    // 1) Unassign from source (no bucket write)
     await fetchData(`plans/${planId}/unassign`, 'POST', {
-      items: { plan_unit_id: from_plan_unit_id, item_id },
+      plan_id: planId,
+      items: [{ plan_unit_id: from_plan_unit_id, item_id }],
       to_bucket: false,
       remove_empty_unit: true,
     })
-    await fetchData(`plans/${planId}/units/${to_plan_unit_id}/assign`, 'POST', {
-      items: { item_id, weight_kg, note: 'manual-move' },
-      // no customerUnitCap
+
+    // 2) Assign to destination via bulk-assign
+    await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
+      plan_id: planId,
+      assignments: [
+        {
+          plan_unit_id: to_plan_unit_id,
+          items: [{ item_id, weight_kg, note: 'manual-move' }],
+        },
+      ],
+      customerUnitCap: 0,
+      // enforce_family: false,
     })
+    return
   }
 }
+
+// async function commitImmediateMove(planId, payload, fetchData) {
+//   const { item_id, weight_kg, from_plan_unit_id, to_plan_unit_id } = payload
+
+//   // A) Bucket → unit (assign)
+//   if (!from_plan_unit_id && to_plan_unit_id) {
+//     await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
+//       // items: { item_id, weight_kg, note: 'manual' },
+//       plan_id: planId,
+//       assignments: [
+//         {
+//           plan_unit_id: to_plan_unit_id,
+//           items: [{ item_id, weight_kg, note: 'manual' }],
+//         },
+//       ],
+//       customerUnitCap: 0,
+//     })
+//     return
+//   }
+
+//   // B) Unit → bucket (unassign)
+//   if (from_plan_unit_id && !to_plan_unit_id) {
+//     await fetchData(`plans/${planId}/unassign`, 'POST', {
+//       items: { plan_unit_id: from_plan_unit_id, item_id },
+//       to_bucket: true,
+//       bucket_reason: 'manual',
+//       remove_empty_unit: true,
+//     })
+//     return
+//   }
+
+//   // C) Unit → unit (move)
+//   if (
+//     from_plan_unit_id &&
+//     to_plan_unit_id &&
+//     from_plan_unit_id !== to_plan_unit_id
+//   ) {
+//     await fetchData(`plans/${planId}/unassign`, 'POST', {
+//       items: { plan_unit_id: from_plan_unit_id, item_id },
+//       to_bucket: false,
+//       remove_empty_unit: true,
+//     })
+//     await fetchData(`plans/${planId}/units/${to_plan_unit_id}/assign`, 'POST', {
+//       items: { item_id, weight_kg, note: 'manual-move' },
+//       // no customerUnitCap
+//     })
+//   }
+// }
 
 // async function commitImmediateMove(planId, payload, fetchData) {
 //   const { item_id, weight_kg, from_plan_unit_id, to_plan_unit_id } = payload

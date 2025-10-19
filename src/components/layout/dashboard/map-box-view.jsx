@@ -17,6 +17,10 @@ async function getMapbox() {
 const OFFLINE_MIN = 5
 const DELAYED_MIN = 15
 const DEPOT_COLOR = '#003e69'
+const ROUTE_PENDING = '#9ca3af'  // Grey for pending segments
+const ROUTE_COMPLETED = '#10b981'  // Green for completed segments
+const ROUTE_RETURN = '#003e69'  // Company color for return route
+const CUSTOMER_COLOR = '#10b981'  // Green for customers
 const DIRECTIONS_PROFILE = 'mapbox/driving-traffic' // traffic-aware driving
 const DIRECTIONS_GEOMETRY = 'geojson' // we want a GeoJSON LineString
 const GEOCODE_LIMIT = 1
@@ -334,16 +338,19 @@ export default function MapViewMapbox({
   initialViewport = { latitude: -26.2041, longitude: 28.0473, zoom: 9 },
   refreshKey = 0,
 }) {
+  // Removed verbose logging
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const markersRef = useRef(new Map()) // plate -> Marker
   const routeIdsRef = useRef(new Set()) // layer/source ids to cleanup
+  const routeMarkersRef = useRef([]) // route markers to cleanup
   const lastMoveRef = useRef(new Map()) // plate -> last move ts
   const geocodeCacheRef = useRef(new Map()) // geocode cache
   const directionsCacheRef = useRef(new Map()) // key(points) -> {geometry,duration,distance}
   const etaByPlateRef = useRef(new Map()) // plate -> {duration, distance}
   const routeRefreshQueued = useRef(false) // debounce styledata refresh
   const [focusPlate, setFocusPlate] = useState('')
+  const [routeData, setRouteData] = useState(null)
 
   // Generation guard: ignore late results from older refresh cycles
   const routesGenerationRef = useRef(0)
@@ -406,13 +413,18 @@ export default function MapViewMapbox({
 
   // Filter to vehicles with coordinates
   const validVehicles = useMemo(
-    () =>
-      vehicleCards.filter(
+    () => {
+      const valid = vehicleCards.filter(
         (c) =>
           c?.live &&
           Number.isFinite(Number(c.live.Latitude)) &&
           Number.isFinite(Number(c.live.Longitude))
-      ),
+      )
+      
+      // Removed verbose vehicle logging
+      
+      return valid
+    },
     [vehicleCards]
   )
 
@@ -420,13 +432,27 @@ export default function MapViewMapbox({
   useEffect(() => {
     const handler = (e) => {
       const plate = e?.detail?.plate
-      if (!plate) return
-      const card = validVehicles.find((v) => v.plate === plate)
-      if (card) setFocusPlate(String(plate).toUpperCase())
+      const plateUpper = plate ? String(plate).toUpperCase() : ''
+      // Focus event received
+      
+      if (!plate || plate === null) {
+        setFocusPlate('')
+        setRouteData(null)
+        return
+      }
+      
+      // Find card by comparing uppercase versions
+      const card = validVehicles.find((v) => String(v.plate).toUpperCase() === plateUpper)
+      // Card found for focus
+      
+      if (card) {
+        setFocusPlate(plateUpper)
+        // Route refresh will be handled by useEffect dependency
+      }
     }
     window.addEventListener('fleet:focusPlate', handler)
     return () => window.removeEventListener('fleet:focusPlate', handler)
-  }, [validVehicles])
+  }, [validVehicles, selectedPlanId])
 
   /* --------------------- init / cleanup map --------------------- */
   useEffect(() => {
@@ -448,6 +474,8 @@ export default function MapViewMapbox({
         zoom: initialViewport.zoom ?? 10,
       })
       mapRef.current = map
+      
+      // Map initialized
 
       // Visibility/resize to keep markers alive after view switches
       const onResize = () => {
@@ -532,6 +560,8 @@ export default function MapViewMapbox({
   function drawMarkers() {
     const map = mapRef.current
     if (!map) return
+    
+    // Drawing markers
 
     const nextPlates = new Set(
       validVehicles.map((c) => String(c.plate || '').toUpperCase())
@@ -558,6 +588,8 @@ export default function MapViewMapbox({
       )
       let marker = markersRef.current.get(plate)
       const eta = etaByPlateRef.current.get(plate) || null
+      
+      // Marker data processed
 
       if (!marker) {
         const el = makeMarkerEl(color, flash)
@@ -588,8 +620,23 @@ export default function MapViewMapbox({
     }
   }
 
+  // Debounced marker updates
+  const markerTimeoutRef = useRef(null)
+  
   useEffect(() => {
-    drawMarkers()
+    if (markerTimeoutRef.current) {
+      clearTimeout(markerTimeoutRef.current)
+    }
+    
+    markerTimeoutRef.current = setTimeout(() => {
+      drawMarkers()
+    }, 100) // 100ms debounce for markers
+    
+    return () => {
+      if (markerTimeoutRef.current) {
+        clearTimeout(markerTimeoutRef.current)
+      }
+    }
   }, [validVehicles])
 
   // Fly to focused plate
@@ -609,40 +656,68 @@ export default function MapViewMapbox({
     if (!map) return
     for (const id of routeIdsRef.current) {
       try {
-        map.removeLayer(id)
+        if (map.getLayer(id)) {
+          map.removeLayer(id)
+        }
       } catch {}
       try {
-        map.removeSource(id)
+        if (map.getSource(id)) {
+          map.removeSource(id)
+        }
       } catch {}
     }
     routeIdsRef.current.clear()
   }
 
-  function addOrUpdateRoute(id, geojson) {
+  function addOrUpdateRouteSegment(id, geojson, color) {
     const map = mapRef.current
-    if (!map || !geojson) return
-    if (!map.isStyleLoaded()) return
+    
+    console.log(`🗺️ Adding route segment ${id}:`, {
+      mapExists: !!map,
+      mapLoaded: map?.loaded(),
+      styleLoaded: map?.isStyleLoaded(),
+      geojsonExists: !!geojson,
+      color,
+      routeIdsCount: routeIdsRef.current.size
+    })
+    
+    if (!map || !geojson) {
+      console.log(`🗺️ Route ${id} skipped: missing map or geojson`)
+      return
+    }
+    if (!map.isStyleLoaded()) {
+      console.log(`🗺️ Route ${id} skipped: style not loaded`)
+      return
+    }
 
     try {
       if (!map.getSource(id)) {
+        console.log(`🗺️ Creating new route source and layer: ${id}`)
         map.addSource(id, { type: 'geojson', data: geojson })
         map.addLayer({
           id,
           type: 'line',
           source: id,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
           paint: {
-            'line-color': '#ff0000',
-            'line-width': 6,
-            'line-opacity': 1,
+            'line-color': color,
+            'line-width': 4,
+            'line-opacity': 0.8,
           },
         })
         routeIdsRef.current.add(id)
+        console.log(`🗺️ Route ${id} added successfully. Total routes: ${routeIdsRef.current.size}`)
       } else {
+        console.log(`🗺️ Updating existing route: ${id}`)
         const src = map.getSource(id)
         src.setData(geojson)
+        console.log(`🗺️ Route ${id} updated successfully`)
       }
     } catch (error) {
-      console.error('Error adding/updating route:', id, error)
+      console.error(`🗺️ Error adding route segment ${id}:`, error)
     }
   }
 
@@ -658,6 +733,16 @@ export default function MapViewMapbox({
     const branch = (geozone === 'ASSM' || vehicleLat < -26.5) 
       ? 'Springbok Road, Midvaal, South Africa'
       : 'Alrode, Alberton, South Africa'
+      
+    // LOG: Unit point building
+    console.log(`🗺️ Building points for unit:`, {
+      plate: unit?.horse?.plate || unit?.rigid?.plate,
+      vehicleLocation: { lat: vehicleLat, lng: vehicleLng },
+      geozone,
+      selectedBranch: branch,
+      customersCount: unit.customers?.length || 0,
+      biasLL
+    })
 
     // Dedupe customers by name but keep first for suburb fallback
     const customerObjs = Array.from(
@@ -670,6 +755,17 @@ export default function MapViewMapbox({
 
     // Limit to max 20 customers to avoid Mapbox API limits (25 waypoints max)
     const limitedCustomers = customerObjs.slice(0, 20)
+    
+    // LOG: Customer data
+    console.log(`📍 Customer data processing:`, {
+      originalCustomers: unit.customers?.length || 0,
+      afterDeduplication: customerObjs.length,
+      afterLimiting: limitedCustomers.length,
+      sampleCustomers: limitedCustomers.slice(0, 3).map(c => ({
+        name: c.customer_name,
+        suburb: c.suburb_name || c.surburb_name || c.subrub_name
+      }))
+    })
 
     const labeled = []
 
@@ -735,6 +831,32 @@ export default function MapViewMapbox({
     // Print nicely for you to verify
     debugPrintRoute(unit?.horse?.plate || unit?.rigid?.plate || 'unit', labeled)
 
+    // LOG: Route locations like dashboard map
+    const routeInfo = {
+      plate: unit?.horse?.plate || unit?.rigid?.plate,
+      totalLocations: labeled.length,
+      routeLocations: labeled.map((location, index) => {
+        const isStart = index === 0
+        const isEnd = index === labeled.length - 1
+        const [lng, lat] = location.ll || [null, null]
+        
+        return {
+          '#': isStart ? 'S' : isEnd ? 'E' : index,
+          type: location.type,
+          name: location.label,
+          coordinates: lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'Not available',
+          geocoded: !!(lat && lng),
+          query: location.query,
+          used: location.used
+        }
+      })
+    }
+    
+    console.log(`🗺️ Route Locations for ${routeInfo.plate}:`, routeInfo)
+    
+    // Store route data for map display
+    setRouteData(routeInfo)
+
     const coords = labeled.map((p) => p.ll)
     return coords.length >= 2 ? { coords, labeled } : null
   }
@@ -743,120 +865,211 @@ export default function MapViewMapbox({
     const map = mapRef.current
     if (!map) return
 
-    // Start a new generation; capture its id in this invocation
-    const myGen = ++routesGenerationRef.current
-
     await waitForStyleReady(map)
     if (!map.isStyleLoaded()) return
-    // Clear old layers only once per generation (prevents flicker)
+    
     clearAllRoutes()
-    etaByPlateRef.current = new Map()
+    
+    // Only show routes if plan is selected and vehicle is focused
+    if (!selectedPlanId || selectedPlanId === 'all' || !focusPlate) {
+      drawMarkers()
+      return
+    }
 
-    // If "All", we only show markers; bail early
-    if (!selectedPlanId || selectedPlanId === 'all') {
+    const focusedVehicle = validVehicles.find(v => String(v.plate).toUpperCase() === focusPlate)
+    if (!focusedVehicle) {
+      drawMarkers()
+      return
+    }
+
+    const unit = unitForPlate(assignedUnits, focusedVehicle.plate)
+    if (!unit || !unit.customers?.length) {
       drawMarkers()
       return
     }
 
     const mapboxgl = await getMapbox()
-
-    // Work list: only vehicles that belong to a unit in this plan
-    const work = []
-    for (const card of validVehicles) {
-      const plate = String(card.plate || '').toUpperCase()
-      const unit = unitForPlate(assignedUnits, plate)
-      if (!unit) continue
-
-      // Bias geocoding to vehicle's live location
-      const biasLL = [Number(card.live?.Longitude), Number(card.live?.Latitude)]
-      work.push({ plate, unit, biasLL, card })
-    }
-
-    // Nothing to do
-    if (work.length === 0) {
+    
+    // Get coordinates for route
+    const routeLocations = await getRouteCoordinates(mapboxgl, unit, focusedVehicle)
+    if (routeLocations.length < 2) {
       drawMarkers()
       return
     }
 
-    // Build points for each unit (sequentially to reuse geocode cache efficiently)
-    const jobs = []
-    for (const { plate, unit, biasLL, card } of work) {
-      jobs.push(
-        (async () => {
-          // If a newer generation started, stop doing work
-          if (myGen !== routesGenerationRef.current) return
-
-          const points = await buildUnitPoints(mapboxgl, unit, biasLL, card)
-          if (!points) return
-
-          // sanity check on each leg (avoid cross-continent)
-          for (let i = 1; i < points.coords.length; i++) {
-            if (haversineKm(points.coords[i - 1], points.coords[i]) > 1000) return
-          }
-
-          // If waypoints haven't changed, skip fetching directions
-          const pointsKey = keyForRoute(points.coords)
-          const lastKey = lastPointsKeyByPlateRef.current.get(plate)
-          if (lastKey === pointsKey) {
-            // we already have a route source/layer in this generation? nothing to add
-            return
-          }
-
-          // Throttle the actual directions request
-          const route = await directionsThrottleRef.current.schedule(() =>
-            fetchDirections(points.coords, mapboxgl)
-          )
-          if (!route) return
-          lastPointsKeyByPlateRef.current.set(plate, pointsKey)
-
-          // Late generation? Drop result.
-          if (myGen !== routesGenerationRef.current) return
-
-          // Save ETA for popup
-          etaByPlateRef.current.set(plate, {
-            duration: route.duration,
-            distance: route.distance,
-          })
-
-          // Add/Update route
-          const geojson = {
-            type: 'FeatureCollection',
-            features: [
-              {
-                type: 'Feature',
-                properties: { plate },
-                geometry: route.geometry,
-              },
-            ],
-          }
-
-          await waitForStyleReady(map)
-          if (!map.isStyleLoaded()) return
-          addOrUpdateRoute(`route-${plate}`, geojson)
-        })()
-      )
+    // Draw route segments
+    for (let i = 0; i < routeLocations.length - 1; i++) {
+      const start = routeLocations[i]
+      const end = routeLocations[i + 1]
+      
+      if (!start.coordinates || !end.coordinates) continue
+      
+      const route = await fetchDirections([start.coordinates, end.coordinates], mapboxgl)
+      if (route) {
+        const isReturnRoute = i === routeLocations.length - 2
+        const color = isReturnRoute ? ROUTE_RETURN : ROUTE_PENDING
+        
+        const geojson = {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            properties: { plate: focusedVehicle.plate, segment: i },
+            geometry: route.geometry,
+          }],
+        }
+        
+        addOrUpdateRouteSegment(`route-${focusedVehicle.plate}-${i}`, geojson, color)
+      }
     }
-
-    // Run all jobs (in parallel; throttler controls external API pressure)
-    await Promise.all(jobs)
-
-    // Still the latest generation? Update markers so popups show ETAs
-    if (myGen === routesGenerationRef.current) {
-      drawMarkers()
+    
+    // Add markers for route locations
+    addRouteMarkers(mapboxgl, map, routeLocations)
+    drawMarkers()
+  }
+  
+  async function getRouteCoordinates(mapboxgl, unit, vehicleData) {
+    const locations = []
+    
+    // Determine branch
+    const vehicleLat = Number(vehicleData?.live?.Latitude || 0)
+    const geozone = vehicleData?.live?.Geozone || ''
+    const branch = (geozone === 'ASSM' || vehicleLat < -26.5) 
+      ? 'Springbok Road, Midvaal, South Africa'
+      : 'Alrode, Alberton, South Africa'
+    
+    // Branch coordinates
+    const branchCoords = await geocode(mapboxgl, geocodeCacheRef, branch, null)
+    if (branchCoords) {
+      locations.push({
+        type: 'branch',
+        name: `Branch: ${branch}`,
+        coordinates: branchCoords
+      })
     }
+    
+    // Customer coordinates
+    const customers = unit.customers || []
+    for (const customer of customers.slice(0, 10)) {
+      const name = customer.customer_name || ''
+      const suburb = customer.suburb_name || customer.surburb_name || customer.subrub_name || ''
+      
+      let coords = null
+      if (suburb) {
+        coords = await geocode(mapboxgl, geocodeCacheRef, suburb, branchCoords)
+      }
+      if (!coords && name) {
+        coords = await geocode(mapboxgl, geocodeCacheRef, name, branchCoords)
+      }
+      
+      if (coords) {
+        locations.push({
+          type: 'customer',
+          name: `Customer: ${name}`,
+          suburb,
+          coordinates: coords
+        })
+      }
+    }
+    
+    // Return to branch
+    if (branchCoords) {
+      locations.push({
+        type: 'branch',
+        name: `Branch: ${branch}`,
+        coordinates: branchCoords
+      })
+    }
+    
+    return locations
+  }
+  
+  function addRouteMarkers(mapboxgl, map, locations) {
+    // Clear existing route markers
+    routeMarkersRef.current.forEach(marker => {
+      try {
+        marker.remove()
+      } catch {}
+    })
+    routeMarkersRef.current = []
+    
+    locations.forEach((location, index) => {
+      if (!location.coordinates) return
+      
+      const [lng, lat] = location.coordinates
+      const isStart = index === 0
+      const isEnd = index === locations.length - 1
+      const isBranch = location.type === 'branch'
+      
+      let color = CUSTOMER_COLOR
+      let label = String(index)
+      
+      if (isStart) {
+        color = DEPOT_COLOR
+        label = 'S'
+      } else if (isEnd) {
+        color = DEPOT_COLOR
+        label = 'E'
+      } else if (isBranch) {
+        color = DEPOT_COLOR
+        label = 'D'
+      }
+      
+      const el = document.createElement('div')
+      el.style.cssText = `
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: ${color};
+        border: 2px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+      `
+      el.textContent = label
+      
+      const marker = new mapboxgl.Marker({ element: el })
+        .setLngLat([lng, lat])
+        .addTo(map)
+      
+      const popup = new mapboxgl.Popup({ offset: 25 })
+        .setHTML(`
+          <div class="p-2">
+            <h3 class="font-semibold text-sm">${location.name}</h3>
+            ${location.suburb ? `<p class="text-xs text-gray-600">Suburb: ${location.suburb}</p>` : ''}
+            <p class="text-xs text-gray-500">Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
+          </div>
+        `)
+      
+      marker.setPopup(popup)
+      routeMarkersRef.current.push(marker)
+    })
   }
 
+  // Debounced route refresh to prevent excessive updates
+  const refreshTimeoutRef = useRef(null)
+  
   useEffect(() => {
-    let canceled = false
-    const run = async () => {
-      await Promise.resolve()
-      if (!canceled) await refreshRoutes()
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current)
     }
-    run()
+    
+    refreshTimeoutRef.current = setTimeout(() => {
+      refreshRoutes()
+    }, 300) // 300ms debounce
+    
     return () => {
-      canceled = true
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
     }
-  }, [selectedPlanId, assignedUnits])
+  }, [selectedPlanId, assignedUnits, focusPlate])
+
+  // Map rendering
 
   return (
     <div className="absolute top-0 z-0 h-full w-full ">

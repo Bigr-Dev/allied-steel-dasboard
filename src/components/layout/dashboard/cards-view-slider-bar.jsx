@@ -783,6 +783,7 @@ export default function CardsViewSidebar({
   assignedUnits = [],
 }) {
   const [q, setQ] = useState('')
+  const [focusPlate, setFocusPlate] = useState('')
   const liveByPlate = useLiveStore((s) => s.liveByPlate)
 
   const lastMoveRef = useRef(new Map()) // plate -> timestamp(ms)
@@ -818,6 +819,12 @@ export default function CardsViewSidebar({
 
     const orderMap = new Map((savedOrder || []).map((p, i) => [p, i]))
     filtered.sort((a, b) => {
+      // 0) Focused vehicle goes to top
+      const aFocused = String(a.plate).toUpperCase() === focusPlate
+      const bFocused = String(b.plate).toUpperCase() === focusPlate
+      if (aFocused && !bFocused) return -1
+      if (!aFocused && bFocused) return 1
+
       // 1) Saved order first (mirror cards view)
       const ai = orderMap.has(a.plate) ? orderMap.get(a.plate) : Infinity
       const bi = orderMap.has(b.plate) ? orderMap.get(b.plate) : Infinity
@@ -839,12 +846,26 @@ export default function CardsViewSidebar({
     })
     prevOrderRef.current = new Map(filtered.map((c, i) => [c.plate, i]))
     return filtered
-  }, [vehicleCards, q, liveByPlate, savedOrder])
+  }, [vehicleCards, q, liveByPlate, savedOrder, focusPlate])
 
-  const focus = (plate) =>
+  // Listen for focus events to update local state
+  useEffect(() => {
+    const handler = (e) => {
+      const plate = e?.detail?.plate
+      setFocusPlate(plate ? String(plate).toUpperCase() : '')
+    }
+    window.addEventListener('fleet:focusPlate', handler)
+    return () => window.removeEventListener('fleet:focusPlate', handler)
+  }, [])
+
+  const focus = (plate) => {
+    const plateUpper = String(plate).toUpperCase()
+    // Card focus triggered
+    setFocusPlate(plateUpper)
     window.dispatchEvent(
       new CustomEvent('fleet:focusPlate', { detail: { plate } })
     )
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -862,6 +883,23 @@ export default function CardsViewSidebar({
           </div>
         </div>
       </div>
+
+      {/* Show All Button */}
+      {focusPlate && (
+        <div className="border-b border-border bg-card px-3 py-2">
+          <button
+            onClick={() => {
+              setFocusPlate('')
+              window.dispatchEvent(
+                new CustomEvent('fleet:focusPlate', { detail: { plate: null } })
+              )
+            }}
+            className="w-full h-8 px-3 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Show All
+          </button>
+        </div>
+      )}
 
       {/* Cards */}
       <div className="flex-1 overflow-auto p-3 space-y-2">
