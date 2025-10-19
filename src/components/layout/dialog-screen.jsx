@@ -26,13 +26,17 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 // hooks
 import { replaceHyphenWithUnderscore } from '@/hooks/replace-hyphen'
 import AssignmentForm from '../forms/assignment-form'
+import DashboardForm from '../forms/dashboard-form'
+import { useGlobalContext } from '@/context/global-context'
 
 const DialogScreen = ({ open, onOpenChange, id, href }) => {
-  // const pathname = usePathname().slice(1)
+  const { selectedVehicle, vehicles } = useGlobalContext()
   const pathname = href ? href : usePathname().split('/')[1]
   const screen = replaceHyphenWithUnderscore(pathname)
-  console.log('href :>> ', href)
-  console.log('screen :>> ', usePathname())
+  const vehiclesData = vehicles?.data
+  // console.log('href :>> ', href)
+  // console.log('screen :>> ', usePathname())
+  // console.log('vehiclesData :>> ', vehiclesData)
   const Modal = ({ children }) => (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
@@ -48,6 +52,19 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
   // console.log('screen :>> ', screen)
 
   switch (screen) {
+    case '':
+    case 'dashboard':
+      return (
+        <Modal>
+          <DashboardForm
+            screen={screen}
+            id={id}
+            open={open}
+            onCancel={() => onOpenChange()}
+          />
+        </Modal>
+      )
+
     case 'branches':
       return (
         <Modal>

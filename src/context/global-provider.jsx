@@ -131,6 +131,7 @@ const GlobalProvider = ({ children, data }) => {
     label: current_user?.currentUser?.branch_name || '',
   })
   const [assignment_preview, setAssignmentPreview] = useState([])
+  const [selectedVehicle, setSelectedVehicle] = useState(null)
   // console.log('data :>> ', data?.load_assignment)
   // load data on initial render
   useEffect(() => {
@@ -165,6 +166,7 @@ const GlobalProvider = ({ children, data }) => {
     if (!modalOpen) {
       setId(null)
       setHref(null)
+      setSelectedVehicle(null)
     }
   }, [modalOpen])
 
@@ -441,7 +443,12 @@ const GlobalProvider = ({ children, data }) => {
     <GlobalContext.Provider
       value={{
         onCreate: onCreate(setModalOpen, modalOpen, setHref),
-        onEdit: onEdit(setModalOpen, modalOpen, setId),
+        onEdit: (data) => {
+          setSelectedVehicle(data)
+          return onEdit(setModalOpen, modalOpen, setId)(data)
+        },
+        selectedVehicle,
+        setSelectedVehicle,
         onDelete: onDelete(setAlertOpen, alertOpen, setId),
         assignment_preview,
         setAssignmentPreview,

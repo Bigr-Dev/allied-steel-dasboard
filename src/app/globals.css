@@ -146,3 +146,7 @@
   height: 0px;
   width: 0px;
 }
+
+a.mapboxgl-ctrl-logo {
+  display: none;
+}

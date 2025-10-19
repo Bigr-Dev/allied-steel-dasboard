@@ -521,6 +521,26 @@ const STATUS_KEYS = [
   'unknown',
 ]
 
+// status priority order (lower number = higher priority)
+const STATUS_PRIORITY = {
+  delayed: 0,    // highest priority - at top
+  moving: 1,
+  stationary: 2,
+  depot: 3,
+  offline: 4,
+  unknown: 5,    // lowest priority - at bottom
+}
+
+// last seen filter options (in minutes)
+const LAST_SEEN_OPTIONS = [
+  { key: 'live', label: 'Live', maxMinutes: 1 },
+  { key: '5min', label: '5 min', maxMinutes: 5 },
+  { key: '15min', label: '15 min', maxMinutes: 15 },
+  { key: '1hour', label: '1 hour', maxMinutes: 60 },
+  { key: '1day', label: '1 day', maxMinutes: 1440 },
+  { key: 'all', label: 'All', maxMinutes: Infinity },
+]
+
 /* --------------------- Utilities --------------------- */
 
 function getTimestampMs(live) {
@@ -685,6 +705,9 @@ export default function CardView({
 
   // status filter state
   const [statusFilter, setStatusFilter] = useState(new Set(STATUS_KEYS))
+  
+  // last seen filter state
+  const [lastSeenFilter, setLastSeenFilter] = useState('all')
 
   // persistent order (shared across views via localStorage + event)
   const [savedOrder, setSavedOrder] = usePersistentOrder(selectedPlanId)
@@ -720,47 +743,73 @@ export default function CardView({
           ? plate.includes(query) || driver.includes(query)
           : true
         const statusOk = statusFilter.has(card.__status.key)
-        return textOk && statusOk
+        
+        // last seen filter
+        const lastSeenOk = (() => {
+          if (lastSeenFilter === 'all') return true
+          const option = LAST_SEEN_OPTIONS.find(o => o.key === lastSeenFilter)
+          if (!option) return true
+          
+          const ts = getTimestampMs(card.live)
+          if (ts == null) return lastSeenFilter === 'all'
+          
+          const minutesAgo = (Date.now() - ts) / 60000
+          return minutesAgo <= option.maxMinutes
+        })()
+        
+        return textOk && statusOk && lastSeenOk
       })
-  }, [vehicleCards, q, liveByPlate, statusFilter])
+  }, [vehicleCards, q, liveByPlate, statusFilter, lastSeenFilter])
 
-  // Apply saved order (if present), then stable sort as fallback
+  // Apply status-based grouping with stable ordering
   const cards = useMemo(() => {
     const orderMap = new Map(savedOrder.map((p, i) => [p, i]))
     const arr = [...augmented]
 
-    arr.sort((a, b) => {
-      // 1) Saved order (if both present)
-      const ai = orderMap.has(a.plate) ? orderMap.get(a.plate) : Infinity
-      const bi = orderMap.has(b.plate) ? orderMap.get(b.plate) : Infinity
-      if (ai !== bi) return ai - bi
-
-      // 2) Primary live sort (only for those NOT in saved order)
-      if (ai === Infinity && bi === Infinity) {
-        if (sortBy === 'lastSeen') {
-          const at = getTimestampMs(a.live) ?? -Infinity
-          const bt = getTimestampMs(b.live) ?? -Infinity
-          if (bt !== at) return bt - at
-        } else if (sortBy === 'speed') {
-          const as = Number(a?.live?.Speed ?? 0)
-          const bs = Number(b?.live?.Speed ?? 0)
-          if (bs !== as) return bs - as
-        }
+    // Group by status first
+    const statusGroups = new Map()
+    for (const card of arr) {
+      const status = card.__status.key
+      if (!statusGroups.has(status)) {
+        statusGroups.set(status, [])
       }
+      statusGroups.get(status).push(card)
+    }
 
-      // 3) Stability tiebreaker (previous on-screen order)
-      const aPrev = prevOrderRef.current.get(a.plate) ?? Infinity
-      const bPrev = prevOrderRef.current.get(b.plate) ?? Infinity
-      if (aPrev !== bPrev) return aPrev - bPrev
+    // Sort each status group internally
+    for (const [status, cards] of statusGroups) {
+      cards.sort((a, b) => {
+        // 1) Saved order within status group
+        const ai = orderMap.has(a.plate) ? orderMap.get(a.plate) : Infinity
+        const bi = orderMap.has(b.plate) ? orderMap.get(b.plate) : Infinity
+        if (ai !== bi) return ai - bi
 
-      // 4) Deterministic fallback
-      return String(a.plate).localeCompare(String(b.plate))
-    })
+        // 2) Stability tiebreaker (previous on-screen order)
+        const aPrev = prevOrderRef.current.get(a.plate) ?? Infinity
+        const bPrev = prevOrderRef.current.get(b.plate) ?? Infinity
+        if (aPrev !== bPrev) return aPrev - bPrev
+
+        // 3) Deterministic fallback
+        return String(a.plate).localeCompare(String(b.plate))
+      })
+    }
+
+    // Combine groups in priority order
+    const result = []
+    const sortedStatuses = Object.keys(STATUS_PRIORITY).sort(
+      (a, b) => STATUS_PRIORITY[a] - STATUS_PRIORITY[b]
+    )
+    
+    for (const status of sortedStatuses) {
+      if (statusGroups.has(status)) {
+        result.push(...statusGroups.get(status))
+      }
+    }
 
     // Remember visual order for stability
-    prevOrderRef.current = new Map(arr.map((c, i) => [c.plate, i]))
-    return arr
-  }, [augmented, savedOrder, sortBy])
+    prevOrderRef.current = new Map(result.map((c, i) => [c.plate, i]))
+    return result
+  }, [augmented, savedOrder])
 
   const focus = (plate) =>
     window.dispatchEvent(
@@ -829,29 +878,51 @@ export default function CardView({
           </div>
 
           {/* Status filter chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Button
-              type="button"
-              variant={allSelected ? 'default' : 'outline'}
-              size="sm"
-              className="h-7"
-              onClick={toggleAll}
-            >
-              All
-            </Button>
-            {STATUS_KEYS.map((k) => (
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-muted-foreground">Status</div>
+            <div className="flex flex-wrap items-center gap-1.5">
               <Button
-                key={k}
                 type="button"
+                variant={allSelected ? 'default' : 'outline'}
                 size="sm"
-                variant={statusFilter.has(k) ? 'default' : 'outline'}
                 className="h-7"
-                onClick={() => toggleOne(k)}
-                title={statusLabel[k]}
+                onClick={toggleAll}
               >
-                {statusLabel[k]}
+                All
               </Button>
-            ))}
+              {STATUS_KEYS.map((k) => (
+                <Button
+                  key={k}
+                  type="button"
+                  size="sm"
+                  variant={statusFilter.has(k) ? 'default' : 'outline'}
+                  className="h-7"
+                  onClick={() => toggleOne(k)}
+                  title={statusLabel[k]}
+                >
+                  {statusLabel[k]}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Last seen filter */}
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-muted-foreground">Last Seen</div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {LAST_SEEN_OPTIONS.map((option) => (
+                <Button
+                  key={option.key}
+                  type="button"
+                  size="sm"
+                  variant={lastSeenFilter === option.key ? 'default' : 'outline'}
+                  className="h-7"
+                  onClick={() => setLastSeenFilter(option.key)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </Card>
@@ -897,7 +968,30 @@ export default function CardView({
                 onDragOver={onDragOver(item.plate)}
                 onDrop={onDrop(item.plate)}
                 // onClick={() => focus(item.plate)}
-                onClick={onEdit}
+                onClick={() => {
+                  // Prepare customer data with coordinates if available
+                  const customersWithCoords = uniqueCustomers.map(customer => {
+                    const name = String(customer.customer_name || '').trim()
+                    const suburb = String(getSuburbName(customer)).trim()
+                    
+                    // You can add geocoded coordinates here if you have them
+                    // For now, we'll include the raw customer data
+                    return {
+                      ...customer,
+                      display_name: name,
+                      suburb: suburb,
+                      // coordinates: null // Add geocoded coords here if available
+                    }
+                  })
+                  
+                  onEdit({ 
+                    id: item.plate, 
+                    vehicleData: item, 
+                    unitData: unit,
+                    customersData: customersWithCoords,
+                    branchName: branchName
+                  })
+                }}
               >
                 <CardHeader className="py-2 px-3">
                   <div className="flex items-center justify-between">
