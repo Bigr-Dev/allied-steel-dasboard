@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import { usePathname, useRouter } from 'next/navigation'
 import { UnassignedList } from './UnassignedList'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { DataTable, createSortableHeader } from '@/components/ui/data-table'
 
 export function LoadAssignment({ id, assignment, onEdit, preview }) {
   const router = useRouter()
@@ -180,6 +181,53 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
       router.push(`/load-assignment/${unit}/${id}`)
     }
   }
+
+  // Columns for unassigned items table
+  const unassignedColumns = [
+    {
+      accessorKey: 'order_number',
+      header: createSortableHeader('Order #'),
+    },
+    {
+      accessorKey: 'description',
+      header: createSortableHeader('Description'),
+      cell: ({ row }) => (
+        <div className="max-w-xs truncate" title={row.getValue('description')}>
+          {row.getValue('description')}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'weight_left',
+      header: createSortableHeader('Weight (kg)'),
+      cell: ({ row }) => `${row.getValue('weight_left')}kg`,
+    },
+    {
+      accessorKey: 'customer_name',
+      header: createSortableHeader('Customer'),
+    },
+    {
+      accessorKey: 'route_name',
+      header: createSortableHeader('Route'),
+    },
+    {
+      accessorKey: 'suburb_name',
+      header: createSortableHeader('Suburb'),
+    },
+    {
+      accessorKey: 'order_date',
+      header: createSortableHeader('Order Date'),
+    },
+    {
+      accessorKey: 'reason',
+      header: createSortableHeader('Reason'),
+      cell: ({ row }) => (
+        <div className="max-w-xs truncate" title={row.getValue('reason')}>
+          {row.getValue('reason')}
+        </div>
+      ),
+    },
+  ]
   return (
     <div>
       <div className="grid gap-6 grid-cols-12  ">
@@ -357,11 +405,14 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
                   </CardDescription>
                 </CardHeader>
 
-                <CardContent
-                  className={
-                    'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 max-h-screen overflow-y-auto'
-                  }
-                ></CardContent>
+                <CardContent className="p-4">
+                  <DataTable
+                    columns={unassignedColumns}
+                    data={unassigned}
+                    filterColumn="description"
+                    filterPlaceholder="Search items, customers, routes..."
+                  />
+                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>

@@ -65,9 +65,9 @@ const SinglePage = async ({ params }) => {
         console.log('plan :>> ')
       }
 
-      //console.log('assignment :>> ', assignment)
+      console.log('assignment :>> ', assignment)
       const plan = assignment?.data
-      // console.log('plan :>> ', plan)
+      console.log('plan :>> ', plan)
       // *********************
       // Helper functions for load assignment stats
       // *********************

@@ -437,32 +437,47 @@ export const VehicleCard = memo(function VehicleCard({
                           </div>
 
                           {/* Orders and Items */}
-                          {customer.orders.map((order) => (
-                            <div
-                              key={`${unit.plan_unit_id}:${order.order_id}`}
-                              // key={order.order_id}
-                              className="ml-4 space-y-1"
-                            >
-                              {order.items.map((item) => (
-                                <DraggableItemRow
-                                  key={`${unit.plan_unit_id}:${order.order_id}:${item.item_id}`}
-                                  // key={`${unit.plan_unit_id}:${order.order_id}:${item.item_id}`}
-                                  item={item}
-                                  customer={customer}
-                                  containerId={`unit:${unit.plan_unit_id}`}
-                                  isDraggable
-                                />
-                              ))}
+                          {customer.orders.map((order) => {
+                            // Group items by order number
+                            const itemsByOrderNumber = order.items.reduce((acc, item) => {
+                              const orderNum = item.order_number || 'No Order'
+                              if (!acc[orderNum]) acc[orderNum] = []
+                              acc[orderNum].push(item)
+                              return acc
+                            }, {})
 
-                              {/* Order Subtotal */}
-                              <div className="flex items-center justify-between text-xs text-muted-foreground ml-4 pt-1 border-t border-border/50">
-                                <span>Order Total</span>
-                                <span className="font-medium">
-                                  {order.total_assigned_weight_kg}kg
-                                </span>
+                            return (
+                              <div
+                                key={`${unit.plan_unit_id}:${order.order_id}`}
+                                className="ml-4 space-y-2"
+                              >
+                                {Object.entries(itemsByOrderNumber).map(([orderNumber, items]) => (
+                                  <div key={`${order.order_id}:${orderNumber}`} className="space-y-1">
+                                    <div className="text-xs font-medium text-muted-foreground">
+                                      Order #{orderNumber}
+                                    </div>
+                                    {items.map((item) => (
+                                      <DraggableItemRow
+                                        key={`${unit.plan_unit_id}:${order.order_id}:${item.item_id}`}
+                                        item={item}
+                                        customer={customer}
+                                        containerId={`unit:${unit.plan_unit_id}`}
+                                        isDraggable
+                                      />
+                                    ))}
+                                  </div>
+                                ))}
+
+                                {/* Order Subtotal */}
+                                <div className="flex items-center justify-between text-xs text-muted-foreground ml-4 pt-1 border-t border-border/50">
+                                  <span>Order Total</span>
+                                  <span className="font-medium">
+                                    {order.total_assigned_weight_kg}kg
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       ))}
                     </div>

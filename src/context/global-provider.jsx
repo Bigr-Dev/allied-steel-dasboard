@@ -438,7 +438,7 @@ const GlobalProvider = ({ children, data }) => {
 
   const fetchAssignmentPreview = async (data) =>
     autoAssignLoads(assignmentDispatch, data)
-  // console.log('assignment :>> ', assignment?.data)
+  //console.log('assignment :>> ', assignment?.data)
   return (
     <GlobalContext.Provider
       value={{

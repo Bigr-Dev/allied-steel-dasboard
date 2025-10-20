@@ -77,6 +77,12 @@ export const DraggableItemRow = memo(function DraggableItemRow({
               {weight}kg
             </Badge>
 
+            {item.order_number && (
+              <Badge variant="secondary" className="text-xs">
+                #{item.order_number}
+              </Badge>
+            )}
+
             {(customer || item.customer_name) && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Building2 className="h-3 w-3" />
