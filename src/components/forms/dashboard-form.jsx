@@ -28,7 +28,15 @@ import {
 } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Gauge, User, MapPin, Navigation, Clock, Compass } from 'lucide-react'
+import {
+  GripVertical,
+  Gauge,
+  User,
+  MapPin,
+  Navigation,
+  Clock,
+  Compass,
+} from 'lucide-react'
 import { useGlobalContext } from '@/context/global-context'
 import { Badge } from '../ui/badge'
 import dynamic from 'next/dynamic'
@@ -84,20 +92,39 @@ const DashboardForm = ({ onCancel }) => {
     geocodeCustomers()
   }, [])
 
-  const calculateETA = (currentLat, currentLng, targetLat, targetLng, speed) => {
-    if (!currentLat || !currentLng || !targetLat || !targetLng || !speed || speed <= 0) return null
-    
+  const calculateETA = (
+    currentLat,
+    currentLng,
+    targetLat,
+    targetLng,
+    speed
+  ) => {
+    if (
+      !currentLat ||
+      !currentLng ||
+      !targetLat ||
+      !targetLng ||
+      !speed ||
+      speed <= 0
+    )
+      return null
+
     const R = 6371 // Earth's radius in km
-    const dLat = (targetLat - currentLat) * Math.PI / 180
-    const dLng = (targetLng - currentLng) * Math.PI / 180
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(currentLat * Math.PI / 180) * Math.cos(targetLat * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    const dLat = ((targetLat - currentLat) * Math.PI) / 180
+    const dLng = ((targetLng - currentLng) * Math.PI) / 180
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((currentLat * Math.PI) / 180) *
+        Math.cos((targetLat * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     const distance = R * c
-    
+
     const timeHours = distance / speed
     const hours = Math.floor(timeHours)
     const minutes = Math.round((timeHours - hours) * 60)
-    
+
     if (hours > 0) return `${hours}h ${minutes}m`
     return `${minutes}m`
   }
@@ -133,14 +160,20 @@ const DashboardForm = ({ onCancel }) => {
 
   const geocodeCustomers = async () => {
     setGeocoding(true)
-    
+
     // Get branch info
     const vehicle = vehiclesData?.find(
-      (v) => v.fleet_number === selectedVehicle?.vehicleData?.plate || v.license_plate === selectedVehicle?.vehicleData?.plate
+      (v) =>
+        v.fleet_number === selectedVehicle?.vehicleData?.plate ||
+        v.license_plate === selectedVehicle?.vehicleData?.plate
     )
     const branchName = vehicle?.branch_name
-    const displayBranch = branchName?.includes('Midvaal') ? 'ASSM' : branchName?.includes('Head Office') ? 'ALRODE' : branchName || 'Unknown Branch'
-    
+    const displayBranch = branchName?.includes('Midvaal')
+      ? 'ASSM'
+      : branchName?.includes('Head Office')
+      ? 'ALRODE'
+      : branchName || 'Unknown Branch'
+
     // Geocode branch
     let branchAddress = 'Unknown Address'
     if (displayBranch === 'ASSM') {
@@ -148,15 +181,15 @@ const DashboardForm = ({ onCancel }) => {
     } else if (displayBranch === 'ALRODE') {
       branchAddress = 'Vereeniging Road, Alberton, 1451, South Africa'
     }
-    
+
     const branchGeocode = await geocodeAddress(branchAddress)
     setBranchCoords({
       ...branchGeocode,
       name: displayBranch,
       address: branchAddress,
-      geocoded: !!branchGeocode
+      geocoded: !!branchGeocode,
     })
-    
+
     // Geocode customers
     const customerPromises = (selectedVehicle?.customersData || []).map(
       async (customer) => {
@@ -255,7 +288,7 @@ const DashboardForm = ({ onCancel }) => {
                         (v) =>
                           v.license_plate === selectedVehicle.vehicleData?.plate
                       )
-                      console.log('vehicle :>> ', vehicle)
+                      //console.log('vehicle :>> ', vehicle)
                       const live = selectedVehicle.vehicleData?.live
                       const branchName = vehicle?.branch_name
                       const displayBranch = branchName?.includes('Midvaal')
@@ -351,7 +384,8 @@ const DashboardForm = ({ onCancel }) => {
                 <CardHeader>
                   <CardTitle>Customer Route Order</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Drag and drop customers to reorder the delivery route. Numbers indicate visit sequence.
+                    Drag and drop customers to reorder the delivery route.
+                    Numbers indicate visit sequence.
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -389,32 +423,47 @@ const DashboardForm = ({ onCancel }) => {
               <div className="w-full h-full rounded overflow-hidden">
                 {(() => {
                   const vehicle = vehiclesData?.find(
-                    (v) => v.fleet_number === selectedVehicle?.vehicleData?.plate || v.license_plate === selectedVehicle?.vehicleData?.plate
+                    (v) =>
+                      v.fleet_number === selectedVehicle?.vehicleData?.plate ||
+                      v.license_plate === selectedVehicle?.vehicleData?.plate
                   )
                   const branchName = vehicle?.branch_name
-                  const displayBranch = branchName?.includes('Midvaal') ? 'ASSM' : branchName?.includes('Head Office') ? 'ALRODE' : branchName || 'Unknown Branch'
-                  
+                  const displayBranch = branchName?.includes('Midvaal')
+                    ? 'ASSM'
+                    : branchName?.includes('Head Office')
+                    ? 'ALRODE'
+                    : branchName || 'Unknown Branch'
+
                   const branchInfo = branchCoords || {
                     lat: null,
                     lng: null,
                     name: displayBranch,
-                    address: displayBranch === 'ASSM' ? 'Springbok Road, South Africa' : displayBranch === 'ALRODE' ? 'Vereeniging Road, Alberton, 1451, South Africa' : 'Unknown Address',
+                    address:
+                      displayBranch === 'ASSM'
+                        ? 'Springbok Road, South Africa'
+                        : displayBranch === 'ALRODE'
+                        ? 'Vereeniging Road, Alberton, 1451, South Africa'
+                        : 'Unknown Address',
                   }
-                  
+
                   const routeLocations = [
                     branchInfo,
-                    ...(customersWithCoords.length > 0 ? customersWithCoords : selectedVehicle?.customersData || []),
+                    ...(customersWithCoords.length > 0
+                      ? customersWithCoords
+                      : selectedVehicle?.customersData || []),
                     branchInfo,
                   ]
-                  
+
                   // Mock completed stops - in real implementation, this would come from vehicle tracking data
-                  const completedStops = [0, 1]  // First two segments completed
-                  
-                  return <MapComponent 
-                    routeLocations={routeLocations} 
-                    vehicleData={selectedVehicle?.vehicleData}
-                    completedStops={completedStops}
-                  />
+                  const completedStops = [0, 1] // First two segments completed
+
+                  return (
+                    <MapComponent
+                      routeLocations={routeLocations}
+                      vehicleData={selectedVehicle?.vehicleData}
+                      completedStops={completedStops}
+                    />
+                  )
                 })()}
               </div>
               {geocoding && (
@@ -424,27 +473,43 @@ const DashboardForm = ({ onCancel }) => {
                   </div>
                 </div>
               )}
-              
+
               {selectedVehicle?.vehicleData?.live && (
                 <div className="absolute top-2 right-2 z-20 bg-black bg-opacity-70 text-white p-3 rounded-lg text-xs min-w-[200px]">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Gauge className="h-3 w-3" />
-                      <span>{Number(selectedVehicle.vehicleData.live.Speed || 0).toFixed(1)} km/h</span>
+                      <span>
+                        {Number(
+                          selectedVehicle.vehicleData.live.Speed || 0
+                        ).toFixed(1)}{' '}
+                        km/h
+                      </span>
                     </div>
-                    
+
                     {selectedVehicle.vehicleData.live.Heading && (
                       <div className="flex items-center gap-2">
                         <Compass className="h-3 w-3" />
-                        <span>{getHeadingDirection(selectedVehicle.vehicleData.live.Heading)} ({selectedVehicle.vehicleData.live.Heading}°)</span>
+                        <span>
+                          {getHeadingDirection(
+                            selectedVehicle.vehicleData.live.Heading
+                          )}{' '}
+                          ({selectedVehicle.vehicleData.live.Heading}°)
+                        </span>
                       </div>
                     )}
-                    
+
                     {(() => {
                       const live = selectedVehicle.vehicleData.live
-                      const nextCustomer = customersWithCoords.find(c => c.coordinates)
-                      
-                      if (live.Latitude && live.Longitude && nextCustomer?.coordinates) {
+                      const nextCustomer = customersWithCoords.find(
+                        (c) => c.coordinates
+                      )
+
+                      if (
+                        live.Latitude &&
+                        live.Longitude &&
+                        nextCustomer?.coordinates
+                      ) {
                         const eta = calculateETA(
                           live.Latitude,
                           live.Longitude,
@@ -452,7 +517,7 @@ const DashboardForm = ({ onCancel }) => {
                           nextCustomer.coordinates.lng,
                           live.Speed || 0
                         )
-                        
+
                         if (eta) {
                           return (
                             <div className="flex items-center gap-2">
@@ -464,11 +529,13 @@ const DashboardForm = ({ onCancel }) => {
                       }
                       return null
                     })()}
-                    
+
                     {selectedVehicle.vehicleData.live.DriverName && (
                       <div className="flex items-center gap-2">
                         <User className="h-3 w-3" />
-                        <span>{selectedVehicle.vehicleData.live.DriverName}</span>
+                        <span>
+                          {selectedVehicle.vehicleData.live.DriverName}
+                        </span>
                       </div>
                     )}
                   </div>

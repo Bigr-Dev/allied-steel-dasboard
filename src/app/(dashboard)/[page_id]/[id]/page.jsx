@@ -59,15 +59,15 @@ const SinglePage = async ({ params }) => {
         include_nested: true, // false => plan header only
         include_idle: true, // only if include_nested=true
       })
-      if (id) {
-        console.log('id :>> ', id)
-      } else {
-        console.log('plan :>> ')
-      }
+      // if (id) {
+      //   console.log('id :>> ', id)
+      // } else {
+      //   console.log('plan :>> ')
+      // }
 
-      console.log('assignment :>> ', assignment)
+      //console.log('assignment :>> ', assignment)
       const plan = assignment?.data
-      console.log('plan :>> ', plan)
+      // console.log('plan :>> ', plan)
       // *********************
       // Helper functions for load assignment stats
       // *********************

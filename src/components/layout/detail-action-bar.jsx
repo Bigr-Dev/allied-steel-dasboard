@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Edit } from 'lucide-react'
+import { ArrowLeft, Download, Edit } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 
 // components
@@ -12,11 +12,13 @@ import { Button } from '@/components/ui/button'
 import { getPermittedAccessRoutes } from '@/hooks/get-accessible-routes'
 import { useAuth } from '@/context/initial-states/auth-state'
 import { useGlobalContext } from '@/context/global-context'
+import { fetchData } from '@/lib/fetch'
+import { useState } from 'react'
+import { Spinner } from '../ui/spinner'
 
 const DetailActionBar = ({ id, title, description }) => {
   const pathname = usePathname().split('/')[1]
 
-  // console.log('pathname :>> ', pathname)
   const router = useRouter()
   const {
     current_user: {
@@ -28,6 +30,56 @@ const DetailActionBar = ({ id, title, description }) => {
   const accessibleRoutes = getPermittedAccessRoutes(permissions, routes)
 
   const canEdit = accessibleRoutes.filter((p) => p.href.includes(pathname))
+  const [loading, setLoading] = useState(false)
+
+  const downloadPlan = async () => {
+    setLoading(true)
+    try {
+      // const res = await fetch('/plans/export-load-plan', {
+      //   method: 'GET',
+      //   cache: 'no-store',
+      // })
+      // if (!res.ok) {
+      //   const txt = await res.text().catch(() => '')
+      //   throw new Error(txt || `HTTP ${res.status}`)
+      // }
+      // const blob = await res.blob()
+      const res = await fetch('/api/plans/export-load-plan', {
+        method: 'GET',
+        cache: 'no-store',
+      })
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        throw new Error(txt || `HTTP ${res.status}`)
+      }
+      const blob = await res.blob()
+      const ab = await blob.arrayBuffer()
+      const sig = new Uint8Array(ab).slice(0, 2)
+      if (!(sig[0] === 0x50 && sig[1] === 0x4b)) {
+        // Not a ZIP/XLSX – show first chars of the payload to debug
+        const text = new TextDecoder().decode(new Uint8Array(ab).slice(0, 200))
+        throw new Error('Server did not return an XLSX.\nPreview: ' + text)
+      }
+      const cd = res.headers.get('Content-Disposition') || ''
+      const m = cd.match(/filename="([^"]+)"/i)
+      const filename = m?.[1] || 'load-plan.xlsx'
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      setLoading(false)
+    } catch (error) {
+      setLoading(false)
+      console.log('download error:', error)
+      alert(error.message || 'Export failed')
+    }
+  }
+
   //  console.log('canEdit :>> ', canEdit[0]?.access !== 'write')
   return (
     <div className="flex flex-col md:flex-row justify-between gap-4 items-center">
@@ -44,15 +96,31 @@ const DetailActionBar = ({ id, title, description }) => {
       </div>
 
       <div className="flex gap-2">
-        <Button
-          // variant="outline"
-          onClick={() => onEdit({ id })}
-          disabled={canEdit[0]?.access !== 'write'}
-          className={'bg-[#003e69] hover:bg-[#428bca] text-white capitalize'}
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          {` Edit ${pathname}`}
-        </Button>
+        {pathname == 'load-assignment' && usePathname().split('/')[2] ? (
+          <Button
+            // variant="outline"
+            onClick={downloadPlan}
+            disabled={canEdit[0]?.access !== 'write'}
+            className={'bg-[#003e69] hover:bg-[#428bca] text-white capitalize'}
+          >
+            {loading ? <Spinner /> : <Download className="mr-2 h-4 w-4" />}
+            {pathname == 'load-assignment' && usePathname().split('/')[3]
+              ? 'Download Vehicle Plan'
+              : pathname == 'load-assignment' && usePathname().split('/')[2]
+              ? 'Download Full Plan'
+              : ` Edit ${pathname}`}
+          </Button>
+        ) : (
+          <Button
+            // variant="outline"
+            onClick={() => onEdit({ id })}
+            disabled={canEdit[0]?.access !== 'write'}
+            className={'bg-[#003e69] hover:bg-[#428bca] text-white capitalize'}
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            {` Edit ${pathname}`}
+          </Button>
+        )}
       </div>
     </div>
   )

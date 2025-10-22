@@ -23,7 +23,7 @@ import { DataTable, createSortableHeader } from '@/components/ui/data-table'
 export function LoadAssignment({ id, assignment, onEdit, preview }) {
   const router = useRouter()
   const pathname = usePathname()
-
+  // console.log('assignment :>> ', assignment?.data)
   //console.log('preview :>> ', preview)
   const {
     assignment: { data: context_data },
