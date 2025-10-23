@@ -25,41 +25,91 @@ const DetailActionBar = ({ id, title, description }) => {
       currentUser: { permissions },
     },
   } = useAuth()
-  const { onEdit, routes } = useGlobalContext()
-
+  const {
+    onEdit,
+    routes,
+    // assignment: { data: assignment },
+    assignment_preview: assignment,
+  } = useGlobalContext()
+  // console.log('assignment_preview :>> ', assignment_preview)
   const accessibleRoutes = getPermittedAccessRoutes(permissions, routes)
 
   const canEdit = accessibleRoutes.filter((p) => p.href.includes(pathname))
   const [loading, setLoading] = useState(false)
 
+  // const downloadPlan = async () => {
+  //   setLoading(true)
+  //   try {
+  //     // const res = await fetch('/plans/export-load-plan', {
+  //     //   method: 'GET',
+  //     //   cache: 'no-store',
+  //     // })
+  //     // if (!res.ok) {
+  //     //   const txt = await res.text().catch(() => '')
+  //     //   throw new Error(txt || `HTTP ${res.status}`)
+  //     // }
+  //     // const blob = await res.blob()
+  //     const res = await fetch('/api/plans/export-load-plan', {
+  //       method: 'GET',
+  //       cache: 'no-store',
+  //     })
+  //     if (!res.ok) {
+  //       const txt = await res.text().catch(() => '')
+  //       throw new Error(txt || `HTTP ${res.status}`)
+  //     }
+  //     const blob = await res.blob()
+  //     const ab = await blob.arrayBuffer()
+  //     const sig = new Uint8Array(ab).slice(0, 2)
+  //     if (!(sig[0] === 0x50 && sig[1] === 0x4b)) {
+  //       // Not a ZIP/XLSX – show first chars of the payload to debug
+  //       const text = new TextDecoder().decode(new Uint8Array(ab).slice(0, 200))
+  //       throw new Error('Server did not return an XLSX.\nPreview: ' + text)
+  //     }
+  //     const cd = res.headers.get('Content-Disposition') || ''
+  //     const m = cd.match(/filename="([^"]+)"/i)
+  //     const filename = m?.[1] || 'load-plan.xlsx'
+
+  //     const url = URL.createObjectURL(blob)
+  //     const a = document.createElement('a')
+  //     a.href = url
+  //     a.download = filename
+  //     document.body.appendChild(a)
+  //     a.click()
+  //     a.remove()
+  //     URL.revokeObjectURL(url)
+  //     setLoading(false)
+  //   } catch (error) {
+  //     setLoading(false)
+  //     console.log('download error:', error)
+  //     alert(error.message || 'Export failed')
+  //   }
+  // }
+
+  // inside DetailActionBar.jsx
   const downloadPlan = async () => {
     setLoading(true)
     try {
-      // const res = await fetch('/plans/export-load-plan', {
-      //   method: 'GET',
-      //   cache: 'no-store',
-      // })
-      // if (!res.ok) {
-      //   const txt = await res.text().catch(() => '')
-      //   throw new Error(txt || `HTTP ${res.status}`)
-      // }
-      // const blob = await res.blob()
+      // you have the assignment object in scope—pass it:
       const res = await fetch('/api/plans/export-load-plan', {
-        method: 'GET',
-        cache: 'no-store',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assignment), // <-- send it
       })
+
       if (!res.ok) {
         const txt = await res.text().catch(() => '')
         throw new Error(txt || `HTTP ${res.status}`)
       }
+
       const blob = await res.blob()
+      // sanity check: XLSX starts with ZIP magic "PK"
       const ab = await blob.arrayBuffer()
       const sig = new Uint8Array(ab).slice(0, 2)
       if (!(sig[0] === 0x50 && sig[1] === 0x4b)) {
-        // Not a ZIP/XLSX – show first chars of the payload to debug
         const text = new TextDecoder().decode(new Uint8Array(ab).slice(0, 200))
         throw new Error('Server did not return an XLSX.\nPreview: ' + text)
       }
+
       const cd = res.headers.get('Content-Disposition') || ''
       const m = cd.match(/filename="([^"]+)"/i)
       const filename = m?.[1] || 'load-plan.xlsx'
