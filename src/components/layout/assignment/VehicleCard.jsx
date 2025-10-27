@@ -415,9 +415,14 @@ export const VehicleCard = memo(function VehicleCard({
                       {/* Customers in Suburb */}
                       {suburb.customers.map((customer) => (
                         <div
-                          key={`${unit.plan_unit_id}:${customer?.customer_id}:${
-                            customer.route_name || ''
-                          }:${customer.suburb_name || ''}`}
+                          // key={`${unit.plan_unit_id}:${customer?.customer_id}:${
+                          //   customer.route_name || ''
+                          // }:${customer.suburb_name || ''}`}
+                          key={`${unit.plan_unit_id}:${
+                            customer.customer_id ?? 'anon'
+                          }:${customer.customer_name ?? ''}:${
+                            customer.suburb_name ?? ''
+                          }:${customer.route_name ?? ''}`}
                           //  key={customer.customer_id || customer.customer_name}
                           className="ml-4 space-y-2"
                         >
@@ -439,34 +444,42 @@ export const VehicleCard = memo(function VehicleCard({
                           {/* Orders and Items */}
                           {customer.orders.map((order) => {
                             // Group items by order number
-                            const itemsByOrderNumber = order.items.reduce((acc, item) => {
-                              const orderNum = item.order_number || 'No Order'
-                              if (!acc[orderNum]) acc[orderNum] = []
-                              acc[orderNum].push(item)
-                              return acc
-                            }, {})
+                            const itemsByOrderNumber = order.items.reduce(
+                              (acc, item) => {
+                                const orderNum = item.order_number || 'No Order'
+                                if (!acc[orderNum]) acc[orderNum] = []
+                                acc[orderNum].push(item)
+                                return acc
+                              },
+                              {}
+                            )
 
                             return (
                               <div
                                 key={`${unit.plan_unit_id}:${order.order_id}`}
                                 className="ml-4 space-y-2"
                               >
-                                {Object.entries(itemsByOrderNumber).map(([orderNumber, items]) => (
-                                  <div key={`${order.order_id}:${orderNumber}`} className="space-y-1">
-                                    <div className="text-xs font-medium text-muted-foreground">
-                                      Order #{orderNumber}
+                                {Object.entries(itemsByOrderNumber).map(
+                                  ([orderNumber, items]) => (
+                                    <div
+                                      key={`${order.order_id}:${orderNumber}`}
+                                      className="space-y-1"
+                                    >
+                                      <div className="text-xs font-medium text-muted-foreground">
+                                        Order #{orderNumber}
+                                      </div>
+                                      {items.map((item) => (
+                                        <DraggableItemRow
+                                          key={`${unit.plan_unit_id}:${order.order_id}:${item.item_id}`}
+                                          item={item}
+                                          customer={customer}
+                                          containerId={`unit:${unit.plan_unit_id}`}
+                                          isDraggable
+                                        />
+                                      ))}
                                     </div>
-                                    {items.map((item) => (
-                                      <DraggableItemRow
-                                        key={`${unit.plan_unit_id}:${order.order_id}:${item.item_id}`}
-                                        item={item}
-                                        customer={customer}
-                                        containerId={`unit:${unit.plan_unit_id}`}
-                                        isDraggable
-                                      />
-                                    ))}
-                                  </div>
-                                ))}
+                                  )
+                                )}
 
                                 {/* Order Subtotal */}
                                 <div className="flex items-center justify-between text-xs text-muted-foreground ml-4 pt-1 border-t border-border/50">

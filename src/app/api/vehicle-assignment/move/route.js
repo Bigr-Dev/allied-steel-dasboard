@@ -247,7 +247,7 @@ export async function POST(request) {
     // }
 
     const response = await fetchServerData(``, 'POST', payload)
-    console.log('response :>> ', response)
+    //console.log('response :>> ', response)
     return NextResponse.json(response)
     // return NextResponse.json({
     //   assigned_units: mockAssignedUnits,

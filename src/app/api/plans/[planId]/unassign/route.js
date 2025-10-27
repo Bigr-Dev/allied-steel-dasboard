@@ -23,7 +23,7 @@ export async function POST(req, { params }) {
       'POST',
       body
     )
-    console.log('resp :>> ', resp)
+    //  console.log('resp :>> ', resp)
     return NextResponse.json(resp?.message ?? resp, { status: 200 })
   } catch (error) {
     console.error('unassign error:', error)

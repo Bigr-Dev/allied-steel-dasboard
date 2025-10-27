@@ -9,9 +9,9 @@ const url = '/plans/auto-assign'
 export async function POST(req) {
   try {
     const body = await req?.json()
-    console.log('body :>> ', body)
+    //  console.log('body :>> ', body)
     const response = await fetchServerData('plans/auto-assign', 'POST', body)
-    console.log('loads response :>> ', response?.data?.plan)
+    // console.log('loads response :>> ', response?.data?.plan)
     if ((response && response?.status) || response?.statusCode == 500) {
       return NextResponse.json({ error: response?.message }, { status: 500 })
     }

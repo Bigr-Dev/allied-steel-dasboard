@@ -503,12 +503,13 @@ export default function MapViewMapbox({
 
       // If style reloads, queue a route refresh
       map.on('styledata', () => {
-        if (routeRefreshQueued.current) return
-        routeRefreshQueued.current = true
-        setTimeout(async () => {
-          routeRefreshQueued.current = false
-          await refreshRoutes()
-        }, 150) // small debounce
+        if (!routeRefreshQueued.current) {
+          routeRefreshQueued.current = true
+          setTimeout(() => {
+            routeRefreshQueued.current = false
+            refreshRoutes()
+          }, 120) // small debounce
+        }
       })
 
       map.on('load', async () => {
@@ -563,20 +564,23 @@ export default function MapViewMapbox({
     
     // Drawing markers
 
-    const nextPlates = new Set(
-      validVehicles.map((c) => String(c.plate || '').toUpperCase())
-    )
-    for (const [plate, m] of markersRef.current.entries()) {
-      if (!nextPlates.has(plate)) {
-        try {
-          m.remove()
-        } catch {}
+    const seen = new Set()
+    for (const card of validVehicles) {
+      const plate = String(card.plate || '').trim().toUpperCase()
+      seen.add(plate)
+      // ... existing add/update logic will follow ...
+    }
+    
+    // remove markers for plates that disappeared
+    for (const [plate, marker] of markersRef.current) {
+      if (!seen.has(plate)) {
+        try { marker.remove() } catch {}
         markersRef.current.delete(plate)
       }
     }
 
     for (const card of validVehicles) {
-      const plate = String(card.plate || '').toUpperCase()
+      const plate = String(card.plate || '').trim().toUpperCase()
       const lat = Number(card.live.Latitude)
       const lng = Number(card.live.Longitude)
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
@@ -864,6 +868,7 @@ export default function MapViewMapbox({
   async function refreshRoutes() {
     const map = mapRef.current
     if (!map) return
+    const myGen = ++routesGenerationRef.current
 
     await waitForStyleReady(map)
     if (!map.isStyleLoaded()) return
@@ -896,15 +901,30 @@ export default function MapViewMapbox({
       drawMarkers()
       return
     }
+    
+    // Check if route points changed to avoid needless refetch
+    const points = routeLocations.map(r => r.coordinates).filter(Boolean)
+    const key = keyForRoute(points)
+    const prevKey = lastPointsKeyByPlateRef.current.get(focusPlate)
+    
+    if (prevKey === key) {
+      // waypoints identical → just ensure markers are present and bail
+      addRouteMarkers(mapboxgl, map, routeLocations)
+      drawMarkers()
+      return
+    }
+    lastPointsKeyByPlateRef.current.set(focusPlate, key)
 
     // Draw route segments
     for (let i = 0; i < routeLocations.length - 1; i++) {
+      if (myGen !== routesGenerationRef.current) return  // cancel if newer refresh started
       const start = routeLocations[i]
       const end = routeLocations[i + 1]
       
       if (!start.coordinates || !end.coordinates) continue
       
       const route = await fetchDirections([start.coordinates, end.coordinates], mapboxgl)
+      if (myGen !== routesGenerationRef.current) return  // check again after async call
       if (route) {
         const isReturnRoute = i === routeLocations.length - 2
         const color = isReturnRoute ? ROUTE_RETURN : ROUTE_PENDING
@@ -923,6 +943,7 @@ export default function MapViewMapbox({
     }
     
     // Add markers for route locations
+    if (myGen !== routesGenerationRef.current) return  // final stale check
     addRouteMarkers(mapboxgl, map, routeLocations)
     drawMarkers()
   }

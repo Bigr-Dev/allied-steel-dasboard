@@ -22,10 +22,10 @@ export async function GET(req) {
 // *****************************
 export async function POST(req) {
   const body = await req?.json()
-  console.log('body :>> ', body)
+  // console.log('body :>> ', body)
   try {
     const response = await fetchServerData('plans', 'POST', body)
-    console.log('loads response :>> ', response)
+    // console.log('loads response :>> ', response)
     if (response && response?.status == 500) {
       return NextResponse.json({ error: response?.message }, { status: 500 })
     }
@@ -44,7 +44,7 @@ export async function DELETE(req, { params }) {
 
   try {
     const response = await fetchServerData(`${url}/${planId}`, 'DELETE')
-    console.log('response :>> /plans', response)
+    // console.log('response :>> /plans', response)
     return NextResponse.json(response?.data?.plan_id, { status: 200 })
   } catch (error) {
     console.error('Error fetching data:', error)

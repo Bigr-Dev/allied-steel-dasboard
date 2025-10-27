@@ -71,6 +71,7 @@ const Statistics = () => {
   const path = replaceHyphenWithUnderscore(pathname)
   const current_screen = useGlobalContext()[path]
   const { loads, users, vehicles, drivers, assignment } = useGlobalContext()
+  //console.log('assignment :>> ', assignment?.data)
   const plan = assignment?.data
   let screenStats = []
 
@@ -442,7 +443,7 @@ const Statistics = () => {
         //   icon: <Route className="h-6 w-6 text-emerald-500" />,
         // },
       ]
-      console.log('current_screen :Statistics>> ', path, current_screen?.data)
+      //console.log('current_screen :Statistics>> ', path, current_screen?.data)
       break
     case 'customers':
       screenStats = [
@@ -522,8 +523,8 @@ const Statistics = () => {
     case 'load_assignment':
       screenStats = [
         {
-          title: 'Active Routes',
-          value: getTotalRoutes(plan) || 0,
+          title: 'Total Plans',
+          value: assignment?.data?.total || 0,
           icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
         },
         {

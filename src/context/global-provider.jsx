@@ -44,7 +44,7 @@ import { deleteVehicle, loadVehicles, upsertVehicle } from './apis/vehicle-apis'
 import { deleteDriver, loadDrivers, upsertDriver } from './apis/driver-apis'
 import { deleteRoute, loadRoutes, upsertRoute } from './apis/route-apis'
 import { loadGroupedLoads } from './apis/grouped-load-apis'
-import { deletePlannedAssignmentById } from './apis/assignment-apis'
+import { addPlan, deletePlannedAssignmentById } from './apis/assignment-apis'
 
 // components
 import AlertScreen from '@/components/layout/alert-screen'
@@ -437,7 +437,8 @@ const GlobalProvider = ({ children, data }) => {
   // console.log('assignment :>> ', assignment)
 
   const fetchAssignmentPreview = async (data) =>
-    autoAssignLoads(assignmentDispatch, data)
+    // autoAssignLoads(assignmentDispatch, data)
+    addPlan(assignmentDispatch, data)
   //console.log('assignment :>> ', assignment?.data)
   return (
     <GlobalContext.Provider

@@ -3,7 +3,7 @@ import React from 'react'
 
 const VehiclePreview = async ({ params }) => {
   const { id } = await params
-  console.log('params :>> ', id)
+  // console.log('params :>> ', id)
   return (
     <div>
       <LoadAssignmentPreviewSingle id={id} />

@@ -12,7 +12,7 @@ export async function POST(req) {
       customer_id,
       commit,
     })
-    console.log('loads response :>> ', response)
+    //console.log('loads response :>> ', response)
     return NextResponse.json(response?.data, { status: 200 })
   } catch (error) {
     console.error('Error fetching data:', error)

@@ -85,7 +85,7 @@ export async function POST(req) {
   const body = await req?.json()
   try {
     const response = await fetchServerData('auto-assign/loads', 'POST', body)
-    console.log('loads response :>> ', response?.data)
+    //console.log('loads response :>> ', response?.data)
     return NextResponse.json(response?.data, { status: 200 })
   } catch (error) {
     console.error('Error fetching data:', error)

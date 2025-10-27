@@ -27,6 +27,7 @@ const assignmentReducer = (state, action) => {
         ...state,
 
         data: {
+          ...state.data,
           plans: Array.isArray(state.data.plans)
             ? [...state.data.plans, action.payload]
             : [action.payload],

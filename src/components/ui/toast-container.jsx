@@ -16,6 +16,7 @@ export const Toaster = () => {
             key={toast.id}
             className="bg-white border border-gray-200 shadow-lg p-4 rounded-lg max-w-sm"
           >
+            <div>test</div>
             <div className="font-semibold">{toast.title}</div>
             <div className="text-sm text-gray-600">{toast.description}</div>
             <div className=" flex justify-between">

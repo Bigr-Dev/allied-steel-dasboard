@@ -3,9 +3,9 @@ import { fetchServerData } from '../../_lib/server-fetch'
 
 // POST request for handling toute
 export async function GET(req, { params }) {
-  console.log('req :>> ', req)
-  const test = await params
-  console.log('params :>> ', test)
+  // console.log('req :>> ', req)
+  // const test = await params
+  // console.log('params :>> ', test)
 
   try {
     // const response = await fetchServerData(`routes/${id}`, 'GET')

@@ -62,7 +62,8 @@ export const UnassignedList = memo(function UnassignedList({
           (item.description ?? '').toLowerCase().includes(query) ||
           (item.customer_name ?? '').toLowerCase().includes(query) ||
           (item.route_name ?? '').toLowerCase().includes(query) ||
-          (item.suburb_name ?? '').toLowerCase().includes(query)
+          (item.suburb_name ?? '').toLowerCase().includes(query) ||
+          (item.order_number ?? '').toLowerCase().includes(query)
 
         if (!matchesSearch) return false
       }
@@ -159,7 +160,7 @@ export const UnassignedList = memo(function UnassignedList({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search items, customers, routes..."
+            placeholder="Search items, customers, routes, order numbers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"

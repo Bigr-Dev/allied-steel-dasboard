@@ -107,7 +107,7 @@ const Dashboard = () => {
   const { vehicles, assignment } = useGlobalContext()
   const loading = assignment?.loading
   // console.log('vehicles?.data :>> ', vehicles?.data)
-
+  //console.log('assignment :>> ', assignment?.data)
   const [localFilters, setLocalFilters] = useState({
     currentVehicles: vehicles?.data ?? [],
     assignmentData: assignment?.data ?? null,
@@ -148,7 +148,7 @@ const Dashboard = () => {
       setLocalFilters((prev) => ({ ...prev, assignedUnits: [] }))
     }
   }
-
+  //console.log('localFilters :>> ', localFilters)
   useEffect(() => {
     if (localFilters.currentView === 'map') {
       // give layout a tick to settle, then nudge the map

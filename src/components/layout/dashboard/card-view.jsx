@@ -502,6 +502,8 @@ import { Button } from '@/components/ui/button'
 import { Search, User, Gauge, MapPin, Navigation, Truck } from 'lucide-react'
 import { useLiveStore } from '@/config/zustand'
 import { useGlobalContext } from '@/context/global-context'
+import DetailCard from '@/components/ui/detail-card'
+import { Separator } from '@/components/ui/separator'
 
 /**
  * Tunables
@@ -523,12 +525,12 @@ const STATUS_KEYS = [
 
 // status priority order (lower number = higher priority)
 const STATUS_PRIORITY = {
-  delayed: 0,    // highest priority - at top
+  delayed: 0, // highest priority - at top
   moving: 1,
   stationary: 2,
   depot: 3,
   offline: 4,
-  unknown: 5,    // lowest priority - at bottom
+  unknown: 5, // lowest priority - at bottom
 }
 
 // last seen filter options (in minutes)
@@ -705,7 +707,7 @@ export default function CardView({
 
   // status filter state
   const [statusFilter, setStatusFilter] = useState(new Set(STATUS_KEYS))
-  
+
   // last seen filter state
   const [lastSeenFilter, setLastSeenFilter] = useState('all')
 
@@ -743,20 +745,20 @@ export default function CardView({
           ? plate.includes(query) || driver.includes(query)
           : true
         const statusOk = statusFilter.has(card.__status.key)
-        
+
         // last seen filter
         const lastSeenOk = (() => {
           if (lastSeenFilter === 'all') return true
-          const option = LAST_SEEN_OPTIONS.find(o => o.key === lastSeenFilter)
+          const option = LAST_SEEN_OPTIONS.find((o) => o.key === lastSeenFilter)
           if (!option) return true
-          
+
           const ts = getTimestampMs(card.live)
           if (ts == null) return lastSeenFilter === 'all'
-          
+
           const minutesAgo = (Date.now() - ts) / 60000
           return minutesAgo <= option.maxMinutes
         })()
-        
+
         return textOk && statusOk && lastSeenOk
       })
   }, [vehicleCards, q, liveByPlate, statusFilter, lastSeenFilter])
@@ -799,7 +801,7 @@ export default function CardView({
     const sortedStatuses = Object.keys(STATUS_PRIORITY).sort(
       (a, b) => STATUS_PRIORITY[a] - STATUS_PRIORITY[b]
     )
-    
+
     for (const status of sortedStatuses) {
       if (statusGroups.has(status)) {
         result.push(...statusGroups.get(status))
@@ -863,23 +865,25 @@ export default function CardView({
   }
 
   return (
-    <div className="h-full flex flex-col mt-20">
+    <div className="h-full flex flex-col mt-20 space-y-6">
       {/* Search + Status filter row */}
-      <Card>
-        <div className="px-3 py-3 space-y-4">
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search plate or driver…"
-              className="pl-8 h-8"
-            />
-          </div>
 
+      <DetailCard>
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search plate or driver…"
+            className="pl-8 h-8 "
+          />
+        </div>
+        <div className=" space-y-4 flex justify-between mt-4">
           {/* Status filter chips */}
-          <div className="space-y-2">
-            <div className="text-xs font-medium text-muted-foreground">Status</div>
+          <div className="space-y-2 ">
+            {/* <div className="text-xs font-medium text-muted-foreground">
+              Status
+            </div> */}
             <div className="flex flex-wrap items-center gap-1.5">
               <Button
                 type="button"
@@ -907,15 +911,19 @@ export default function CardView({
           </div>
 
           {/* Last seen filter */}
-          <div className="space-y-2">
-            <div className="text-xs font-medium text-muted-foreground">Last Seen</div>
+          <div className="space-y-2 ">
+            {/* <div className="text-xs font-medium text-muted-foreground">
+              Last Seen
+            </div> */}
             <div className="flex flex-wrap items-center gap-1.5">
               {LAST_SEEN_OPTIONS.map((option) => (
                 <Button
                   key={option.key}
                   type="button"
                   size="sm"
-                  variant={lastSeenFilter === option.key ? 'default' : 'outline'}
+                  variant={
+                    lastSeenFilter === option.key ? 'default' : 'outline'
+                  }
                   className="h-7"
                   onClick={() => setLastSeenFilter(option.key)}
                 >
@@ -925,210 +933,215 @@ export default function CardView({
             </div>
           </div>
         </div>
-      </Card>
+        <Separator />
 
-      {/* Grid of cards (draggable) */}
-      <div className="flex-1 overflow-auto p-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          {cards.map((item) => {
-            const s = item.__status
-            const badgeStyle = {
-              backgroundColor: s.color,
-              animation: s.flash ? 'pulse 1s ease-in-out infinite' : undefined,
-            }
-            const speed = Number(item?.live?.Speed ?? 0)
-            const unit = unitByPlate.get(String(item.plate).toUpperCase())
-            const showPlanContext =
-              selectedPlanId && selectedPlanId !== 'all' && unit
-            const geozone = getGeoZone(item.live)
+        {/* Grid of cards (draggable) */}
+        <div className="flex-1 overflow-auto py-4 px-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {cards.map((item) => {
+              const s = item.__status
+              const badgeStyle = {
+                backgroundColor: s.color,
+                animation: s.flash
+                  ? 'pulse 1s ease-in-out infinite'
+                  : undefined,
+              }
+              const speed = Number(item?.live?.Speed ?? 0)
+              const unit = unitByPlate.get(String(item.plate).toUpperCase())
+              const showPlanContext =
+                selectedPlanId && selectedPlanId !== 'all' && unit
+              const geozone = getGeoZone(item.live)
 
-            const branchName =
-              item?.branch_name ||
-              item?.branch ||
-              unit?.branch_name ||
-              unit?.branch ||
-              'Branch'
+              const branchName =
+                item?.branch_name ||
+                item?.branch ||
+                unit?.branch_name ||
+                unit?.branch ||
+                'Branch'
 
-            const customerObjs = (unit?.customers || []).filter(Boolean)
-            const uniqueCustomers = Array.from(
-              new Map(
-                customerObjs.map((c) => [
-                  String(c.customer_name || '').trim(),
-                  c,
-                ])
-              ).values()
-            )
+              const customerObjs = (unit?.customers || []).filter(Boolean)
+              const uniqueCustomers = Array.from(
+                new Map(
+                  customerObjs.map((c) => [
+                    String(c.customer_name || '').trim(),
+                    c,
+                  ])
+                ).values()
+              )
 
-            return (
-              <Card
-                key={item.plate}
-                className="cursor-grab hover:shadow-sm"
-                draggable
-                onDragStart={onDragStart(item.plate)}
-                onDragOver={onDragOver(item.plate)}
-                onDrop={onDrop(item.plate)}
-                // onClick={() => focus(item.plate)}
-                onClick={() => {
-                  // Prepare customer data with coordinates if available
-                  const customersWithCoords = uniqueCustomers.map(customer => {
-                    const name = String(customer.customer_name || '').trim()
-                    const suburb = String(getSuburbName(customer)).trim()
-                    
-                    // You can add geocoded coordinates here if you have them
-                    // For now, we'll include the raw customer data
-                    return {
-                      ...customer,
-                      display_name: name,
-                      suburb: suburb,
-                      // coordinates: null // Add geocoded coords here if available
-                    }
-                  })
-                  
-                  onEdit({ 
-                    id: item.plate, 
-                    vehicleData: item, 
-                    unitData: unit,
-                    customersData: customersWithCoords,
-                    branchName: branchName
-                  })
-                }}
-              >
-                <CardHeader className="py-2 px-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-mono">
-                      {item.plate}
-                    </CardTitle>
-                    <Badge
-                      style={badgeStyle}
-                      className="text-[10px] capitalize"
-                    >
-                      {s.key}
-                    </Badge>
-                  </div>
-                </CardHeader>
+              return (
+                <Card
+                  key={item.plate}
+                  className="cursor-grab hover:shadow-sm"
+                  draggable
+                  onDragStart={onDragStart(item.plate)}
+                  onDragOver={onDragOver(item.plate)}
+                  onDrop={onDrop(item.plate)}
+                  // onClick={() => focus(item.plate)}
+                  onClick={() => {
+                    // Prepare customer data with coordinates if available
+                    const customersWithCoords = uniqueCustomers.map(
+                      (customer) => {
+                        const name = String(customer.customer_name || '').trim()
+                        const suburb = String(getSuburbName(customer)).trim()
 
-                <CardContent className="px-3 pb-3 pt-0">
-                  {/* Live block */}
-                  {item.live ? (
-                    <div className="space-y-1.5 text-xs">
-                      <div className="flex items-center gap-2">
-                        <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="font-medium">
-                          {speed.toFixed(1)} km/h
-                        </span>
-                      </div>
+                        // You can add geocoded coordinates here if you have them
+                        // For now, we'll include the raw customer data
+                        return {
+                          ...customer,
+                          display_name: name,
+                          suburb: suburb,
+                          // coordinates: null // Add geocoded coords here if available
+                        }
+                      }
+                    )
 
-                      {item.live.DriverName && (
-                        <div className="flex items-center gap-2">
-                          <User className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>{item.live.DriverName}</span>
-                        </div>
-                      )}
-
-                      {item.live.Address && (
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
-                          <span className="text-[11px] text-muted-foreground line-clamp-2">
-                            {item.live.Address}
-                          </span>
-                        </div>
-                      )}
-
-                      {geozone && (
-                        <div className="flex items-center gap-2">
-                          <Navigation className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-[11px] text-muted-foreground">
-                            {geozone}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="text-[11px] text-muted-foreground border-t pt-1">
-                        Last seen: {lastSeen(item.live)}
-                      </div>
+                    onEdit({
+                      id: item.plate,
+                      vehicleData: item,
+                      unitData: unit,
+                      customersData: customersWithCoords,
+                      branchName: branchName,
+                    })
+                  }}
+                >
+                  <CardHeader className="py-2 px-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-mono">
+                        {item.plate}
+                      </CardTitle>
+                      <Badge
+                        style={badgeStyle}
+                        className="text-[10px] capitalize"
+                      >
+                        {s.key}
+                      </Badge>
                     </div>
-                  ) : (
-                    <div className="text-xs text-muted-foreground">
-                      No live data.
-                    </div>
-                  )}
+                  </CardHeader>
 
-                  {/* Plan context */}
-                  {showPlanContext && (
-                    <div className="mt-2 border-t pt-2 space-y-2">
-                      {unit?.horse && unit?.trailer && (
-                        <div className="flex items-center gap-2 text-xs">
-                          <Truck className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-muted-foreground">
-                            Trailer:{' '}
-                            <span className="font-medium">
-                              {unit.trailer.plate}
-                            </span>
-                            {unit.trailer.fleet_number
-                              ? ` (${unit.trailer.fleet_number})`
-                              : ''}
+                  <CardContent className="px-3 pb-3 pt-0">
+                    {/* Live block */}
+                    {item.live ? (
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="font-medium">
+                            {speed.toFixed(1)} km/h
                           </span>
                         </div>
-                      )}
 
-                      {/* Route strip: Branch -> customers -> Branch */}
-                      <div className="flex flex-wrap items-center gap-1">
-                        <Badge variant="secondary" className="text-[10px]">
-                          {branchName}
-                        </Badge>
-
-                        {uniqueCustomers.length === 0 && (
-                          <Badge variant="outline" className="text-[10px]">
-                            No customers
-                          </Badge>
-                        )}
-                        {uniqueCustomers.map((c, idx) => {
-                          const name =
-                            String(c.customer_name || '').trim() ||
-                            `Customer ${idx + 1}`
-                          const suburb = String(getSuburbName(c)).trim()
-                          const match =
-                            suburb &&
-                            geozone &&
-                            suburb.toUpperCase() === geozone.toUpperCase()
-                          const cls = match
-                            ? 'bg-green-600 text-white hover:bg-green-600'
-                            : 'bg-muted text-foreground hover:bg-muted'
-                          return (
-                            <Badge
-                              key={name + idx}
-                              className={`text-[10px] ${cls}`}
-                            >
-                              {name}
-                            </Badge>
-                          )
-                        })}
-
-                        <Badge variant="secondary" className="text-[10px]">
-                          {branchName}
-                        </Badge>
-                      </div>
-
-                      {unit?.driver_name &&
-                        unit?.driver_name !== item?.live?.DriverName && (
-                          <div className="flex items-center gap-2 text-xs">
+                        {item.live.DriverName && (
+                          <div className="flex items-center gap-2">
                             <User className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">
-                              Planned driver:{' '}
-                              <span className="font-medium">
-                                {unit.driver_name}
-                              </span>
+                            <span>{item.live.DriverName}</span>
+                          </div>
+                        )}
+
+                        {item.live.Address && (
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
+                            <span className="text-[11px] text-muted-foreground line-clamp-2">
+                              {item.live.Address}
                             </span>
                           </div>
                         )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
+
+                        {geozone && (
+                          <div className="flex items-center gap-2">
+                            <Navigation className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-[11px] text-muted-foreground">
+                              {geozone}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="text-[11px] text-muted-foreground border-t pt-1">
+                          Last seen: {lastSeen(item.live)}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground">
+                        No live data.
+                      </div>
+                    )}
+
+                    {/* Plan context */}
+                    {showPlanContext && (
+                      <div className="mt-2 border-t pt-2 space-y-2">
+                        {unit?.horse && unit?.trailer && (
+                          <div className="flex items-center gap-2 text-xs">
+                            <Truck className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              Trailer:{' '}
+                              <span className="font-medium">
+                                {unit.trailer.plate}
+                              </span>
+                              {unit.trailer.fleet_number
+                                ? ` (${unit.trailer.fleet_number})`
+                                : ''}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Route strip: Branch -> customers -> Branch */}
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Badge variant="secondary" className="text-[10px]">
+                            {branchName}
+                          </Badge>
+
+                          {uniqueCustomers.length === 0 && (
+                            <Badge variant="outline" className="text-[10px]">
+                              No customers
+                            </Badge>
+                          )}
+                          {uniqueCustomers.map((c, idx) => {
+                            const name =
+                              String(c.customer_name || '').trim() ||
+                              `Customer ${idx + 1}`
+                            const suburb = String(getSuburbName(c)).trim()
+                            const match =
+                              suburb &&
+                              geozone &&
+                              suburb.toUpperCase() === geozone.toUpperCase()
+                            const cls = match
+                              ? 'bg-green-600 text-white hover:bg-green-600'
+                              : 'bg-muted text-foreground hover:bg-muted'
+                            return (
+                              <Badge
+                                key={name + idx}
+                                className={`text-[10px] ${cls}`}
+                              >
+                                {name}
+                              </Badge>
+                            )
+                          })}
+
+                          <Badge variant="secondary" className="text-[10px]">
+                            {branchName}
+                          </Badge>
+                        </div>
+
+                        {unit?.driver_name &&
+                          unit?.driver_name !== item?.live?.DriverName && (
+                            <div className="flex items-center gap-2 text-xs">
+                              <User className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">
+                                Planned driver:{' '}
+                                <span className="font-medium">
+                                  {unit.driver_name}
+                                </span>
+                              </span>
+                            </div>
+                          )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      </DetailCard>
 
       {/* simple pulse keyframes */}
       <style jsx global>{`

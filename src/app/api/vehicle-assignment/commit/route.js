@@ -4,7 +4,7 @@ export async function POST(request) {
   try {
     const { commit, changes } = await request.json()
 
-    console.log('[v0] Commit plan:', { commit, changes })
+    // console.log('[v0] Commit plan:', { commit, changes })
 
     if (!commit) {
       return NextResponse.json(
@@ -22,7 +22,7 @@ export async function POST(request) {
     // Mock implementation - simulate database commit
     await new Promise((resolve) => setTimeout(resolve, 500))
 
-    console.log('[v0] Successfully committed', changes.length, 'changes')
+    //  console.log('[v0] Successfully committed', changes.length, 'changes')
 
     return NextResponse.json({
       success: true,

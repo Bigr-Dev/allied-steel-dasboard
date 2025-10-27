@@ -22,8 +22,8 @@ export async function GET(req, { params }) {
 // get plans preview
 // *****************************
 export async function POST(req, { params }) {
-  const { ...test } = await params
-  console.log('test :>> ', test)
+  //const { ...test } = await params
+  //  console.log('test :>> ', test)
   const body = await req.json()
   try {
     const response = await fetchServerData(url, 'POST', body)
