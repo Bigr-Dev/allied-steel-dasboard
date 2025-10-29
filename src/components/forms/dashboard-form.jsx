@@ -40,6 +40,7 @@ import {
 import { useGlobalContext } from '@/context/global-context'
 import { Badge } from '../ui/badge'
 import dynamic from 'next/dynamic'
+import { fetchData } from '@/lib/fetch'
 
 const MapComponent = dynamic(() => import('./map-component'), { ssr: false })
 
@@ -78,6 +79,7 @@ const SortableCustomer = ({ customer, index }) => {
 const DashboardForm = ({ onCancel }) => {
   const { selectedVehicle, vehicles } = useGlobalContext()
   const vehiclesData = vehicles?.data
+  console.log('selectedVehicle :>> ', selectedVehicle)
 
   const [notes, setNotes] = useState('')
   const [customers, setCustomers] = useState(
@@ -236,10 +238,17 @@ const DashboardForm = ({ onCancel }) => {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     // Handle form submission here
-    console.log('Dashboard form submitted')
+    console.log('notes :>> ', notes)
+    // if (notes) {
+    //   await fetchData('/api/assignment-planner/units/note', {
+    //     // plan_id,
+    //     // plan_unit_id,
+    //     note: notes,
+    //   }).then((r) => r.json())
+    // }
     onCancel()
   }
 
