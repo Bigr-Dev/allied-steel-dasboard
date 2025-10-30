@@ -343,8 +343,20 @@ const LoadAssignmentSingle = ({ id, data }) => {
 
   const handleDragStart = (event) => {
     const { active } = event
+    const dragData = active.data.current
+    
+    if (dragData?.isOrderGroup) {
+      setActiveItem({
+        item: {
+          description: `Order ${dragData.order_number} (${dragData.itemCount} items)`,
+          item_id: active.id
+        },
+        sourceType: 'orderGroup'
+      })
+      return
+    }
+    
     const lookupResult = itemLookupMap.get(active.id)
-
     if (lookupResult) {
       setActiveItem(lookupResult)
     }
@@ -361,8 +373,49 @@ const LoadAssignmentSingle = ({ id, data }) => {
     const to = over.id
     if (from === to) return
 
-    // … (your capacity guard + undo snapshot stays unchanged)
+    // Handle order groups
+    if (dragData.isOrderGroup) {
+      const to_plan_unit_id = to.startsWith('unit:') ? to.slice(5) : null
+      if (!to_plan_unit_id) return // Can only assign order groups to units
+      
+      // Process all items in the order group
+      const items = dragData.items || []
+      
+      // Local optimistic updates
+      items.forEach(item => {
+        handleAssignItem(item.item_id, to_plan_unit_id)
+      })
+      
+      // Server API calls for each item
+      const serverCalls = items.map(item => {
+        const move = {
+          item_id: item.item_id,
+          weight_kg: item.weight_left,
+          from_plan_unit_id: null,
+          to_plan_unit_id: to_plan_unit_id,
+        }
+        return commitImmediateMove(plan?.id, move, fetchData)
+      })
+      
+      Promise.all(serverCalls)
+        .then(() => {
+          toast({ 
+            title: 'Order Assigned', 
+            description: `${items.length} items from order ${dragData.order_number} assigned` 
+          })
+        })
+        .catch((err) => {
+          handleAPIError(err, toast)
+          // Rollback on error - unassign all items that were assigned
+          items.forEach(item => {
+            handleUnassignItem(item.item_id)
+          })
+        })
+      
+      return
+    }
 
+    // Handle single items (existing logic)
     const move = {
       item_id: dragData.item_id,
       weight_kg: dragData.weight,

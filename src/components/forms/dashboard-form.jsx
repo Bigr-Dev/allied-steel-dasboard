@@ -78,8 +78,8 @@ const SortableCustomer = ({ customer, index }) => {
 
 const DashboardForm = ({ onCancel }) => {
   const { selectedVehicle, vehicles } = useGlobalContext()
+
   const vehiclesData = vehicles?.data
-  console.log('selectedVehicle :>> ', selectedVehicle)
 
   const [notes, setNotes] = useState('')
   const [customers, setCustomers] = useState(
@@ -241,7 +241,17 @@ const DashboardForm = ({ onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     // Handle form submission here
-    console.log('notes :>> ', notes)
+
+    const plan_id = selectedVehicle?.selectedPlanId
+    const plan_unit_id = selectedVehicle?.unitData?.plan_unit_id
+
+    fetchData(`plans/${plan_id}/units/${plan_unit_id}`, 'POST', {
+      plan_id,
+      plan_unit_id,
+      note: notes,
+    }).then((r) => {
+      console.log('r :>> ', r)
+    })
     // if (notes) {
     //   await fetchData('/api/assignment-planner/units/note', {
     //     // plan_id,
@@ -251,6 +261,15 @@ const DashboardForm = ({ onCancel }) => {
     // }
     onCancel()
   }
+  // console.log('plan_unit_id  :>> ', selectedVehicle?.unitData?.plan_unit_id)
+  const filteredNotes = notes.replace(/\s+/g, '')
+
+  const disabled =
+    selectedVehicle?.selectedPlanId == 'all'
+      ? true
+      : filteredNotes.length < 4
+      ? true
+      : false
 
   return (
     <form onSubmit={handleSubmit}>
@@ -558,7 +577,11 @@ const DashboardForm = ({ onCancel }) => {
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" className="bg-[#003e69] hover:bg-[#428bca]">
+          <Button
+            type="submit"
+            className="bg-[#003e69] hover:bg-[#428bca]"
+            disabled={disabled}
+          >
             Save Changes
           </Button>
         </div>

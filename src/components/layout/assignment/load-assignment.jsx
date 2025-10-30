@@ -34,10 +34,15 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
   } = useGlobalContext()
 
   useEffect(() => {
-    if (assignment?.data) {
+    // Only seed once or when changing to a different plan
+    if (
+      assignment?.data &&
+      (!assignment_preview?.plan ||
+       assignment_preview.plan.id !== assignment?.data?.plan?.id)
+    ) {
       setAssignmentPreview(assignment.data)
     }
-  }, [assignment?.data, setAssignmentPreview])
+  }, [assignment?.data, assignment_preview?.plan?.id, setAssignmentPreview])
   // console.log('assignment_preview :>> ', assignment_preview)
   const data = assignment_preview
 
@@ -335,7 +340,7 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
                     //`/assignments/${plan.plan_id}/units/${unit.plan_unit_id}`
                     return (
                       <Card
-                        key={unit?.plan_unit_id || index}
+                        key={`${unit?.plan_unit_id}-${unit?.used_capacity_kg}-${unit?.customers?.length}`}
                         onClick={() => {
                           handleClick({
                             unit: unit.plan_unit_id,

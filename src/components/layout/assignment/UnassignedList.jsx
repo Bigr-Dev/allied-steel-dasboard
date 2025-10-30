@@ -26,10 +26,6 @@ export const UnassignedList = memo(function UnassignedList({
 
   const { isOver, setNodeRef } = useDroppable({ id: 'bucket:unassigned' })
 
-  // const { isOver, setNodeRef } = useDroppable({
-  //   id: 'unassigned',
-  // })
-
   // Get unique filter options
   const filterOptions = useMemo(() => {
     const routes = new Set(items.map((item) => item.route_name).filter(Boolean))
@@ -47,17 +43,13 @@ export const UnassignedList = memo(function UnassignedList({
     }
   }, [items])
 
-  // Filter items based on search and filters
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
+  // Group items by order number and filter
+  const orderGroups = useMemo(() => {
+    // First filter items
+    const filtered = items.filter((item) => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
-        // const matchesSearch =
-        //   item.description.toLowerCase().includes(query) ||
-        //   item.customer_name.toLowerCase().includes(query) ||
-        //   item.route_name.toLowerCase().includes(query) ||
-        //   item.suburb_name.toLowerCase().includes(query)
         const matchesSearch =
           (item.description ?? '').toLowerCase().includes(query) ||
           (item.customer_name ?? '').toLowerCase().includes(query) ||
@@ -88,10 +80,48 @@ export const UnassignedList = memo(function UnassignedList({
 
       return true
     })
+
+    // Group by order number
+    const groups = new Map()
+    filtered.forEach((item) => {
+      const orderNum = item.order_number || 'NO_ORDER'
+      if (!groups.has(orderNum)) {
+        groups.set(orderNum, [])
+      }
+      groups.get(orderNum).push(item)
+    })
+
+    // Convert to array of order objects
+    return Array.from(groups.entries()).map(([orderNumber, orderItems]) => {
+      const totalWeight = orderItems.reduce((sum, item) => sum + (item.weight_left || 0), 0)
+      const totalVolume = orderItems.reduce((sum, item) => sum + (item.volume_left || 0), 0)
+      
+      return {
+        id: `order-${orderNumber}`,
+        order_number: orderNumber,
+        items: orderItems,
+        itemCount: orderItems.length,
+        totalWeight,
+        totalVolume,
+        customer_name: orderItems[0]?.customer_name || '',
+        route_name: orderItems[0]?.route_name || '',
+        suburb_name: orderItems[0]?.suburb_name || '',
+        // For dragging, we'll use the first item's structure but with combined data
+        ...orderItems[0],
+        weight_left: totalWeight,
+        volume_left: totalVolume,
+        description: `Order ${orderNumber} (${orderItems.length} items)`,
+        isOrderGroup: true
+      }
+    })
   }, [items, searchQuery, selectedRoutes, selectedSuburbs, selectedCustomers])
 
-  const totalWeight = filteredItems.reduce(
-    (sum, item) => sum + item.weight_left,
+  const totalWeight = orderGroups.reduce(
+    (sum, order) => sum + order.totalWeight,
+    0
+  )
+  const totalItems = orderGroups.reduce(
+    (sum, order) => sum + order.itemCount,
     0
   )
 
@@ -152,7 +182,7 @@ export const UnassignedList = memo(function UnassignedList({
             Unassigned Items
           </CardTitle>
           <Badge variant="secondary" className="text-xs">
-            {filteredItems.length} items
+            {orderGroups.length} orders
           </Badge>
         </div>
 
@@ -267,58 +297,29 @@ export const UnassignedList = memo(function UnassignedList({
         </div>
 
         {/* Summary */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            Total Weight:{' '}
-            <span className="font-medium text-foreground">{totalWeight}kg</span>
-          </span>
-          {hasActiveFilters && (
-            <span className="text-xs text-muted-foreground">
-              {filteredItems.length} of {items.length} items
-            </span>
-          )}
+        <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 rounded-lg p-2">
+          <span>{totalItems} items in {orderGroups.length} orders</span>
+          <span>{totalWeight.toFixed(1)} kg total</span>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
-        <div className="space-y-2 max-h-96 overflow-y-auto">
-          {filteredItems.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {items.length === 0 ? (
-                <>
-                  <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-medium">All caught up!</p>
-                  <p className="text-xs">No unassigned items remaining</p>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-medium">No items match filters</p>
-                  <p className="text-xs">
-                    Try adjusting your search or filters
-                  </p>
-                </>
-              )}
-            </div>
-          ) : (
-            filteredItems.map((item) => (
-              <DraggableItemRow
-                key={`unassigned:${item.item_id}`}
-                item={item}
-                containerId="bucket:unassigned"
-                isDraggable
-                isUnassigned
-              />
-              // <DraggableItemRow
-              //   key={`unassigned:${item.item_id}`}
-              //   item={item}
-              //   containerId="bucket:unassigned"
-              //   isDraggable={true}
-              //   isUnassigned={true}
-              // />
-            ))
-          )}
-        </div>
+      <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+        {orderGroups.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <AlertCircle className="h-8 w-8 mb-2" />
+            <p>No orders match your filters</p>
+          </div>
+        ) : (
+          orderGroups.map((order) => (
+            <DraggableItemRow
+              key={order.id}
+              item={order}
+              isDraggable={true}
+              isUnassigned={true}
+              isOrderGroup={true}
+            />
+          ))
+        )}
       </CardContent>
     </Card>
   )

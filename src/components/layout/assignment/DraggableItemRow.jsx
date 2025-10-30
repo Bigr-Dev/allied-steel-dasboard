@@ -17,14 +17,26 @@ export const DraggableItemRow = memo(function DraggableItemRow({
   containerId,
   isDraggable = false,
   isUnassigned = false,
+  isOrderGroup = false,
 }) {
   const weight = isUnassigned ? item.weight_left : item.assigned_weight_kg
 
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
-      id: item.item_id,
+      id: isOrderGroup ? item.id : item.item_id,
       disabled: !isDraggable,
-      data: {
+      data: isOrderGroup ? {
+        containerId: containerId || 'unassigned',
+        isOrderGroup: true,
+        order_number: item.order_number,
+        items: item.items,
+        customer_name: item.customer_name,
+        route_name: item.route_name,
+        suburb_name: item.suburb_name,
+        totalWeight: item.totalWeight,
+        totalVolume: item.totalVolume,
+        itemCount: item.itemCount,
+      } : {
         containerId: containerId || (isUnassigned ? 'unassigned' : null),
         item_id: item.item_id,
         assignment_id: item.assignment_id || null,
@@ -70,17 +82,23 @@ export const DraggableItemRow = memo(function DraggableItemRow({
 
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate mb-1">
-            {item.description}
+            {isOrderGroup ? `Order ${item.order_number}` : item.description}
           </p>
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="outline" className="text-xs font-medium">
-              {weight}kg
+              {isOrderGroup ? `${item.totalWeight.toFixed(1)}kg` : `${weight}kg`}
             </Badge>
 
-            {item.order_number && (
-              <Badge variant="secondary" className="text-xs">
-                #{item.order_number}
+            {isOrderGroup ? (
+              <Badge variant="default" className="text-xs">
+                {item.itemCount} items
               </Badge>
+            ) : (
+              item.order_number && (
+                <Badge variant="secondary" className="text-xs">
+                  #{item.order_number}
+                </Badge>
+              )
             )}
 
             {(customer || item.customer_name) && (
