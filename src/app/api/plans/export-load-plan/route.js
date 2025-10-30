@@ -191,9 +191,16 @@ export async function POST(request) {
       }
     }
 
+    // ------ Sort units by capacity percentage (least full to most full) ------
+    const sortedUnits = units.slice().sort((a, b) => {
+      const aPercentage = (a.used_capacity_kg / a.capacity_kg) * 100
+      const bPercentage = (b.used_capacity_kg / b.capacity_kg) * 100
+      return aPercentage - bPercentage
+    })
+
     // ------ Populate: one unit per column ------
     let col = startCol
-    for (const unit of units) {
+    for (const unit of sortedUnits) {
       const capacity_kg = Number(unit?.capacity_kg || 0)
       const used_kg = Number(unit?.used_capacity_kg || 0)
       const diff_kg = capacity_kg - used_kg // allow negative if overloaded
@@ -207,13 +214,9 @@ export async function POST(request) {
       const horseFleet = unit?.horse?.fleet_number || ''
       const trailerPlate = unit?.trailer?.plate || ''
 
-      const registration = isRigid
-        ? rigidPlate
-        : trailerPlate
-        ? `${horsePlate} + ${trailerPlate}`
-        : horsePlate
+      const registration = isRigid ? rigidPlate : horsePlate
       const fleet = isRigid ? rigidFleet : horseFleet
-      const driver = unit?.driver_name || ''
+      const driver = unit?.driver_name ? unit.driver_name.split(' ')[0] : ''
       const unitType = unit?.unit_type || ''
 
       // Top block writes (do not touch formatting; set only values/numFmt)

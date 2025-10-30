@@ -25,7 +25,7 @@ import { Search } from 'lucide-react'
 export function LoadAssignment({ id, assignment, onEdit, preview }) {
   const router = useRouter()
   const pathname = usePathname()
-  // console.log('assignment :>> ', assignment?.data)
+  console.log('assignment :>> ', assignment?.data)
   //console.log('preview :>> ', preview)
   const {
     assignment: { data: context_data },
@@ -38,7 +38,7 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
     if (
       assignment?.data &&
       (!assignment_preview?.plan ||
-       assignment_preview.plan.id !== assignment?.data?.plan?.id)
+        assignment_preview.plan.id !== assignment?.data?.plan?.id)
     ) {
       setAssignmentPreview(assignment.data)
     }
