@@ -132,6 +132,7 @@ const GlobalProvider = ({ children, data }) => {
   })
   const [assignment_preview, setAssignmentPreview] = useState([])
   const [selectedVehicle, setSelectedVehicle] = useState(null)
+
   // console.log('data :>> ', data?.load_assignment)
   // load data on initial render
   useEffect(() => {
@@ -141,7 +142,11 @@ const GlobalProvider = ({ children, data }) => {
       loadCustomers(customersDispatch, data?.customers)
       loadOrders(ordersDispatch, data?.orders)
       loadAssignments(assignmentDispatch, data?.load_assignment)
-      // loadRoutes(routesDispatch, data?.routes)
+      loadUsers(usersDispatch, data?.users)
+      loadLoads(loadsDispatch, data?.loads?.branches)
+      loadRoutes(routesDispatch, data?.routes)
+      loadVehicles(vehiclesDispatch, data?.vehicles)
+      loadDrivers(driversDispatch, data?.drivers)
     }
   }, [data, current_user])
 
@@ -178,92 +183,94 @@ const GlobalProvider = ({ children, data }) => {
   }, [alertOpen])
 
   // filter data based on dashboard state
-  useEffect(() => {
-    if (data) {
-      if (!current_user?.currentUser?.id) return
+  // useEffect(() => {
+  //   if (data) {
+  //     if (!current_user?.currentUser?.id) return
 
-      if (data?.users) {
-        if (dashboardState.value == 'all') {
-          loadUsers(usersDispatch, data?.users)
-        } else {
-          loadUsers(
-            usersDispatch,
-            data?.users?.filter((u) => u.branch_id === dashboardState.value)
-          )
-        }
-      }
+  //     if (data?.users) {
+  //       if (dashboardState.value == 'all') {
+  //         loadUsers(usersDispatch, data?.users)
+  //       } else {
+  //         loadUsers(
+  //           usersDispatch,
+  //           data?.users?.filter((u) => u.branch_id === dashboardState.value)
+  //         )
+  //       }
+  //     }
 
-      if (data?.loads) {
-        if (dashboardState.value == 'all') {
-          loadLoads(loadsDispatch, data?.loads)
-        } else {
-          loadLoads(
-            loadsDispatch,
-            data?.loads?.filter((l) => l.branch_id === dashboardState.value)
-          )
-        }
-      }
+  //     if (data?.loads) {
+  //       if (dashboardState.value == 'all') {
+  //         loadLoads(loadsDispatch, data?.loads)
+  //       } else {
+  //         loadLoads(
+  //           loadsDispatch,
+  //           data?.loads?.branches?.filter(
+  //             (l) => l.branch_id === dashboardState.value
+  //           )
+  //         )
+  //       }
+  //     }
 
-      if (data?.vehicles) {
-        if (dashboardState.value == 'all') {
-          loadVehicles(vehiclesDispatch, data?.vehicles)
-        } else {
-          loadVehicles(
-            vehiclesDispatch,
-            data?.vehicles?.filter((v) => v.branch_id === dashboardState.value)
-          )
-        }
-      }
+  //     if (data?.vehicles) {
+  //       if (dashboardState.value == 'all') {
+  //         loadVehicles(vehiclesDispatch, data?.vehicles)
+  //       } else {
+  //         loadVehicles(
+  //           vehiclesDispatch,
+  //           data?.vehicles?.filter((v) => v.branch_id === dashboardState.value)
+  //         )
+  //       }
+  //     }
 
-      if (data?.drivers) {
-        if (dashboardState.value == 'all') {
-          loadDrivers(driversDispatch, data?.drivers)
-        } else {
-          loadDrivers(
-            driversDispatch,
-            data?.drivers?.filter((d) => d.branch_id === dashboardState.value)
-          )
-        }
-      }
+  //     if (data?.drivers) {
+  //       if (dashboardState.value == 'all') {
+  //         loadDrivers(driversDispatch, data?.drivers)
+  //       } else {
+  //         loadDrivers(
+  //           driversDispatch,
+  //           data?.drivers?.filter((d) => d.branch_id === dashboardState.value)
+  //         )
+  //       }
+  //     }
 
-      if (data?.routes) {
-        if (dashboardState.value == 'all') {
-          loadRoutes(routesDispatch, data?.routes)
-        } else {
-          loadRoutes(
-            routesDispatch,
-            data?.routes?.filter((d) => d.branch_id === dashboardState.value)
-          )
-        }
-      }
-    }
-    if (data?.assigned_loads && data?.assigned_vehicles) {
-      const assigned_loads_data = Object.entries(data?.assigned_loads).map(
-        ([id, data]) => ({
-          id,
-          data,
-        })
-      )
+  //     if (data?.routes) {
+  //       if (dashboardState.value == 'all') {
+  //         loadRoutes(routesDispatch, data?.routes)
+  //       } else {
+  //         loadRoutes(
+  //           routesDispatch,
+  //           data?.routes?.filter((d) => d.branch_id === dashboardState.value)
+  //         )
+  //       }
+  //     }
+  //   }
+  //   if (data?.assigned_loads && data?.assigned_vehicles) {
+  //     const assigned_loads_data = Object.entries(data?.assigned_loads).map(
+  //       ([id, data]) => ({
+  //         id,
+  //         data,
+  //       })
+  //     )
 
-      const assigned_vehicles = data?.assigned_vehicles
-      if (dashboardState.value == 'all') {
-        const assigned_loads = assigned_loads_data
-          ?.map((l) => l.data)
-          .filter((l) => l.branch_id === dashboardState.value)
-        loadGroupedLoads(groupedLoadsDispatch, [
-          assigned_loads,
-          assigned_vehicles,
-        ])
-      } else {
-        loadGroupedLoads(groupedLoadsDispatch, [
-          assigned_loads_data,
-          assigned_vehicles,
-        ])
-      }
+  //     const assigned_vehicles = data?.assigned_vehicles
+  //     if (dashboardState.value == 'all') {
+  //       const assigned_loads = assigned_loads_data
+  //         ?.map((l) => l.data)
+  //         .filter((l) => l.branch_id === dashboardState.value)
+  //       loadGroupedLoads(groupedLoadsDispatch, [
+  //         assigned_loads,
+  //         assigned_vehicles,
+  //       ])
+  //     } else {
+  //       loadGroupedLoads(groupedLoadsDispatch, [
+  //         assigned_loads_data,
+  //         assigned_vehicles,
+  //       ])
+  //     }
 
-      //  console.log('data :>> ', data)
-    }
-  }, [current_user, dashboardState])
+  //     //  console.log('data :>> ', data)
+  //   }
+  // }, [current_user, dashboardState])
 
   const TABLES = [
     {
@@ -406,40 +413,11 @@ const GlobalProvider = ({ children, data }) => {
     }
   }, [dashboardState?.value, current_user?.currentUser?.id])
 
-  // useEffect(() => {
-  //   const channels = TABLES.map(({ table, onInsert, onUpdate, onDelete }) => {
-  //     const ch = supabase
-  //       .channel(`${table}-rt`)
-  //       .on(
-  //         'postgres_changes',
-  //         { event: 'INSERT', schema: 'public', table },
-  //         (p) => onInsert?.(p.new)
-  //       )
-  //       .on(
-  //         'postgres_changes',
-  //         { event: 'UPDATE', schema: 'public', table },
-  //         (p) => onUpdate?.(p.new)
-  //       )
-  //       .on(
-  //         'postgres_changes',
-  //         { event: 'DELETE', schema: 'public', table },
-  //         (p) => onDelete?.(p.old)
-  //       )
-  //       .subscribe()
-
-  //     return ch
-  //   })
-
-  //   return () => {
-  //     channels.forEach((ch) => supabase.removeChannel(ch))
-  //   }
-  // }, [])
-  // console.log('assignment :>> ', assignment)
-
   const fetchAssignmentPreview = async (data) =>
     // autoAssignLoads(assignmentDispatch, data)
     addPlan(assignmentDispatch, data)
-  //console.log('assignment :>> ', assignment?.data)
+
+  // console.log('data :>> ', data?.load_assignment)
   return (
     <GlobalContext.Provider
       value={{

@@ -25,7 +25,7 @@ const ArchivePage = async ({ params, title, statistics }) => {
             {<Statistics />}
           </div>
 
-          <LoadsPage />
+          {/* <LoadsPage /> */}
           <div className="space-y-6 h-full overflow-y-auto  p-1">
             <PageContainer />
           </div>

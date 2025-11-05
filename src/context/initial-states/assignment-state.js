@@ -5,6 +5,7 @@ import {
   createCheckboxColumn,
   createSortableHeader,
 } from '@/components/ui/data-table'
+import { Badge } from '@/components/ui/badge'
 
 // data
 const data = { plans: [], loading: false }
@@ -60,17 +61,17 @@ const columns = ({ onEdit, onDelete, branches }) => {
     //   header: createSortableHeader('ID'),
     // },
     {
-      accessorKey: 'notes',
+      accessorKey: 'plan_name',
       header: createSortableHeader('Plan Name'),
       cell: ({ row }) => (
-        <div className="font-medium capitalize">{row.original.notes}</div>
+        <div className="font-medium capitalize">{row.original.plan_name}</div>
       ),
     },
     {
-      accessorKey: 'run_at',
+      accessorKey: 'created_at',
       header: createSortableHeader('Date Created'),
       cell: ({ row }) => {
-        const str = new Date(row.getValue('run_at'))
+        const str = new Date(row.getValue('created_at'))
         const date = str.toISOString().split('T')[0]
         const time = str.toISOString().split('T')[1].split('Z')[0]
         return (
@@ -82,20 +83,13 @@ const columns = ({ onEdit, onDelete, branches }) => {
       },
     },
     {
-      accessorKey: 'scope_branch_id',
+      accessorKey: 'scope_all_branches',
       header: createSortableHeader('Branch'),
       cell: ({ row }) => {
-        const branch = branches
-          .filter((b) => b.id === row?.original?.scope_branch_id)?.[0]
-          ?.name?.slice(26)
-
-        // const str = new Date(row.getValue('run_at'))
-        // const date = str.toISOString().split('T')[0]
-        // const time = str.toISOString().split('T')[1].split('Z')[0]
+        const isAllBranches = row.getValue('scope_all_branches')
         return (
           <div>
-            <div className="font-medium">{branch}</div>
-            {/* <div className="text-sm text-gray-500">{time}</div> */}
+            <div className="font-medium">{isAllBranches ? 'All Branches' : 'Specific Branch'}</div>
           </div>
         )
       },
@@ -117,14 +111,21 @@ const columns = ({ onEdit, onDelete, branches }) => {
     //   },
     // },
     {
-      accessorKey: 'departure_date',
-      header: createSortableHeader('Departure Date'),
-      // cell: ({ row }) => getDriverStatusBadge(row.getValue('status')),
+      accessorKey: 'delivery_start',
+      header: createSortableHeader('Delivery Start'),
     },
     {
-      accessorKey: 'cutoff_date',
-      header: createSortableHeader('Cutoff date'),
-      // cell: ({ row }) => getDriverStatusBadge(row.getValue('status')),
+      accessorKey: 'delivery_end',
+      header: createSortableHeader('Delivery End'),
+    },
+    {
+      accessorKey: 'status',
+      header: createSortableHeader('Status'),
+      cell: ({ row }) => (
+        <Badge variant={row.getValue('status') === 'committed' ? 'default' : 'secondary'}>
+          {row.getValue('status')}
+        </Badge>
+      ),
     },
     // {
     //   accessorKey: 'cutoff_date',

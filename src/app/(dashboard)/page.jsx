@@ -4,10 +4,17 @@ import CardsView from '@/components/layout/dashboard/card-view'
 import MapWithCards from '@/components/layout/dashboard/map-with-cards'
 import MapView from '@/components/layout/dashboard/map-box-view'
 import { Button } from '@/components/ui/button'
-import DynamicInput from '@/components/ui/dynamic-input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useLiveStore } from '@/config/zustand'
 import { useGlobalContext } from '@/context/global-context'
 import { fetchData } from '@/lib/fetch'
+import { assignmentAPI, transformPlanData } from '@/lib/assignment-helpers'
 import { LayoutGrid, Map } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
@@ -144,14 +151,13 @@ const Dashboard = () => {
     setLocalFilters((prev) => ({ ...prev, selectedPlanId: value }))
 
     try {
-      const r = await fetchData(`plans/`, 'POST', {
-        plan_id: value,
-        include_nested: true,
-        include_idle: true,
-      })
-      const units = Array.isArray(r?.assigned_units) ? r.assigned_units : []
-      //  console.log('Plan units loaded:', units.length)
-      setLocalFilters((prev) => ({ ...prev, assignedUnits: units }))
+      const response = await assignmentAPI.getPlan(value)
+      if (response.success) {
+        const planData = transformPlanData(response.data)
+        const units = planData.units || []
+        setLocalFilters((prev) => ({ ...prev, assignedUnits: units }))
+        setAssignmentPreview(planData)
+      }
     } catch (e) {
       console.warn('onSelectPlan failed', e)
       setLocalFilters((prev) => ({ ...prev, assignedUnits: [] }))
@@ -375,7 +381,7 @@ const Dashboard = () => {
           className="object-cover"
         />
       </div>
-      <div className="fixed w-full shadow-lg z-4 flex flex-col md:flex-row justify-between items-center gap-4 p-4 px-10 bg-white">
+      <div className="flex flex-col md:flex-row justify-between items-end gap-4 pt-6 pl-6">
         <div>
           <h2 className="text-xl text-[#003e69]   font-bold tracking-tight uppercase">
             {'Dashboard'}
@@ -390,13 +396,22 @@ const Dashboard = () => {
               Plan:
             </span>
 
-            <div className="">
-              <DynamicInput
-                inputs={plans_options}
-                handleSelectChange={handleSelectChange}
-                handleChange={handleChange}
-              />
-            </div>
+            <Select
+              value={localFilters?.selectedPlanId || 'all'}
+              onValueChange={(value) => handleSelectChange('selectedPlanId', value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a plan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Vehicles</SelectItem>
+                {localFilters.plans?.map((plan) => (
+                  <SelectItem key={plan.id} value={plan.id}>
+                    {plan.notes || `Plan ${plan.id}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div
             className="flex items-center gap-1 bg-muted p-1 mr-10 rounded-lg"

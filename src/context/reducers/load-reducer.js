@@ -12,6 +12,7 @@ const loadReducer = (state, action) => {
     case loads.REQUEST_SUCCESS:
       return {
         ...state,
+        data: action.payload,
         loading: false,
       }
     case loads.REQUEST_FAILURE:

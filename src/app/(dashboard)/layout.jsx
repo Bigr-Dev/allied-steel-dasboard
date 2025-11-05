@@ -40,10 +40,7 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       const Routes = await fetchServerData('routes', 'GET')
       const Customers = await fetchServerData('customers', 'GET')
       const Drivers = await fetchServerData('drivers', 'GET')
-      const Loads = await fetchServerData(
-        `loads?date=${tomorrow}&includeItems=true`,
-        'GET'
-      )
+      const Loads = await fetchServerData(`loads`, 'GET')
       // console.log('tomorrow :>> ', tomorrow)
       // const Loads = await fetchServerData(`loads?includeItems=true`, 'GET')
       const Orders = await fetchServerData('orders', 'GET')
@@ -57,7 +54,7 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
       //console.log('current_user :>> ', current_user?.branch_id)
 
       const plans = await fetchServerData(
-        'plans?include_unassigned=true&include_counts=true&include_units=true',
+        `plans?limit=1000&offset=0&include_units=true&include_counts=true&include_unassigned=true`,
         'GET'
       )
 
@@ -76,8 +73,10 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
           ...load_params,
         })
       }
+      // console.log('plans :>> ', plans)
 
       data = {
+        plans: plans?.data,
         load_assignment: {
           ...plans?.data,
           // ...assignment?.data,
@@ -86,7 +85,7 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
         branches: Branches?.message,
         customers: Customers?.data,
         drivers: Drivers,
-        loads: Loads?.data?.results,
+        loads: Loads?.data,
         orders: Orders?.data,
         users: Users?.message,
         vehicles: Vehicles,
