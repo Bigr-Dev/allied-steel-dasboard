@@ -3,22 +3,10 @@
 
 import { useAuth } from '@/context/initial-states/auth-state'
 import { useToast } from '@/hooks/use-toast'
-import { useEffect } from 'react'
 
 export const Toaster = () => {
   const { toasts, dismiss } = useToast()
   const { logout } = useAuth()
-
-  useEffect(() => {
-    toasts.forEach((toast) => {
-      if (toast.open) {
-        const timer = setTimeout(() => {
-          dismiss(toast.id)
-        }, 10000)
-        return () => clearTimeout(timer)
-      }
-    })
-  }, [toasts, dismiss])
 
   return (
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
@@ -28,6 +16,7 @@ export const Toaster = () => {
             key={toast.id}
             className="bg-white border border-gray-200 shadow-lg p-4 rounded-lg max-w-sm"
           >
+            <div>test</div>
             <div className="font-semibold">{toast.title}</div>
             <div className="text-sm text-gray-600">{toast.description}</div>
             <div className=" flex justify-between">

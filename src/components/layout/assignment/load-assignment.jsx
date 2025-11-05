@@ -25,7 +25,7 @@ import { Search } from 'lucide-react'
 export function LoadAssignment({ id, assignment, onEdit, preview }) {
   const router = useRouter()
   const pathname = usePathname()
-  console.log('assignment :>> ', assignment?.data)
+  // console.log('assignment :>> ', assignment?.data)
   //console.log('preview :>> ', preview)
   const {
     assignment: { data: context_data },
@@ -34,15 +34,10 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
   } = useGlobalContext()
 
   useEffect(() => {
-    // Only seed once or when changing to a different plan
-    if (
-      assignment?.data &&
-      (!assignment_preview?.plan ||
-        assignment_preview.plan.id !== assignment?.data?.plan?.id)
-    ) {
+    if (assignment?.data) {
       setAssignmentPreview(assignment.data)
     }
-  }, [assignment?.data, assignment_preview?.plan?.id, setAssignmentPreview])
+  }, [assignment?.data, setAssignmentPreview])
   // console.log('assignment_preview :>> ', assignment_preview)
   const data = assignment_preview
 
@@ -340,7 +335,7 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
                     //`/assignments/${plan.plan_id}/units/${unit.plan_unit_id}`
                     return (
                       <Card
-                        key={`${unit?.plan_unit_id}-${unit?.used_capacity_kg}-${unit?.customers?.length}`}
+                        key={unit?.plan_unit_id || index}
                         onClick={() => {
                           handleClick({
                             unit: unit.plan_unit_id,

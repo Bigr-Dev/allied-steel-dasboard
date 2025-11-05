@@ -191,64 +191,9 @@ export async function POST(request) {
       }
     }
 
-    // ------ Calculate required blocks for all units ------
-    let maxRequiredBlocks = 0
-    units.forEach((unit) => {
-      const customers = Array.isArray(unit?.customers) ? unit.customers : []
-      let unitOrderCount = 0
-      customers.forEach((cust) => {
-        const orders = Array.isArray(cust?.orders) ? cust.orders : []
-        orders.forEach((order) => {
-          const customer = cust?.customer_name || ''
-          const area = cust?.suburb_name || ''
-          const so = Array.isArray(order.items) && order.items.length ? order.items[0].order_number || '' : ''
-          const massKg = Number(order?.total_assigned_weight_kg || 0)
-          if (customer && area && so && massKg > 0) {
-            unitOrderCount++
-          }
-        })
-      })
-      maxRequiredBlocks = Math.max(maxRequiredBlocks, unitOrderCount)
-    })
-
-    // Expand maxBlocks if needed to accommodate all items
-    if (maxRequiredBlocks > maxBlocks) {
-      maxBlocks = maxRequiredBlocks
-    }
-
-    // ------ Sort units by capacity percentage (least full to most full) ------
-    const sortedUnits = units.slice().sort((a, b) => {
-      const aPercentage = (a.used_capacity_kg / a.capacity_kg) * 100
-      const bPercentage = (b.used_capacity_kg / b.capacity_kg) * 100
-      return aPercentage - bPercentage
-    })
-
-    // ------ Update date/time in spreadsheet ------
-    const now = new Date()
-    const dateTimeStr = now.toLocaleString('en-AU', {
-      day: '2-digit',
-      month: '2-digit', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    })
-    
-    // Find and update date/time cell (typically in top rows)
-    for (let r = 1; r <= 10; r++) {
-      for (let c = 1; c <= 5; c++) {
-        const cell = ws.getCell(r, c)
-        const val = (cell.value || '').toString().toLowerCase()
-        if (val.includes('date') || val.includes('time') || /\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}/.test(val)) {
-          cell.value = dateTimeStr
-          break
-        }
-      }
-    }
-
     // ------ Populate: one unit per column ------
     let col = startCol
-    for (const unit of sortedUnits) {
+    for (const unit of units) {
       const capacity_kg = Number(unit?.capacity_kg || 0)
       const used_kg = Number(unit?.used_capacity_kg || 0)
       const diff_kg = capacity_kg - used_kg // allow negative if overloaded
@@ -262,9 +207,13 @@ export async function POST(request) {
       const horseFleet = unit?.horse?.fleet_number || ''
       const trailerPlate = unit?.trailer?.plate || ''
 
-      const registration = isRigid ? rigidPlate : horsePlate
+      const registration = isRigid
+        ? rigidPlate
+        : trailerPlate
+        ? `${horsePlate} + ${trailerPlate}`
+        : horsePlate
       const fleet = isRigid ? rigidFleet : horseFleet
-      const driver = unit?.driver_name ? unit.driver_name.split(' ')[0] : ''
+      const driver = unit?.driver_name || ''
       const unitType = unit?.unit_type || ''
 
       // Top block writes (do not touch formatting; set only values/numFmt)
@@ -326,22 +275,20 @@ export async function POST(request) {
             const salesPerson = order?.sales_person || ''
             const massKg = Number(order?.total_assigned_weight_kg || 0)
 
-            // Only include orders with valid customer, area, and sales order data
-            if (customer && area && so && massKg > 0) {
-              orderRows.push({
-                customer,
-                area,
-                so,
-                product,
-                comments,
-                salesPerson,
-                massKg,
-              })
-            }
+            orderRows.push({
+              customer,
+              area,
+              so,
+              product,
+              comments,
+              salesPerson,
+              massKg,
+            })
           })
         })
 
-        for (let i = 0; i < orderRows.length; i++) {
+        const n = Math.min(orderRows.length, maxBlocks)
+        for (let i = 0; i < n; i++) {
           const base = firstCustomerRow + i * blockSize
           ws.getCell(base + 0, col).value = orderRows[i].customer // Customer
           ws.getCell(base + 1, col).value = orderRows[i].area // Del Area
@@ -356,19 +303,6 @@ export async function POST(request) {
       col++
     }
     stripSharedFormulas(ws)
-
-    // Fix column Y formatting to match column X
-    const colX = ws.getColumn(24) // Column X is the 24th column
-    const colY = ws.getColumn(25) // Column Y is the 25th column
-    colY.width = colX.width
-    
-    // Copy all cell formatting from column X to column Y
-    ws.eachRow((row, rowNumber) => {
-      const cellX = row.getCell(24)
-      const cellY = row.getCell(25)
-      cellY.fill = cellX.fill
-      cellY.border = cellX.border
-    })
 
     // 2) Return the filled workbook (first sheet populated)
     // const buffer = await wb.xlsx.writeBuffer()

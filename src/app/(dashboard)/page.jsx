@@ -70,7 +70,6 @@ function extractPlatesFromVehiclesList(vehicles = []) {
 // }
 
 function parseRawTcpData(raw) {
-  //console.log('raw TCP data :>> ', raw)
   if (typeof raw !== 'string') return []
   const parsed = safeParseJSON(raw)
   if (!parsed) return []
@@ -117,7 +116,6 @@ const Dashboard = () => {
     assignedUnits: [],
     currentView: 'cards',
   })
-  //console.log('localFilters.assignedUnits :>> ', localFilters.assignedUnits)
   const [tcpError, setTcpError] = useState(null)
   const [mapShowTick, setMapShowTick] = useState(0)
   //console.log('localFilters :>> ', localFilters)
@@ -131,18 +129,11 @@ const Dashboard = () => {
 
   // ----- Plan change -> fetch units -----
   const onPlanChange = async (value) => {
+    setLocalFilters((prev) => ({ ...prev, selectedPlanId: value }))
     if (value == 'all' || value == null) {
-      setLocalFilters((prev) => ({
-        ...prev,
-        selectedPlanId: value,
-        assignedUnits: [],
-      }))
+      setLocalFilters((prev) => ({ ...prev, assignedUnits: [] }))
       return
     }
-
-    // Set plan ID first, keep existing units temporarily
-    setLocalFilters((prev) => ({ ...prev, selectedPlanId: value }))
-
     try {
       const r = await fetchData(`plans/`, 'POST', {
         plan_id: value,
@@ -150,7 +141,7 @@ const Dashboard = () => {
         include_idle: true,
       })
       const units = Array.isArray(r?.assigned_units) ? r.assigned_units : []
-      //  console.log('Plan units loaded:', units.length)
+      //   console.log('r :>> ', r)
       setLocalFilters((prev) => ({ ...prev, assignedUnits: units }))
     } catch (e) {
       console.warn('onSelectPlan failed', e)
@@ -188,7 +179,6 @@ const Dashboard = () => {
 
     // Otherwise build from current page + path
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-
     const host = window.location.host
     const path = (envUrl || '/ws/').replace(/([^/])$/, '$1/') // ensure trailing /
     return `${proto}://${host}${path}`
@@ -235,8 +225,6 @@ const Dashboard = () => {
   // ----- WebSocket: tolerant parser, filter to target plates, upsert live -----
   useEffect(() => {
     const url = computedWsUrl
-    // console.log('WebSocket URL:', url)
-
     if (!url) return
     let ws
     try {

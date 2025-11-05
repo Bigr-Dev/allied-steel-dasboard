@@ -158,12 +158,9 @@ const AssignmentForm = ({ id, onCancel }) => {
       placeholder: 'Select branch',
       value: localFilters.branch_id,
       required: true,
-      options: [
-        { value: 'all', label: 'All' },
-        ...(branches?.data?.map((b) => {
-          return { value: b.id, label: b.name }
-        }) || [])
-      ],
+      options: branches?.data?.map((b) => {
+        return { value: b.id, label: b.name }
+      }),
     },
     {
       type: 'date',
