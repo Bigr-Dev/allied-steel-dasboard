@@ -11,7 +11,7 @@ export async function GET(req, { params }) {
   try {
     const response = await fetchServerData(`${url}/${planId}`, 'GET')
 
-    return NextResponse.json(response.message, { status: 200 })
+    return NextResponse.json(response, { status: 200 })
   } catch (error) {
     console.error('Error fetching data:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

@@ -42,14 +42,13 @@ function pickPlateFromVehicle(v) {
   return String(s).trim().toUpperCase()
 }
 
-// Extract plates from assigned_units: prefer horse.plate, else rigid.plate
 function extractPlatesFromAssignedUnits(assignedUnits = []) {
   const set = new Set()
   for (const u of assignedUnits) {
     const plate =
+      u?.vehicle?.plate ??
       u?.horse?.plate ??
       u?.rigid?.plate ??
-      //  u?.trailer?.plate ??
       u?.plan_unit_id
     if (!plate) continue
     set.add(String(plate).trim().toUpperCase())
@@ -112,7 +111,7 @@ function remapTcpFields(pkt = {}) {
 }
 
 const Dashboard = () => {
-  const { vehicles, assignment } = useGlobalContext()
+  const { vehicles, assignment, setAssignmentPreview } = useGlobalContext()
   const loading = assignment?.loading
   // console.log('vehicles?.data :>> ', vehicles?.data)
   //console.log('assignment :>> ', assignment?.data)
@@ -152,9 +151,12 @@ const Dashboard = () => {
 
     try {
       const response = await assignmentAPI.getPlan(value)
+      console.log('Plan API response:', response)
       if (response.success) {
         const planData = transformPlanData(response.data)
+        console.log('Transformed plan data:', planData)
         const units = planData.units || []
+        console.log('Units extracted:', units)
         setLocalFilters((prev) => ({ ...prev, assignedUnits: units }))
         setAssignmentPreview(planData)
       }
