@@ -146,9 +146,6 @@ const Dashboard = () => {
       return
     }
 
-    // Set plan ID first, keep existing units temporarily
-    setLocalFilters((prev) => ({ ...prev, selectedPlanId: value }))
-
     try {
       const response = await assignmentAPI.getPlan(value)
       console.log('Plan API response:', response)
@@ -157,12 +154,21 @@ const Dashboard = () => {
         console.log('Transformed plan data:', planData)
         const units = planData.units || []
         console.log('Units extracted:', units)
-        setLocalFilters((prev) => ({ ...prev, assignedUnits: units }))
+        // Update both selectedPlanId and assignedUnits atomically
+        setLocalFilters((prev) => ({ 
+          ...prev, 
+          selectedPlanId: value,
+          assignedUnits: units 
+        }))
         setAssignmentPreview(planData)
       }
     } catch (e) {
       console.warn('onSelectPlan failed', e)
-      setLocalFilters((prev) => ({ ...prev, assignedUnits: [] }))
+      setLocalFilters((prev) => ({ 
+        ...prev, 
+        selectedPlanId: value,
+        assignedUnits: [] 
+      }))
     }
   }
   //console.log('localFilters :>> ', localFilters)
