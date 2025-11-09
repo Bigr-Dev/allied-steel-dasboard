@@ -53,32 +53,37 @@ export const VehicleCard = memo(function VehicleCard({
   const { toast } = useToast()
 
   const { isOver, setNodeRef } = useDroppable({
-    id: `unit:${unit.plan_unit_id}`,
+    id: `unit:${unit.planned_unit_id || unit.plan_unit_id}`,
   })
 
-  const capacityPercentage = (unit.used_capacity_kg / unit.capacity_kg) * 100
+  const capacityPercentage = ((unit.used_capacity_kg || 0) / (unit.capacity_kg || 1)) * 100
 
   const isOverCapacity = capacityPercentage > 100
   const isNearCapacity = capacityPercentage >= 85
 
   const getVehicleDisplay = () => {
-    if (unit.unit_type === 'rigid' && unit.rigid) {
+    const vehicleType = unit.vehicle_type || unit.unit_type
+    
+    if ((vehicleType === 'rigid' || unit.unit_type === 'rigid') && (unit.rigid || unit.vehicle)) {
+      const vehicle = unit.rigid || unit.vehicle
       return {
         icon: <Truck className="h-4 w-4" />,
-        name: unit.rigid.fleet_number,
-        plate: unit.rigid.plate,
+        name: vehicle.fleet_number || vehicle.reg_number || 'Unknown',
+        plate: vehicle.plate || vehicle.license_plate || 'N/A',
         type: 'Rigid',
       }
-    } else if (
-      unit.unit_type === 'horse+trailer' &&
-      unit.horse &&
-      unit.trailer
-    ) {
+    } else if ((vehicleType === 'horse' || unit.unit_type === 'horse+trailer') && (unit.horse || unit.vehicle)) {
+      const horse = unit.horse || unit.vehicle
+      const trailer = unit.trailer
       return {
         icon: <Truck className="h-4 w-4" />,
-        name: `${unit.horse.fleet_number}+${unit.trailer.fleet_number}`,
-        plate: `${unit.horse.plate} / ${unit.trailer.plate}`,
-        type: 'Horse+Trailer',
+        name: trailer 
+          ? `${horse.fleet_number || horse.reg_number}+${trailer.fleet_number || trailer.reg_number}`
+          : horse.fleet_number || horse.reg_number || 'Unknown',
+        plate: trailer
+          ? `${horse.plate || horse.license_plate} / ${trailer.plate || trailer.license_plate}`
+          : horse.plate || horse.license_plate || 'N/A',
+        type: trailer ? 'Horse+Trailer' : 'Horse',
       }
     }
     return {
@@ -114,18 +119,17 @@ export const VehicleCard = memo(function VehicleCard({
   }
 
   const getTotalItems = () => {
-    return unit.customers.reduce((total, customer) => {
-      return (
-        total +
-        customer.orders.reduce((orderTotal, order) => {
-          return orderTotal + order.items.length
-        }, 0)
-      )
+    if (unit.summary?.total_items) return unit.summary.total_items
+    return (unit.customers || []).reduce((total, customer) => {
+      return total + (customer.orders || []).reduce((orderTotal, order) => {
+        return orderTotal + (order.items || []).length
+      }, 0)
     }, 0)
   }
 
   const getUniqueCustomers = () => {
-    return unit.customers.length
+    if (unit.summary?.total_customers) return unit.summary.total_customers
+    return (unit.customers || []).length
   }
 
   const getUniqueRoutes = () => {
@@ -134,19 +138,14 @@ export const VehicleCard = memo(function VehicleCard({
   }
 
   const getDriverInfo = () => {
-    if (unit.unit_type === 'rigid' && unit.rigid) {
+    if (unit.driver) {
       return {
-        name: unit.driver_name || 'No driver assigned',
-        source: 'rigid',
-      }
-    } else if (unit.unit_type === 'horse+trailer' && unit.horse) {
-      return {
-        name: unit.driver_name || 'No driver assigned',
-        source: 'horse',
+        name: `${unit.driver.name || ''} ${unit.driver.last_name || ''}`.trim() || 'No driver assigned',
+        source: unit.vehicle_type || unit.unit_type,
       }
     }
     return {
-      name: 'No driver assigned',
+      name: unit.driver_name || 'No driver assigned',
       source: null,
     }
   }
@@ -335,7 +334,7 @@ export const VehicleCard = memo(function VehicleCard({
                   : 'text-foreground'
               }`}
             >
-              {unit.used_capacity_kg}kg / {unit.capacity_kg}kg
+              {(unit.used_capacity_kg || 0).toFixed(2)}kg / {(unit.capacity_kg || 0).toFixed(2)}kg
             </span>
           </div>
           <ProgressBar

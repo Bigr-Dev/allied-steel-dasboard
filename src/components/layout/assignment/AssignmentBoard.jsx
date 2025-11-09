@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast'
 import { assignmentAPI, transformPlanData } from '@/lib/assignment-helpers'
 import { RefreshCw, Save, RotateCcw } from 'lucide-react'
 import { useGlobalContext } from '@/context/global-context'
+import DetailCard from '@/components/ui/detail-card'
 
 export function AssignmentBoard() {
   const { fetchData } = useGlobalContext()

@@ -428,7 +428,7 @@ const GlobalProvider = ({ children, data }) => {
       const res = await fetch('/api/plans/export-load-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(assignment), // <-- send it
+        body: JSON.stringify(assignment_preview), // <-- send it
       })
 
       if (!res.ok) {

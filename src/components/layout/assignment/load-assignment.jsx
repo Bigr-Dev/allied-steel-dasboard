@@ -35,6 +35,24 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
     downloading,
   } = useGlobalContext()
 
+  // Determine capacity (kg) based on vehicle type + trailer
+  const getUnitCapacityKg = (unit) => {
+    if (!unit) return 0
+
+    if (unit.vehicle_type === 'horse') {
+      // horse + trailer combo -> use trailer capacity
+      return unit.trailer?.capacity_kg || (unit.trailer?.capacity ?? 0) || 0
+    }
+
+    // default: rigid or anything else -> use vehicle capacity
+    return unit.vehicle?.capacity_kg || (unit.vehicle?.capacity ?? 0) || 0
+  }
+
+  // Used capacity is the total weight assigned to the unit
+  const getUnitUsedKg = (unit) => {
+    return unit?.summary?.total_weight || 0
+  }
+
   useEffect(() => {
     if (assignment) {
       setAssignmentPreview(assignment?.data)
@@ -75,8 +93,10 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
   }
 
   const getVehicleDisplay = (unit) => {
+    console.log('unit :>> ', unit)
     if (unit.vehicle_type === 'rigid' && unit.vehicle) {
       const enrichedVehicle = getEnrichedVehicleInfo(unit.vehicle.id)
+
       return {
         icon: <Truck className="h-4 w-4" />,
         name:
@@ -89,6 +109,8 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
     } else if (unit.vehicle_type === 'horse' && unit.vehicle && unit.trailer) {
       const enrichedVehicle = getEnrichedVehicleInfo(unit.vehicle.id)
       const enrichedTrailer = getEnrichedVehicleInfo(unit.trailer.id)
+      // console.log('enrichedVehicle :>> ', enrichedVehicle)
+      // console.log('enrichedTrailer :>> ', enrichedTrailer)
       return {
         icon: <Truck className="h-4 w-4" />,
         name: `${
@@ -96,13 +118,13 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
           unit.vehicle.fleet_number ||
           unit.vehicle.reg_number
         }+${
-          enrichedTrailer.fleet_number ||
-          unit.trailer.fleet_number ||
-          unit.trailer.reg_number
+          enrichedTrailer?.fleet_number ||
+          unit.trailer?.fleet_number ||
+          unit.trailer?.reg_number
         }`,
         plate: `${
           enrichedVehicle.license_plate || unit.vehicle.license_plate
-        } / ${enrichedTrailer.license_plate || unit.trailer.license_plate}`,
+        } / ${enrichedTrailer?.license_plate || unit.trailer?.license_plate}`,
         type: 'Horse+Trailer',
       }
     }
@@ -190,38 +212,95 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
     }
   }
 
+  // // Filter vehicles based on search query
+  // const filteredUnits = assigned_units.filter((unit) => {
+  //   if (!searchQuery) return true
+
   // Filter vehicles based on search query
-  const filteredUnits = assigned_units.filter((unit) => {
-    if (!searchQuery) return true
+  // Filter vehicles based on search query
+  const filteredUnits = assigned_units
+    .map((unit) => {
+      const capacity_kg = getUnitCapacityKg(unit)
+      const used_capacity_kg = getUnitUsedKg(unit)
 
-    const query = searchQuery.toLowerCase()
-    const vehicle = getVehicleDisplay(unit)
-    const driver = getDriverInfo(unit)
+      // also expose plain capacity / used_capacity for display compatibility
+      return {
+        ...unit,
+        capacity_kg,
+        used_capacity_kg,
+        capacity: capacity_kg,
+        used_capacity: used_capacity_kg,
+      }
+    })
+    .filter((unit) => {
+      if (!searchQuery) return true
 
-    // Search in vehicle info
-    if (
-      vehicle.name?.toLowerCase().includes(query) ||
-      vehicle.plate?.toLowerCase().includes(query)
-    )
-      return true
+      const query = searchQuery.toLowerCase()
+      const vehicle = getVehicleDisplay(unit)
+      const driver = getDriverInfo(unit)
 
-    // Search in driver name
-    if (driver.name?.toLowerCase().includes(query)) return true
+      // Search in vehicle info
+      if (
+        vehicle.name?.toLowerCase().includes(query) ||
+        vehicle.plate?.toLowerCase().includes(query)
+      )
+        return true
 
-    // Search in orders and customers
-    return unit.orders?.some(
-      (order) =>
-        order.customer_name?.toLowerCase().includes(query) ||
-        order.route_name?.toLowerCase().includes(query) ||
-        order.suburb_name?.toLowerCase().includes(query) ||
-        order.sales_order_number?.toLowerCase().includes(query) ||
-        order.order_lines?.some(
+      // Search in driver name
+      if (driver.name?.toLowerCase().includes(query)) return true
+
+      // Search in orders and customers
+      return unit.orders?.some((order) => {
+        if (
+          order.customer_name?.toLowerCase().includes(query) ||
+          order.route_name?.toLowerCase().includes(query) ||
+          order.suburb_name?.toLowerCase().includes(query) ||
+          order.sales_order_number?.toLowerCase().includes(query)
+        ) {
+          return true
+        }
+
+        // NOTE: buildPlanPayload uses `lines`, not `order_lines`
+        return order.lines?.some(
           (line) =>
             line.description?.toLowerCase().includes(query) ||
             line.ur_prod?.toLowerCase().includes(query)
         )
-    )
-  })
+      })
+    })
+
+  // const filteredUnits = assigned_units.map((unit) => {
+  //   const capacity_kg = getUnitCapacityKg(unit)
+  //   const used_capacity_kg = getUnitUsedKg(unit)
+
+  //   const query = searchQuery.toLowerCase()
+  //   const vehicle = getVehicleDisplay(unit)
+  //   const driver = getDriverInfo(unit)
+
+  //   // Search in vehicle info
+  //   if (
+  //     vehicle.name?.toLowerCase().includes(query) ||
+  //     vehicle.plate?.toLowerCase().includes(query)
+  //   )
+  //     return true
+
+  //   // Search in driver name
+  //   if (driver.name?.toLowerCase().includes(query)) return true
+
+  //   // Search in orders and customers
+  //   return unit.orders?.some(
+  //     (order) =>
+  //       order.customer_name?.toLowerCase().includes(query) ||
+  //       order.route_name?.toLowerCase().includes(query) ||
+  //       order.suburb_name?.toLowerCase().includes(query) ||
+  //       order.sales_order_number?.toLowerCase().includes(query) ||
+  //       order.order_lines?.some(
+  //         (line) =>
+  //           line.description?.toLowerCase().includes(query) ||
+  //           line.ur_prod?.toLowerCase().includes(query)
+  //       )
+  //   )
+  // })
 
   // Columns for unassigned orders table
   const unassignedColumns = [
@@ -264,6 +343,7 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
       ),
     },
   ]
+
   return (
     <div className="grid grid-cols-1">
       <Tabs defaultValue={tableInfo?.tabs?.[0]?.value} className="w-full">
@@ -329,20 +409,32 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
                 {filteredUnits.length > 0 &&
                   filteredUnits
                     .sort((a, b) => {
-                      const aPercentage =
-                        (a.used_capacity_kg / a.capacity_kg) * 100
-                      const bPercentage =
-                        (b.used_capacity_kg / b.capacity_kg) * 100
-                      return aPercentage - bPercentage
+                      const aPct =
+                        a.capacity_kg > 0
+                          ? (a.used_capacity_kg / a.capacity_kg) * 100
+                          : 0
+                      const bPct =
+                        b.capacity_kg > 0
+                          ? (b.used_capacity_kg / b.capacity_kg) * 100
+                          : 0
+                      return aPct - bPct
                     })
                     .map((unit, index) => {
                       const vehicle = getVehicleDisplay(unit)
                       const driverInfo = getDriverInfo(unit)
                       const groupedData = getGroupUnitData(unit)
+
+                      const capacityKg = getUnitCapacityKg(unit)
+                      const usedKg = getUnitUsedKg(unit)
+
                       const capacityPercentage =
-                        (unit.used_capacity_kg / unit.capacity) * 100
+                        capacityKg > 0 ? (usedKg / capacityKg) * 100 : 0
                       const isOverCapacity = capacityPercentage > 100
                       const isNearCapacity = capacityPercentage >= 85
+
+                      const uniqueCustomerCount = new Set(
+                        (unit.orders || []).map((o) => o.customer_id)
+                      ).size
 
                       //`/assignments/${plan.plan_id}/units/${unit.plan_unit_id}`
                       return (
@@ -389,7 +481,7 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
                                 {vehicle.type}
                               </Badge>
                               <Badge variant="outline" className="text-xs">
-                                {unit.summary?.total_customers || 0} customers
+                                {uniqueCustomerCount} customers
                               </Badge>
                             </div>
                             <Separator className="mt-2" />
@@ -426,8 +518,7 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
                                       : 'text-foreground'
                                   }`}
                                 >
-                                  {unit.used_capacity}kg / {unit.capacity}
-                                  kg
+                                  {usedKg}kg / {capacityKg}kg
                                 </span>
                               </div>
                               <ProgressBar

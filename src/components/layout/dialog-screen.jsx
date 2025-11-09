@@ -32,7 +32,8 @@ import PlanCreationForm from '../forms/plan-creation-form'
 
 const DialogScreen = ({ open, onOpenChange, id, href }) => {
   const { selectedVehicle, vehicles } = useGlobalContext()
-  const pathname = href ? href : usePathname().split('/')[1]
+  const currentPath = usePathname()
+  const pathname = href ? href : currentPath.split('/')[1]
   const screen = replaceHyphenWithUnderscore(pathname)
   const vehiclesData = vehicles?.data
   // console.log('href :>> ', href)
@@ -138,7 +139,7 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
       )
 
     case 'load_assignment':
-      if (pathname == 'load-assignment' && usePathname().split('/')[2]) {
+      if (pathname == 'load-assignment' && currentPath.split('/')[2]) {
         return (
           <Modal>
             <AssignmentForm
