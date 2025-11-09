@@ -58,21 +58,21 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
         'GET'
       )
 
-      let AssignedLoads = {}
-      if (Users?.message) {
-        const load_params = {
-          departure_date: tomorrow, // default: tomorrow
-          //   "cutoff_date": "2025-09-18",     // default: today
-          //   "branch_id": "uuid-optional",
-          //   "customer_id": "uuid-optional",
-          commit: false, // preview (no DB writes) if false
-          //   "notes": "optional plan note"
-        }
-        //  console.log('AssignedLoads :>> ', load_params)
-        AssignedLoads = await fetchServerData('plans/auto-assign', 'POST', {
-          ...load_params,
-        })
-      }
+      // let AssignedLoads = {}
+      // if (Users?.message) {
+      //   const load_params = {
+      //     departure_date: tomorrow, // default: tomorrow
+      //     //   "cutoff_date": "2025-09-18",     // default: today
+      //     //   "branch_id": "uuid-optional",
+      //     //   "customer_id": "uuid-optional",
+      //     commit: false, // preview (no DB writes) if false
+      //     //   "notes": "optional plan note"
+      //   }
+      //   //  console.log('AssignedLoads :>> ', load_params)
+      //   AssignedLoads = await fetchServerData('plans/auto-assign', 'POST', {
+      //     ...load_params,
+      //   })
+      // }
       // console.log('plans :>> ', plans)
 
       data = {
@@ -90,8 +90,8 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
         users: Users?.message,
         vehicles: Vehicles,
         routes: Routes?.data?.results,
-        assigned_loads: AssignedLoads?.data?.assignments_by_load || [],
-        assigned_vehicles: AssignedLoads?.data?.assignments_by_vehicle || [],
+        assigned_loads: [],
+        assigned_vehicles: [],
       }
     }
   } catch (error) {

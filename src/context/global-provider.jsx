@@ -417,6 +417,10 @@ const GlobalProvider = ({ children, data }) => {
     // autoAssignLoads(assignmentDispatch, data)
     addPlan(assignmentDispatch, data)
 
+  const runAutoAssign = async (data) => {
+    autoAssignLoads(assignmentDispatch, data)
+  }
+
   const downloadPlan = async () => {
     setDownloading(true)
     try {
@@ -475,6 +479,7 @@ const GlobalProvider = ({ children, data }) => {
         selectedVehicle,
         setSelectedVehicle,
         onDelete: onDelete(setAlertOpen, alertOpen, setId),
+        runAutoAssign,
         assignment_preview,
         setAssignmentPreview,
         setModalOpen,

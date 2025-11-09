@@ -30,8 +30,12 @@ function todayTomorrow() {
 const { today } = todayTomorrow()
 
 const AssignmentForm = ({ id, onCancel }) => {
-  const { branches, fetchAssignmentPreview, assignment_preview } =
-    useGlobalContext()
+  const {
+    branches,
+    fetchAssignmentPreview,
+    assignment_preview,
+    runAutoAssign,
+  } = useGlobalContext()
   console.log('assignment_preview :>> ', assignment_preview)
   const {
     current_user: { currentUser: current_user },
@@ -49,7 +53,7 @@ const AssignmentForm = ({ id, onCancel }) => {
     notes: '',
   }
 
-  const [formData, setFormData] = useState({})
+  const [formData, setFormData] = useState(assignmentData)
 
   const tabs = [
     { name: 'Auto assign', value: 'auto-assign' },
@@ -75,7 +79,14 @@ const AssignmentForm = ({ id, onCancel }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
     // fetchAssignmentPreview(formData)
-    console.log('formData :>> ', formData)
+    if (currentTab === 'auto-assign') {
+      runAutoAssign(formData)
+    } else {
+      // addVehicle(formData)
+      console.log('formData :>> ', formData)
+    }
+    // console.log('currentTab :>> ', currentTab)
+
     onCancel()
   }
 
@@ -155,11 +166,13 @@ const AssignmentForm = ({ id, onCancel }) => {
               title="Plan Details"
               description="Enter the plan information"
             >
-              <DynamicInput
-                inputs={assignmentInputs}
-                handleSelectChange={handleSelectChange}
-                handleChange={handleChange}
-              />
+              {currentTab === 'auto-assign' && (
+                <DynamicInput
+                  inputs={assignmentInputs}
+                  handleSelectChange={handleSelectChange}
+                  handleChange={handleChange}
+                />
+              )}
             </DetailCard>
           </TabsContent>
           <TabsContent value="add-vehicle">
