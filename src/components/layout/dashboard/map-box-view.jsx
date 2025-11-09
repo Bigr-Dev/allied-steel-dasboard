@@ -446,7 +446,7 @@ export default function MapViewMapbox({
       console.log('🎯 Focus event received:', plate)
       
       if (!plate || plate === null || plate === '') {
-        console.log('🎯 Clearing focus')
+        console.log('🎯 Clearing focus and routes')
         clearAllRoutes()
         setFocusPlate('')
         setRouteData(null)
@@ -723,8 +723,8 @@ export default function MapViewMapbox({
         },
         paint: {
           'line-color': color,
-          'line-width': 5,
-          'line-opacity': 0.9,
+          'line-width': 6,
+          'line-opacity': 0.85,
         },
       })
       routeIdsRef.current.add(id)
@@ -877,7 +877,12 @@ export default function MapViewMapbox({
   async function refreshRoutes() {
     const map = mapRef.current
     if (!map) return
-    const myGen = ++routesGenerationRef.current
+    
+    // Don't start a new refresh if we're actively drawing
+    if (isDrawingRef.current) {
+      console.log('⏸️ refreshRoutes blocked: route is being drawn')
+      return
+    }
 
     console.log('🗺️ refreshRoutes:', { selectedPlanId, focusPlate, assignedUnitsCount: assignedUnits?.length })
 
@@ -889,16 +894,20 @@ export default function MapViewMapbox({
     
     // Clear routes only if explicitly switching away
     if (!selectedPlanId || selectedPlanId === 'all') {
+      const myGen = ++routesGenerationRef.current
       clearAllRoutes()
       drawMarkers()
       return
     }
     
     if (!focusPlate) {
-      // Don't clear routes, just don't draw new ones
+      // Don't clear routes, just don't draw new ones - and DON'T increment generation
       console.log('⏸️ No focus plate, keeping existing routes')
       return
     }
+    
+    // Only increment generation when we're actually going to draw routes
+    const myGen = ++routesGenerationRef.current
 
     const focusedVehicle = validVehicles.find(v => String(v.plate).toUpperCase() === focusPlate)
     if (!focusedVehicle) {
@@ -946,8 +955,14 @@ export default function MapViewMapbox({
     console.log('🗺️ Drawing optimized route with', routeLocations.length, 'locations')
     isDrawingRef.current = true
     
-    // Clear ALL old routes when switching vehicles
+    // Clear ALL old routes and markers when switching vehicles
     clearAllRoutes()
+    
+    // Clear old route markers
+    routeMarkersRef.current.forEach(marker => {
+      try { marker.remove() } catch {}
+    })
+    routeMarkersRef.current = []
     
     addRouteMarkers(mapboxgl, map, routeLocations)
     
@@ -971,6 +986,8 @@ export default function MapViewMapbox({
       }
       
       console.log(`🔍 Fetching segment ${i}/${totalSegments}: ${start.name} → ${end.name}`)
+      console.log(`   Start coords: [${start.coordinates[0].toFixed(6)}, ${start.coordinates[1].toFixed(6)}]`)
+      console.log(`   End coords: [${end.coordinates[0].toFixed(6)}, ${end.coordinates[1].toFixed(6)}]`)
       
       const route = await fetchDirections([start.coordinates, end.coordinates], mapboxgl)
       
@@ -1052,13 +1069,23 @@ export default function MapViewMapbox({
       console.log(`🔍 Geocoding customer: ${name} (${suburb})`)
       
       let coords = null
-      if (suburb) {
+      
+      // Try full name + suburb for most accurate location
+      if (name && suburb) {
+        coords = await geocode(mapboxgl, geocodeCacheRef, `${name}, ${suburb}, South Africa`, vehicleLL)
+        console.log(`  ✅ Full address geocoded:`, coords)
+      }
+      
+      // Fallback to just name
+      if (!coords && name) {
+        coords = await geocode(mapboxgl, geocodeCacheRef, `${name}, South Africa`, vehicleLL)
+        console.log(`  ✅ Name geocoded:`, coords)
+      }
+      
+      // Last resort: just suburb
+      if (!coords && suburb) {
         coords = await geocode(mapboxgl, geocodeCacheRef, suburb, vehicleLL)
         console.log(`  ✅ Suburb geocoded:`, coords)
-      }
-      if (!coords && name) {
-        coords = await geocode(mapboxgl, geocodeCacheRef, name, vehicleLL)
-        console.log(`  ✅ Name geocoded:`, coords)
       }
       
       if (coords) {
@@ -1106,28 +1133,29 @@ export default function MapViewMapbox({
       el.className = 'route-marker'
       
       if (isVehicle) {
-        // Uber-style vehicle marker
+        // Vehicle marker - black circle with truck icon
         el.innerHTML = `
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <circle cx="20" cy="20" r="18" fill="${VEHICLE_COLOR}" stroke="white" stroke-width="3"/>
-            <text x="20" y="26" text-anchor="middle" fill="white" font-size="20" font-weight="bold">🚛</text>
+          <svg width="36" height="36" viewBox="0 0 36 36" style="display: block;">
+            <circle cx="18" cy="18" r="16" fill="${VEHICLE_COLOR}" stroke="white" stroke-width="2.5"/>
+            <path d="M12 16h-2v4h2v-4zm8-4h-6v8h2v2h2v-2h2v-8zm4 6v-2l-2-2h-1v4h3z" fill="white" transform="translate(4, 4) scale(1.2)"/>
           </svg>
         `
       } else if (isCustomer) {
-        // Uber-style pin marker with number
+        // Customer pin marker with number
         customerNum++
         el.innerHTML = `
-          <svg width="32" height="42" viewBox="0 0 32 42">
-            <path d="M16 0C7.2 0 0 7.2 0 16c0 12 16 26 16 26s16-14 16-26C32 7.2 24.8 0 16 0z" 
+          <svg width="28" height="38" viewBox="0 0 28 38" style="display: block;">
+            <path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 24 14 24s14-13.5 14-24C28 6.3 21.7 0 14 0z" 
                   fill="${CUSTOMER_COLOR}" stroke="white" stroke-width="2"/>
-            <circle cx="16" cy="16" r="10" fill="white"/>
-            <text x="16" y="21" text-anchor="middle" fill="${CUSTOMER_COLOR}" font-size="12" font-weight="bold">${customerNum}</text>
+            <circle cx="14" cy="14" r="9" fill="white"/>
+            <text x="14" y="18.5" text-anchor="middle" fill="${CUSTOMER_COLOR}" font-size="11" font-weight="bold">${customerNum}</text>
           </svg>
         `
-        el.style.marginTop = '-42px' // Anchor at bottom of pin
       }
       
       el.style.cursor = 'pointer'
+      
+      console.log(`📍 Placing ${isVehicle ? 'vehicle' : 'customer'} marker at precise coords: [${lng.toFixed(6)}, ${lat.toFixed(6)}]`)
       
       const marker = new mapboxgl.Marker({ 
         element: el, 
@@ -1176,13 +1204,12 @@ export default function MapViewMapbox({
       focusPlate
     })
     
-    lastRefreshKey.current = key
-    
     if (refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current)
     }
     
     refreshTimeoutRef.current = setTimeout(() => {
+      lastRefreshKey.current = key
       refreshRoutes()
     }, 300)
     
@@ -1230,11 +1257,19 @@ export default function MapViewMapbox({
         .route-marker {
           z-index: 100 !important;
         }
+        .route-marker svg {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
         .marker-outer {
           z-index: 1 !important;
         }
         .mapboxgl-marker.route-marker-container {
           z-index: 100 !important;
+        }
+        .mapboxgl-marker {
+          cursor: pointer;
         }
       `}</style>
     </div>

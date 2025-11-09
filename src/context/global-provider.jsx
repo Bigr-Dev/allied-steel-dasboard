@@ -172,6 +172,7 @@ const GlobalProvider = ({ children, data }) => {
       setId(null)
       setHref(null)
       setSelectedVehicle(null)
+      // Don't clear focus - let it persist so routes stay visible
     }
   }, [modalOpen])
 
