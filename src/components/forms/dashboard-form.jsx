@@ -80,7 +80,7 @@ const DashboardForm = ({ onCancel }) => {
   const { selectedVehicle, vehicles } = useGlobalContext()
 
   const vehiclesData = vehicles?.data
-
+  console.log('selectedVehicle :>> ', selectedVehicle)
   const [notes, setNotes] = useState('')
   const [customers, setCustomers] = useState(
     selectedVehicle?.customersData || []
@@ -312,9 +312,19 @@ const DashboardForm = ({ onCancel }) => {
                   </CardHeader>
                   <CardContent className="px-3 pb-3 pt-0">
                     {(() => {
-                      const targetPlate = selectedVehicle.vehicleData?.plate?.trim().toUpperCase()
+                      const targetPlate = selectedVehicle.vehicleData?.plate
+                        ?.trim()
+                        .toUpperCase()
                       const vehicle = vehiclesData.find((v) => {
-                        const vPlate = (v.license_plate || v.plate || v.reg_number || v.fleet_number || '').trim().toUpperCase()
+                        const vPlate = (
+                          v.license_plate ||
+                          v.plate ||
+                          v.reg_number ||
+                          v.fleet_number ||
+                          ''
+                        )
+                          .trim()
+                          .toUpperCase()
                         return vPlate === targetPlate
                       })
                       //console.log('vehicle :>> ', vehicle)
@@ -451,9 +461,19 @@ const DashboardForm = ({ onCancel }) => {
             <div className="border rounded-lg h-96 relative">
               <div className="w-full h-full rounded overflow-hidden">
                 {(() => {
-                  const targetPlate = selectedVehicle?.vehicleData?.plate?.trim().toUpperCase()
+                  const targetPlate = selectedVehicle?.vehicleData?.plate
+                    ?.trim()
+                    .toUpperCase()
                   const vehicle = vehiclesData?.find((v) => {
-                    const vPlate = (v.license_plate || v.plate || v.reg_number || v.fleet_number || '').trim().toUpperCase()
+                    const vPlate = (
+                      v.license_plate ||
+                      v.plate ||
+                      v.reg_number ||
+                      v.fleet_number ||
+                      ''
+                    )
+                      .trim()
+                      .toUpperCase()
                     return vPlate === targetPlate
                   })
                   const branchName = vehicle?.branch_name

@@ -554,23 +554,22 @@ const LoadAssignmentSingle = ({ id, data }) => {
   }
 
   const handleOptimisticMove = async (payload) => {
-    const { item_id, from_plan_unit_id, to_plan_unit_id } = payload
+    const { item_id, order_id, from_plan_unit_id, to_plan_unit_id } = payload
+
+    // Strip "order-" prefix for local state updates
+    const cleanOrderId = (order_id || item_id || '').replace(/^order-/, '')
 
     if (!from_plan_unit_id && to_plan_unit_id) {
-      // await handleAssignItem(item_id, to_plan_unit_id)
-      handleAssignItem(item_id, to_plan_unit_id)
+      handleAssignItem(cleanOrderId, to_plan_unit_id)
     } else if (from_plan_unit_id && !to_plan_unit_id) {
-      // await handleUnassignItem(item_id)
-      handleUnassignItem(item_id)
+      handleUnassignItem(cleanOrderId)
     } else if (
       from_plan_unit_id &&
       to_plan_unit_id &&
       from_plan_unit_id !== to_plan_unit_id
     ) {
-      handleUnassignItem(item_id)
-      handleAssignItem(item_id, to_plan_unit_id)
-      //  await handleUnassignItem(item_id)
-      //  await handleAssignItem(item_id, to_plan_unit_id)
+      handleUnassignItem(cleanOrderId)
+      handleAssignItem(cleanOrderId, to_plan_unit_id)
     }
   }
 
