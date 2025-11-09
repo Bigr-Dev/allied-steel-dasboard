@@ -456,8 +456,13 @@ export default function CardView({
               }
               const speed = Number(item?.live?.Speed ?? 0)
               const unit = unitByPlate.get(String(item.plate).toUpperCase())
-              console.log('Looking for plate:', String(item.plate).toUpperCase(), 'Found unit:', unit)
-              
+              console.log(
+                'Looking for plate:',
+                String(item.plate).toUpperCase(),
+                'Found unit:',
+                unit
+              )
+
               const showPlanContext =
                 selectedPlanId && selectedPlanId !== 'all' && unit
               const geozone = getGeoZone(item.live)
@@ -469,14 +474,16 @@ export default function CardView({
                 unit?.branch ||
                 'Branch'
 
-              const customerObjs = (unit?.orders || []).map(order => ({
-                customer_name: order.customer_name,
-                customer_id: order.customer_id,
-                customer_bp_code: order.customer_bp_code,
-                suburb_name: order.suburb_name,
-                address: order.address,
-                ...order
-              })).filter(c => c.customer_name)
+              const customerObjs = (unit?.orders || [])
+                .map((order) => ({
+                  customer_name: order.customer_name,
+                  customer_id: order.customer_id,
+                  customer_bp_code: order.customer_bp_code,
+                  suburb_name: order.suburb_name,
+                  address: order.address,
+                  ...order,
+                }))
+                .filter((c) => c.customer_name)
               const uniqueCustomers = Array.from(
                 new Map(
                   customerObjs.map((c) => [
