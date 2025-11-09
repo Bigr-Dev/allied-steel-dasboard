@@ -14,8 +14,8 @@ const API_URL = 'loads'
 // *****************************
 // load loads data
 // *****************************
-export const loadLoads = async (loadsDispatch, data) =>
-  loadAPI({
+export const loadLoads = async (loadsDispatch, data) => {
+  return loadAPI({
     dispatch: loadsDispatch,
     start: load_actions.fetchLoadsStart,
     success: load_actions.fetchLoadsSuccess,
@@ -23,7 +23,7 @@ export const loadLoads = async (loadsDispatch, data) =>
     errorMsg: 'Something went wrong, while fetching loads',
     data: data,
   })
-
+}
 // *****************************
 // fetch loads
 // *****************************

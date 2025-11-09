@@ -28,10 +28,12 @@ import { replaceHyphenWithUnderscore } from '@/hooks/replace-hyphen'
 import AssignmentForm from '../forms/assignment-form'
 import DashboardForm from '../forms/dashboard-form'
 import { useGlobalContext } from '@/context/global-context'
+import PlanCreationForm from '../forms/plan-creation-form'
 
 const DialogScreen = ({ open, onOpenChange, id, href }) => {
   const { selectedVehicle, vehicles } = useGlobalContext()
-  const pathname = href ? href : usePathname().split('/')[1]
+  const currentPath = usePathname()
+  const pathname = href ? href : currentPath.split('/')[1]
   const screen = replaceHyphenWithUnderscore(pathname)
   const vehiclesData = vehicles?.data
   // console.log('href :>> ', href)
@@ -52,7 +54,6 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
   // console.log('screen :>> ', screen)
 
   switch (screen) {
-    case '':
     case 'dashboard':
       return (
         <Modal>
@@ -138,16 +139,29 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
       )
 
     case 'load_assignment':
-      return (
-        <Modal>
-          <AssignmentForm
-            screen={screen}
-            id={id}
-            open={open}
-            onCancel={() => onOpenChange()}
-          />
-        </Modal>
-      )
+      if (pathname == 'load-assignment' && currentPath.split('/')[2]) {
+        return (
+          <Modal>
+            <AssignmentForm
+              screen={screen}
+              id={id}
+              open={open}
+              onCancel={() => onOpenChange()}
+            />
+          </Modal>
+        )
+      } else {
+        return (
+          <Modal>
+            <PlanCreationForm
+              screen={screen}
+              id={id}
+              open={open}
+              onCancel={() => onOpenChange()}
+            />
+          </Modal>
+        )
+      }
 
     default:
       return (

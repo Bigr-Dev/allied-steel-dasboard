@@ -54,125 +54,33 @@ const SinglePage = async ({ params }) => {
       return <LoadsPage id={id} />
 
     case 'load-assignment':
-      const assignment = await fetchServerData(`plans/`, 'POST', {
-        plan_id: id, // required
-        include_nested: true, // false => plan header only
-        include_idle: true, // only if include_nested=true
-      })
-      // if (id) {
-      //   console.log('id :>> ', id)
-      // } else {
-      //   console.log('plan :>> ')
-      // }
-
-      //console.log('assignment :>> ', assignment)
-      const plan = assignment?.data
-      // console.log('plan :>> ', plan)
-      // *********************
-      // Helper functions for load assignment stats
-      // *********************
-
-      // Count unique values helper
-      const uniqueCount = (arr) => new Set(arr.filter(Boolean)).size
-
-      const getTotalVehicles = (plan) => {
-        // vehicles are the assigned units
-        return Array.isArray(plan.assigned_units)
-          ? plan.assigned_units?.length
-          : 0
-      }
-
-      const getTotalRoutes = (plan) => {
-        //  console.log('plan.assigned_units :>> ', plan)
-        if (!Array.isArray(plan?.assigned_units)) return 0
-        const routes = []
-        plan.assigned_units.forEach((unit) => {
-          unit.customers?.forEach((c) => {
-            if (c.route_name) routes.push(c.route_name)
-          })
-        })
-        // also include unassigned routes
-        plan.unassigned?.forEach((item) => {
-          if (item.route_name) routes.push(item.route_name)
-        })
-        return uniqueCount(routes)
-      }
-
-      const getTotalSuburbs = (plan) => {
-        if (!Array.isArray(plan.assigned_units)) return 0
-        const suburbs = []
-        plan.assigned_units.forEach((unit) => {
-          unit.customers?.forEach((c) => {
-            if (c.suburb_name) suburbs.push(c.suburb_name)
-          })
-        })
-        plan.unassigned?.forEach((item) => {
-          if (item.suburb_name) suburbs.push(item.suburb_name)
-        })
-        return uniqueCount(suburbs)
-      }
-
-      const getTotalClients = (plan) => {
-        const clients = []
-        plan.assigned_units?.forEach((unit) => {
-          unit.customers?.forEach((c) => {
-            if (c.customer_name) clients.push(c.customer_name)
-          })
-        })
-        plan.unassigned?.forEach((item) => {
-          if (item.customer_name) clients.push(item.customer_name)
-        })
-        return uniqueCount(clients)
-      }
-
-      const getIdleUnits = (plan) => {
-        const orders = []
-        plan?.idle_units_by_branch?.forEach((unit) => {
-          orders.push(unit)
-        })
-
-        return uniqueCount(orders)
-      }
-
-      const getTotalOrders = (plan) => {
-        const orders = []
-        plan.assigned_units?.forEach((unit) => {
-          unit.customers?.forEach((c) => {
-            c.orders?.forEach((o) => orders.push(o.order_id))
-          })
-        })
-        plan.unassigned?.forEach((item) => {
-          if (item.order_id) orders.push(item.order_id)
-        })
-        return uniqueCount(orders)
-      }
-
+      const assignment = await fetchServerData(`plans/${id}`, 'GET')
+      //  console.log('assignment?.data?.units :>> ', assignment?.data)
       const screenStats = [
         {
           title: 'Assigned Vehicles',
-          value: getTotalVehicles(plan) || 0,
+          value: assignment?.data?.units?.length || 0,
           icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
         {
           title: 'Unassigned Vehicles',
-          value: getIdleUnits(plan) || 0,
+          value: assignment?.data?.unassigned_units?.length || 0,
           icon: (
             <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
           ),
         },
         {
           title: 'Assigned Items',
-          value: getTotalOrders(plan) || 0,
+          value: assignment?.data?.assigned_orders?.length || 0,
           icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
         },
         {
           title: 'Unassigned Items',
-          value: plan?.unassigned?.length || 0,
+          value: assignment?.data?.unassigned_orders?.length || 0,
           icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
         },
       ]
-
-      // console.log('assignment?.data :page_id>> ', assignment?.data)
+      // console.log('assignment :>> ', assignment?.data?.plan)
       return (
         <>
           {assignment?.data && (
@@ -180,8 +88,8 @@ const SinglePage = async ({ params }) => {
               {/* <div className="flex flex-col md:flex-row justify-between items-end gap-4 p-1"> */}
               <DetailActionBar
                 id={id}
-                title={assignment?.data?.plan?.notes}
-                description={'N/A'}
+                title={assignment?.data?.plan?.plan_name || 'Load Assignment'}
+                description={assignment?.data?.plan?.notes || 'plan details'}
               />
               {/* </div> */}
 

@@ -176,13 +176,26 @@ async function waitForStyleReady(map) {
 /* ===================== Unit & geocoding helpers ===================== */
 
 function unitForPlate(assignedUnits, plate) {
-  const P = String(plate || '').toUpperCase()
+  const P = String(plate || '').trim().toUpperCase()
+  console.log('🔍 unitForPlate searching for:', P, 'in', assignedUnits?.length, 'units')
+  
   for (const u of assignedUnits || []) {
-    const h = normalizeName(u?.horse?.plate).toUpperCase()
-    const r = normalizeName(u?.rigid?.plate).toUpperCase()
-    if (h && h === P) return u
-    if (r && r === P) return u
+    const h = String(u?.horse?.plate || '').trim().toUpperCase()
+    const r = String(u?.rigid?.plate || '').trim().toUpperCase()
+    
+    console.log('🔍 Checking unit:', { horse: h, rigid: r, customers: u?.customers?.length })
+    
+    if (h && h === P) {
+      console.log('✅ Found unit by horse plate:', h)
+      return u
+    }
+    if (r && r === P) {
+      console.log('✅ Found unit by rigid plate:', r)
+      return u
+    }
   }
+  
+  console.log('❌ No unit found for plate:', P)
   return null
 }
 
@@ -432,27 +445,22 @@ export default function MapViewMapbox({
   useEffect(() => {
     const handler = (e) => {
       const plate = e?.detail?.plate
-      const plateUpper = plate ? String(plate).toUpperCase() : ''
-      // Focus event received
+      console.log('🎯 Focus event received:', plate)
       
       if (!plate || plate === null) {
+        console.log('🎯 Clearing focus')
         setFocusPlate('')
         setRouteData(null)
         return
       }
       
-      // Find card by comparing uppercase versions
-      const card = validVehicles.find((v) => String(v.plate).toUpperCase() === plateUpper)
-      // Card found for focus
-      
-      if (card) {
-        setFocusPlate(plateUpper)
-        // Route refresh will be handled by useEffect dependency
-      }
+      const plateUpper = String(plate).toUpperCase()
+      console.log('🎯 Setting focus to:', plateUpper)
+      setFocusPlate(plateUpper)
     }
     window.addEventListener('fleet:focusPlate', handler)
     return () => window.removeEventListener('fleet:focusPlate', handler)
-  }, [validVehicles, selectedPlanId])
+  }, [])
 
   /* --------------------- init / cleanup map --------------------- */
   useEffect(() => {
@@ -870,25 +878,36 @@ export default function MapViewMapbox({
     if (!map) return
     const myGen = ++routesGenerationRef.current
 
+    console.log('🗺️ refreshRoutes called:', { selectedPlanId, focusPlate, assignedUnitsCount: assignedUnits?.length })
+
     await waitForStyleReady(map)
     if (!map.isStyleLoaded()) return
     
     clearAllRoutes()
     
     // Only show routes if plan is selected and vehicle is focused
-    if (!selectedPlanId || selectedPlanId === 'all' || !focusPlate) {
+    if (!selectedPlanId || selectedPlanId === 'all') {
+      drawMarkers()
+      return
+    }
+    
+    if (!focusPlate) {
       drawMarkers()
       return
     }
 
     const focusedVehicle = validVehicles.find(v => String(v.plate).toUpperCase() === focusPlate)
+    console.log('🗺️ focusedVehicle found:', focusedVehicle?.plate)
     if (!focusedVehicle) {
+      console.log('🗺️ No focused vehicle found for plate:', focusPlate)
       drawMarkers()
       return
     }
 
     const unit = unitForPlate(assignedUnits, focusedVehicle.plate)
+    console.log('🗺️ unit found:', unit ? 'YES' : 'NO', 'customers:', unit?.customers?.length)
     if (!unit || !unit.customers?.length) {
+      console.log('🗺️ No unit or customers found')
       drawMarkers()
       return
     }
@@ -1075,6 +1094,12 @@ export default function MapViewMapbox({
   const refreshTimeoutRef = useRef(null)
   
   useEffect(() => {
+    console.log('🔄 Route refresh triggered by dependency change:', {
+      selectedPlanId,
+      assignedUnitsLength: assignedUnits?.length,
+      focusPlate
+    })
+    
     if (refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current)
     }

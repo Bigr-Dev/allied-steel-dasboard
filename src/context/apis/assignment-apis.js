@@ -24,21 +24,6 @@ export const loadAssignments = async (assignmentDispatch, data) =>
 // *****************************
 // auto assign loads
 // *****************************
-export const autoAssignLoads = async (assignmentDispatch, data) =>
-  postApi({
-    dispatch: assignmentDispatch,
-    start: assignment_actions.autoAssignLoadsStart,
-    success: assignment_actions.addPlanSuccess,
-    successMsg: 'success',
-    failure: assignment_actions.autoAssignLoadsFailure,
-    errorMsg: 'Something went wrong, while fetching the assignment plan',
-    url: `/plans/auto-assign`,
-    data,
-  })
-
-// *****************************
-// auto assign loads
-// *****************************
 export const addPlan = async (assignmentDispatch, data) =>
   postApi({
     dispatch: assignmentDispatch,
@@ -49,6 +34,32 @@ export const addPlan = async (assignmentDispatch, data) =>
     errorMsg: `Something went wrong, while adding ${
       data?.notes || 'the assignment plan'
     }`,
+    url: `/plans/add-plan`,
+    data,
+  })
+
+// *****************************
+// auto assign loads
+// *****************************
+export const autoAssignPlan = async (assignmentDispatch, data) =>
+  postApi({
+    dispatch: assignmentDispatch,
+    start: assignment_actions.autoAssignLoadsStart,
+    success: assignment_actions.addPlanSuccess,
+    successMsg: 'success',
+    failure: assignment_actions.autoAssignLoadsFailure,
+    errorMsg: 'Something went wrong, while fetching the assignment plan',
+    url: `/plans/auto-assign`,
+    data,
+  })
+export const autoAssignLoads = async (assignmentDispatch, data) =>
+  postApi({
+    dispatch: assignmentDispatch,
+    start: assignment_actions.autoAssignLoadsStart,
+    success: assignment_actions.addPlanSuccess,
+    successMsg: 'success',
+    failure: assignment_actions.autoAssignLoadsFailure,
+    errorMsg: 'Something went wrong, while fetching the assignment plan',
     url: `/plans/auto-assign`,
     data,
   })

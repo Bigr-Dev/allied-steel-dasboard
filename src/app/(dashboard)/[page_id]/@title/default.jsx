@@ -121,7 +121,7 @@ const PageTitle = () => {
     }
   } else if (pathname.includes('load-assignment')) {
     if (params?.id) {
-      const loads = grouped_loads?.data.find((item) => item.id === params.id)
+      //const loads = grouped_loads?.data.find((item) => item.id === params.id)
       titleSection = {
         ...assignment?.titleSection,
         // title: assignment?.name,

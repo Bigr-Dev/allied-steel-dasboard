@@ -1,6 +1,8 @@
 import Cookies from 'js-cookie'
 
 export async function fetchData(url, method, data = null) {
+  console.log('data :>> ', data)
+  console.log('data :>> ', typeof data)
   // Retrieve the access token from cookies if any
   const token = Cookies.get('access_token') // Directly use Cookies.get() instead of await
   // console.log('url :>> ', url)

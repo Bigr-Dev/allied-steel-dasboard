@@ -20,6 +20,144 @@ import { createPortal } from 'react-dom'
 import { useAssignmentPlan } from '@/hooks/assignment-plan/use-assignment-plan'
 
 // helpers
+// Take a unit from buildPlanPayload and make it look like what VehicleCard expects
+function hydrateUnitFromPlanPayload(rawUnit) {
+  const vehicle = rawUnit.vehicle || null
+  const trailer = rawUnit.trailer || null
+  const vehicleType = rawUnit.vehicle_type
+
+  // capacity_kg rule: horse uses trailer’s capacity, rigid uses its own
+  const capacity_kg =
+    vehicleType === 'horse'
+      ? Number(trailer?.capacity_kg ?? 0)
+      : Number(vehicle?.capacity_kg ?? 0)
+
+  // Build customers -> orders -> items from rawUnit.orders[].lines[]
+  const customersMap = new Map()
+
+  ;(rawUnit.orders || []).forEach((order) => {
+    const key = [
+      order.customer_id || '',
+      order.customer_name || '',
+      order.route_name || '',
+      order.suburb_name || '',
+    ].join('|')
+
+    if (!customersMap.has(key)) {
+      customersMap.set(key, {
+        customer_id: order.customer_id,
+        customer_name: order.customer_name,
+        route_name: order.route_name,
+        suburb_name: order.suburb_name,
+        orders: [],
+      })
+    }
+
+    const customer = customersMap.get(key)
+
+    const items = (order.lines || []).map((line) => {
+      const weight = Number(line.weight || 0)
+      return {
+        item_id: line.order_line_id,
+        description: line.description,
+        assigned_weight_kg: weight,
+        assignment_id: `server-${line.order_line_id}`,
+        order_number: order.sales_order_number,
+        order_id: order.order_id,
+      }
+    })
+
+    const totalWeight = items.reduce(
+      (sum, it) => sum + (it.assigned_weight_kg || 0),
+      0
+    )
+
+    customer.orders.push({
+      order_id: order.order_id,
+      total_assigned_weight_kg: totalWeight,
+      items,
+    })
+  })
+
+  const customers = Array.from(customersMap.values())
+
+  const used_capacity_kg = customers
+    .flatMap((c) => c.orders || [])
+    .flatMap((o) => o.items || [])
+    .reduce((sum, it) => sum + (it.assigned_weight_kg || 0), 0)
+
+  const unit_type =
+    vehicleType === 'rigid'
+      ? 'rigid'
+      : vehicleType === 'horse'
+      ? trailer
+        ? 'horse+trailer'
+        : 'horse'
+      : 'unknown'
+
+  // Give VehicleCard the shape it expects: rigid / horse / trailer objects with fleet_number & plate
+  const rigid =
+    vehicleType === 'rigid' && vehicle
+      ? {
+          ...vehicle,
+          fleet_number: vehicle.fleet_number || vehicle.reg_number,
+          plate: vehicle.plate || vehicle.license_plate,
+        }
+      : null
+
+  const horse =
+    vehicleType === 'horse' && vehicle
+      ? {
+          ...vehicle,
+          fleet_number: vehicle.fleet_number || vehicle.reg_number,
+          plate: vehicle.plate || vehicle.license_plate,
+        }
+      : null
+
+  const normTrailer = trailer
+    ? {
+        ...trailer,
+        fleet_number: trailer.fleet_number || trailer.reg_number,
+        plate: trailer.plate || trailer.license_plate,
+      }
+    : null
+
+  return {
+    ...rawUnit,
+    unit_type,
+    rigid,
+    horse,
+    trailer: normTrailer,
+    customers,
+    capacity_kg,
+    used_capacity_kg,
+  }
+}
+
+// Build the bucket items for UnassignedList from buildPlanPayload.unassigned_orders
+// IMPORTANT: requires backend to attach `lines` to each unassigned order (same as units.orders)
+function buildUnassignedItems(unassignedOrders = []) {
+  const items = []
+
+  unassignedOrders.forEach((order) => {
+    ;(order.lines || []).forEach((line) => {
+      items.push({
+        item_id: line.order_line_id,
+        description: line.description,
+        weight_left: Number(line.weight || 0),
+        volume_left: null,
+        order_id: order.order_id,
+        order_number: order.sales_order_number,
+        route_name: order.route_name,
+        suburb_name: order.suburb_name,
+        customer_id: order.customer_id,
+        customer_name: order.customer_name,
+      })
+    })
+  })
+
+  return items
+}
 
 async function commitImmediateMove(planId, payload, fetchData) {
   const { item_id, weight_kg, from_plan_unit_id, to_plan_unit_id } = payload
@@ -249,9 +387,9 @@ const LoadAssignmentSingle = ({ id, data }) => {
   const { unassignAllFromUnit } = useAssignmentPlan()
 
   const { toast } = useToast()
-
-  const [assignedUnits, setAssignedUnits] = useState(data?.assigned_units || [])
-  const [unassigned, setUnassigned] = useState(data?.unassigned || [])
+  console.log('data :>> ', data)
+  const [assignedUnits, setAssignedUnits] = useState(data?.units || [])
+  const [unassigned, setUnassigned] = useState(data?.unassigned_orders || [])
 
   const [plan, setPlan] = useState(data?.plan || null)
   const [activeItem, setActiveItem] = useState(null)
@@ -260,19 +398,19 @@ const LoadAssignmentSingle = ({ id, data }) => {
 
   const initialSnapshotRef = useRef({
     plan: data?.plan || null,
-    assigned_units: JSON.parse(JSON.stringify(data?.assigned_units || [])),
-    unassigned: JSON.parse(JSON.stringify(data?.unassigned || [])),
+    units: JSON.parse(JSON.stringify(data?.units || [])),
+    unassigned_orders: JSON.parse(JSON.stringify(data?.unassigned_orders || [])),
   })
 
   // If the page receives new data (e.g., navigation), refresh the snapshot
   useEffect(() => {
     initialSnapshotRef.current = {
       plan: data?.plan || null,
-      assigned_units: JSON.parse(JSON.stringify(data?.assigned_units || [])),
-      unassigned: JSON.parse(JSON.stringify(data?.unassigned || [])),
+      units: JSON.parse(JSON.stringify(data?.units || [])),
+      unassigned_orders: JSON.parse(JSON.stringify(data?.unassigned_orders || [])),
     }
-    setAssignedUnits(data?.assigned_units || [])
-    setUnassigned(data?.unassigned || [])
+    setAssignedUnits(data?.units || [])
+    setUnassigned(data?.unassigned_orders || [])
     setPlan(data?.plan || null)
     setChanges([])
     setUndoStack([])
@@ -282,12 +420,12 @@ const LoadAssignmentSingle = ({ id, data }) => {
   useEffect(() => {
     setAssignmentPreview({
       plan,
-      assigned_units: assignedUnits,
-      unassigned: unassigned,
+      units: assignedUnits,
+      unassigned_orders: unassigned,
     })
   }, [assignedUnits, unassigned, plan, setAssignmentPreview])
 
-  const planned_unit = assignedUnits?.find((v) => v.plan_unit_id === id)
+  const planned_unit = assignedUnits?.find((v) => v.planned_unit_id === id)
 
   const onUnassignAll = unassignAllFromUnit
 
@@ -310,9 +448,9 @@ const LoadAssignmentSingle = ({ id, data }) => {
     const map = new Map()
 
     // Add unassigned items
-    unassigned.forEach((item) => {
-      map.set(item.item_id, {
-        item,
+    unassigned.forEach((order) => {
+      map.set(order.order_id, {
+        item: order,
         sourceType: 'unassigned',
         sourceVehicleId: null,
       })
@@ -320,19 +458,19 @@ const LoadAssignmentSingle = ({ id, data }) => {
 
     // Add assigned items
     assignedUnits.forEach((unit) => {
-      unit.customers.forEach((customer) => {
-        customer.orders.forEach((order) => {
-          order.items.forEach((item) => {
-            map.set(item.item_id, {
-              item: {
-                ...item,
-                customer_name: customer.customer_name,
-                route_name: customer.route_name,
-                suburb_name: customer.suburb_name,
-              },
-              sourceType: 'assigned',
-              sourceVehicleId: unit.plan_unit_id,
-            })
+      unit.orders?.forEach((order) => {
+        order.order_lines?.forEach((line) => {
+          map.set(line.order_line_id, {
+            item: {
+              ...line,
+              customer_name: order.customer_name,
+              route_name: order.route_name,
+              suburb_name: order.suburb_name,
+              order_id: order.order_id,
+              sales_order_number: order.sales_order_number,
+            },
+            sourceType: 'assigned',
+            sourceVehicleId: unit.planned_unit_id,
           })
         })
       })
@@ -413,85 +551,56 @@ const LoadAssignmentSingle = ({ id, data }) => {
   }
 
   const handleAssignItem = (itemId, vehicleId) => {
-    const meta = unassigned.find((x) => String(x.item_id) === String(itemId))
+    const meta = unassigned.find((x) => String(x.order_id) === String(itemId))
     if (!meta) return
 
     // remove from unassigned
     setUnassigned((prev) =>
-      prev.filter((x) => String(x.item_id) !== String(itemId))
+      prev.filter((x) => String(x.order_id) !== String(itemId))
     )
 
-    // add into the destination unit immutably
+    // add into the destination unit
     setAssignedUnits((prev) =>
       prev.map((u) => {
-        if (String(u.plan_unit_id) !== String(vehicleId)) return u
-        const { nextCustomers, addedWeight } = addItemIntoUnitCustomers(
-          u.customers || [],
-          meta
-        )
+        if (String(u.planned_unit_id) !== String(vehicleId)) return u
         return {
           ...u,
-          customers: nextCustomers,
+          orders: [...(u.orders || []), meta],
           used_capacity_kg:
-            Number(u.used_capacity_kg || 0) + Number(addedWeight || 0),
+            Number(u.used_capacity_kg || 0) + Number(meta.total_weight || 0),
         }
       })
     )
   }
 
   const handleUnassignItem = (itemId) => {
-    const metaFromUnits =
-      assignedUnits.flatMap((u) =>
-        (u.customers || []).flatMap((c) =>
-          (c.orders || []).flatMap((o) =>
-            (o.items || [])
-              .filter((it) => String(it.item_id) === String(itemId))
-              .map((it) => ({
-                item_id: it.item_id,
-                description: it.description,
-                weight_left: it.assigned_weight_kg,
-                customer_id: c.customer_id,
-                customer_name: c.customer_name,
-                route_name: c.route_name,
-                suburb_name: c.suburb_name,
-                order_id: o.order_id,
-                order_number: it.order_number,
-              }))
-          )
-        )
-      )[0] || null
+    let removedOrder = null
 
     setAssignedUnits((prev) =>
       prev.map((u) => {
-        const { nextCustomers, removedWeight } = removeItemFromUnitCustomers(
-          u.customers || [],
-          itemId
+        const orderIndex = (u.orders || []).findIndex(
+          (o) => String(o.order_id) === String(itemId)
         )
-        if (!removedWeight) return u
+        if (orderIndex === -1) return u
+        
+        removedOrder = u.orders[orderIndex]
         return {
           ...u,
-          customers: nextCustomers,
+          orders: u.orders.filter((_, index) => index !== orderIndex),
           used_capacity_kg: Math.max(
             0,
-            Number(u.used_capacity_kg || 0) - Number(removedWeight || 0)
+            Number(u.used_capacity_kg || 0) - Number(removedOrder.total_weight || 0)
           ),
         }
       })
     )
 
-    setUnassigned((prev) =>
-      prev.some((x) => String(x.item_id) === String(itemId))
-        ? prev
-        : [
-            ...prev,
-            metaFromUnits || {
-              item_id: itemId,
-              description: '',
-              weight_left: 0,
-              order_number: 'No Order',
-            },
-          ]
-    )
+    if (removedOrder) {
+      setUnassigned((prev) => [
+        ...prev.filter((x) => String(x.order_id) !== String(itemId)),
+        removedOrder,
+      ])
+    }
   }
 
   const handleUndo = () => {
@@ -532,19 +641,19 @@ const LoadAssignmentSingle = ({ id, data }) => {
               <div className="">
                 {planned_unit && (
                   <VehicleCard
-                    key={planned_unit.plan_unit_id}
-                    unit={planned_unit}
+                    key={planned_unit.planned_unit_id}
+                    unit={hydrateUnitFromPlanPayload(planned_unit)}
                     onUnitChange={(updatedUnit) => {
                       setAssignedUnits((prev) =>
                         prev.map((u) =>
-                          u.plan_unit_id === updatedUnit.plan_unit_id
+                          u.planned_unit_id === updatedUnit.planned_unit_id
                             ? updatedUnit
                             : u
                         )
                       )
                     }}
                     onUnassignAll={() =>
-                      onUnassignAll(planned_unit.plan_unit_id)
+                      onUnassignAll(planned_unit.planned_unit_id)
                     }
                   />
                 )}
