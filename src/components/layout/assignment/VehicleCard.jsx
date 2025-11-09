@@ -47,7 +47,7 @@ export const VehicleCard = memo(function VehicleCard({
   onUnitChange,
   onUnassignAll,
 }) {
-  console.log('unit :>> ', unit)
+  //console.log('unit :>> ', unit)
   const [isLoading, setIsLoading] = useState(false)
   const [expandedRoutes, setExpandedRoutes] = useState(new Set())
   const { toast } = useToast()
@@ -56,15 +56,19 @@ export const VehicleCard = memo(function VehicleCard({
     id: `unit:${unit.planned_unit_id || unit.plan_unit_id}`,
   })
 
-  const capacityPercentage = ((unit.used_capacity_kg || 0) / (unit.capacity_kg || 1)) * 100
+  const capacityPercentage =
+    ((unit.used_capacity_kg || 0) / (unit.capacity_kg || 1)) * 100
 
   const isOverCapacity = capacityPercentage > 100
   const isNearCapacity = capacityPercentage >= 85
 
   const getVehicleDisplay = () => {
     const vehicleType = unit.vehicle_type || unit.unit_type
-    
-    if ((vehicleType === 'rigid' || unit.unit_type === 'rigid') && (unit.rigid || unit.vehicle)) {
+
+    if (
+      (vehicleType === 'rigid' || unit.unit_type === 'rigid') &&
+      (unit.rigid || unit.vehicle)
+    ) {
       const vehicle = unit.rigid || unit.vehicle
       return {
         icon: <Truck className="h-4 w-4" />,
@@ -72,16 +76,23 @@ export const VehicleCard = memo(function VehicleCard({
         plate: vehicle.plate || vehicle.license_plate || 'N/A',
         type: 'Rigid',
       }
-    } else if ((vehicleType === 'horse' || unit.unit_type === 'horse+trailer') && (unit.horse || unit.vehicle)) {
+    } else if (
+      (vehicleType === 'horse' || unit.unit_type === 'horse+trailer') &&
+      (unit.horse || unit.vehicle)
+    ) {
       const horse = unit.horse || unit.vehicle
       const trailer = unit.trailer
       return {
         icon: <Truck className="h-4 w-4" />,
-        name: trailer 
-          ? `${horse.fleet_number || horse.reg_number}+${trailer.fleet_number || trailer.reg_number}`
+        name: trailer
+          ? `${horse.fleet_number || horse.reg_number}+${
+              trailer.fleet_number || trailer.reg_number
+            }`
           : horse.fleet_number || horse.reg_number || 'Unknown',
         plate: trailer
-          ? `${horse.plate || horse.license_plate} / ${trailer.plate || trailer.license_plate}`
+          ? `${horse.plate || horse.license_plate} / ${
+              trailer.plate || trailer.license_plate
+            }`
           : horse.plate || horse.license_plate || 'N/A',
         type: trailer ? 'Horse+Trailer' : 'Horse',
       }
@@ -121,9 +132,12 @@ export const VehicleCard = memo(function VehicleCard({
   const getTotalItems = () => {
     if (unit.summary?.total_items) return unit.summary.total_items
     return (unit.customers || []).reduce((total, customer) => {
-      return total + (customer.orders || []).reduce((orderTotal, order) => {
-        return orderTotal + (order.items || []).length
-      }, 0)
+      return (
+        total +
+        (customer.orders || []).reduce((orderTotal, order) => {
+          return orderTotal + (order.items || []).length
+        }, 0)
+      )
     }, 0)
   }
 
@@ -140,7 +154,9 @@ export const VehicleCard = memo(function VehicleCard({
   const getDriverInfo = () => {
     if (unit.driver) {
       return {
-        name: `${unit.driver.name || ''} ${unit.driver.last_name || ''}`.trim() || 'No driver assigned',
+        name:
+          `${unit.driver.name || ''} ${unit.driver.last_name || ''}`.trim() ||
+          'No driver assigned',
         source: unit.vehicle_type || unit.unit_type,
       }
     }
@@ -334,7 +350,8 @@ export const VehicleCard = memo(function VehicleCard({
                   : 'text-foreground'
               }`}
             >
-              {(unit.used_capacity_kg || 0).toFixed(2)}kg / {(unit.capacity_kg || 0).toFixed(2)}kg
+              {(unit.used_capacity_kg || 0).toFixed(2)}kg /{' '}
+              {(unit.capacity_kg || 0).toFixed(2)}kg
             </span>
           </div>
           <ProgressBar
@@ -441,56 +458,36 @@ export const VehicleCard = memo(function VehicleCard({
                             </Badge>
                           </div>
 
-                          {/* Orders and Items */}
-                          {customer.orders.map((order) => {
-                            // Group items by order number
-                            const itemsByOrderNumber = order.items.reduce(
-                              (acc, item) => {
-                                const orderNum = item.order_number || 'No Order'
-                                if (!acc[orderNum]) acc[orderNum] = []
-                                acc[orderNum].push(item)
-                                return acc
-                              },
-                              {}
-                            )
-
-                            return (
-                              <div
-                                key={`${unit.plan_unit_id}:${order.order_id}`}
-                                className="ml-4 space-y-2"
-                              >
-                                {Object.entries(itemsByOrderNumber).map(
-                                  ([orderNumber, items]) => (
-                                    <div
-                                      key={`${order.order_id}:${orderNumber}`}
-                                      className="space-y-1"
-                                    >
-                                      <div className="text-xs font-medium text-muted-foreground">
-                                        Order #{orderNumber}
-                                      </div>
-                                      {items.map((item) => (
-                                        <DraggableItemRow
-                                          key={`${unit.plan_unit_id}:${order.order_id}:${item.item_id}`}
-                                          item={item}
-                                          customer={customer}
-                                          containerId={`unit:${unit.plan_unit_id}`}
-                                          isDraggable
-                                        />
-                                      ))}
-                                    </div>
-                                  )
-                                )}
-
-                                {/* Order Subtotal */}
-                                <div className="flex items-center justify-between text-xs text-muted-foreground ml-4 pt-1 border-t border-border/50">
-                                  <span>Order Total</span>
-                                  <span className="font-medium">
-                                    {order.total_assigned_weight_kg}kg
-                                  </span>
-                                </div>
-                              </div>
-                            )
-                          })}
+                          {/* Orders */}
+                          {customer.orders.map((order) => (
+                            <DraggableItemRow
+                              key={`${unit.planned_unit_id}:${order.order_id}`}
+                              item={{
+                                id: `order-${order.order_id}`,
+                                order_number:
+                                  order.items?.[0]?.order_number || 'N/A',
+                                order_id: order.order_id,
+                                items: order.items || [],
+                                itemCount: order.items?.length || 0,
+                                totalWeight:
+                                  order.total_assigned_weight_kg || 0,
+                                customer_name: customer.customer_name,
+                                route_name: customer.route_name,
+                                suburb_name: customer.suburb_name,
+                                weight_left:
+                                  order.total_assigned_weight_kg || 0,
+                                description: `Order ${
+                                  order.items?.[0]?.order_number || 'N/A'
+                                } - ${customer.customer_name} (${
+                                  order.items?.length || 0
+                                } items)`,
+                                isOrderGroup: true,
+                              }}
+                              containerId={`unit:${unit.planned_unit_id}`} // FIX: Use planned_unit_id instead of plan_unit_id
+                              isDraggable
+                              isOrderGroup
+                            />
+                          ))}
                         </div>
                       ))}
                     </div>

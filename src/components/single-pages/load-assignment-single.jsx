@@ -160,64 +160,72 @@ function buildUnassignedItems(unassignedOrders = []) {
 }
 
 async function commitImmediateMove(planId, payload, fetchData) {
-  const { item_id, weight_kg, from_plan_unit_id, to_plan_unit_id } = payload
+  const { item_id, order_id, from_plan_unit_id, to_plan_unit_id } = payload
 
-  // A) Bucket → Unit (assign)  ✅ working
-  if (!from_plan_unit_id && to_plan_unit_id) {
-    await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
-      plan_id: planId, // REQUIRED by bulk-assign
-      assignments: [
-        {
-          plan_unit_id: to_plan_unit_id,
-          items: [{ item_id, weight_kg, note: 'manual' }],
-        },
-      ],
-      customerUnitCap: 0, // skip cap to avoid DB join ambiguity; set >0 if you want caps enforced
-      // enforce_family: false, // optional
-    })
-    return
-  }
+  console.log('payload :>> ', payload)
 
-  // B) Unit → Bucket (unassign)  ✅ normalized shape
-  if (from_plan_unit_id && !to_plan_unit_id) {
-    await fetchData(`plans/${planId}/unassign`, 'POST', {
-      plan_id: planId, // include plan_id for clarity
-      items: [{ plan_unit_id: from_plan_unit_id, item_id }], // send as ARRAY
-      to_bucket: true,
-      bucket_reason: 'manual',
-      remove_empty_unit: true,
-    })
-    return
-  }
+  // Strip "order-" prefix if present
+  const cleanOrderId = (order_id || item_id || '').replace(/^order-/, '')
 
-  // C) Unit → Unit (move)  ✅ robust: unassign then bulk-assign
-  if (
-    from_plan_unit_id &&
-    to_plan_unit_id &&
-    from_plan_unit_id !== to_plan_unit_id
-  ) {
-    // 1) Unassign from source (no bucket write)
-    await fetchData(`plans/${planId}/unassign`, 'POST', {
-      plan_id: planId,
-      items: [{ plan_unit_id: from_plan_unit_id, item_id }],
-      to_bucket: false,
-      remove_empty_unit: true,
-    })
+  // Ensure we don't send 'undefined' string
+  const fromUnitId =
+    from_plan_unit_id && from_plan_unit_id !== 'undefined'
+      ? from_plan_unit_id
+      : null
+  const toUnitId =
+    to_plan_unit_id && to_plan_unit_id !== 'undefined' ? to_plan_unit_id : null
 
-    // 2) Assign to destination via bulk-assign
+  console.log('fromUnitId :>> ', fromUnitId)
+  console.log('toUnitId :>> ', toUnitId)
+
+  // A) Bucket → Unit (assign)
+  if (!fromUnitId && toUnitId) {
+    console.log('Case A: Bucket → Unit')
     await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
       plan_id: planId,
       assignments: [
         {
-          plan_unit_id: to_plan_unit_id,
-          items: [{ item_id, weight_kg, note: 'manual-move' }],
+          planned_unit_id: toUnitId,
+          orders: [{ order_id: cleanOrderId }],
         },
       ],
-      customerUnitCap: 0,
-      // enforce_family: false,
     })
     return
   }
+
+  // B) Unit → Bucket (unassign)
+  if (fromUnitId && !toUnitId) {
+    console.log('Case B: Unit → Bucket')
+    await fetchData(`plans/${planId}/unassign`, 'POST', {
+      plan_id: planId,
+      planned_unit_id: fromUnitId,
+      order_ids: [cleanOrderId],
+    })
+    return
+  }
+
+  // C) Unit → Unit (move)
+  if (fromUnitId && toUnitId && fromUnitId !== toUnitId) {
+    console.log('Case C: Unit → Unit')
+    await fetchData(`plans/${planId}/unassign`, 'POST', {
+      plan_id: planId,
+      planned_unit_id: fromUnitId,
+      order_ids: [cleanOrderId],
+    })
+
+    await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
+      plan_id: planId,
+      assignments: [
+        {
+          planned_unit_id: toUnitId,
+          orders: [{ order_id: cleanOrderId }],
+        },
+      ],
+    })
+    return
+  }
+
+  console.log('No matching case found!')
 }
 
 function removeItemFromUnitCustomers(customers = [], item_id) {
@@ -387,7 +395,7 @@ const LoadAssignmentSingle = ({ id, data }) => {
   const { unassignAllFromUnit } = useAssignmentPlan()
 
   const { toast } = useToast()
-  console.log('data :>> ', data)
+  // console.log('data :>> ', data)
   const [assignedUnits, setAssignedUnits] = useState(data?.units || [])
   const [unassigned, setUnassigned] = useState(data?.unassigned_orders || [])
 
@@ -399,7 +407,9 @@ const LoadAssignmentSingle = ({ id, data }) => {
   const initialSnapshotRef = useRef({
     plan: data?.plan || null,
     units: JSON.parse(JSON.stringify(data?.units || [])),
-    unassigned_orders: JSON.parse(JSON.stringify(data?.unassigned_orders || [])),
+    unassigned_orders: JSON.parse(
+      JSON.stringify(data?.unassigned_orders || [])
+    ),
   })
 
   // If the page receives new data (e.g., navigation), refresh the snapshot
@@ -407,7 +417,9 @@ const LoadAssignmentSingle = ({ id, data }) => {
     initialSnapshotRef.current = {
       plan: data?.plan || null,
       units: JSON.parse(JSON.stringify(data?.units || [])),
-      unassigned_orders: JSON.parse(JSON.stringify(data?.unassigned_orders || [])),
+      unassigned_orders: JSON.parse(
+        JSON.stringify(data?.unassigned_orders || [])
+      ),
     }
     setAssignedUnits(data?.units || [])
     setUnassigned(data?.unassigned_orders || [])
@@ -497,15 +509,27 @@ const LoadAssignmentSingle = ({ id, data }) => {
 
     const from = dragData.containerId
     const to = over.id
+
     if (from === to) return
 
-    // … (your capacity guard + undo snapshot stays unchanged)
-
     const move = {
-      item_id: dragData.item_id,
+      item_id: dragData.item_id || active.id,
+      order_id: dragData.order_id || active.id,
       weight_kg: dragData.weight,
-      from_plan_unit_id: from.startsWith('unit:') ? from.slice(5) : null,
-      to_plan_unit_id: to.startsWith('unit:') ? to.slice(5) : null,
+      from_plan_unit_id:
+        from === 'bucket:unassigned'
+          ? null
+          : from === 'unit:undefined'
+          ? id // Use the current page's unit ID
+          : from && from.startsWith('unit:')
+          ? from.slice(5)
+          : null,
+      to_plan_unit_id:
+        to === 'bucket:unassigned'
+          ? null
+          : to && to.startsWith('unit:')
+          ? to.slice(5)
+          : null,
     }
 
     // Optimistic local update (your existing helper)
@@ -582,14 +606,15 @@ const LoadAssignmentSingle = ({ id, data }) => {
           (o) => String(o.order_id) === String(itemId)
         )
         if (orderIndex === -1) return u
-        
+
         removedOrder = u.orders[orderIndex]
         return {
           ...u,
           orders: u.orders.filter((_, index) => index !== orderIndex),
           used_capacity_kg: Math.max(
             0,
-            Number(u.used_capacity_kg || 0) - Number(removedOrder.total_weight || 0)
+            Number(u.used_capacity_kg || 0) -
+              Number(removedOrder.total_weight || 0)
           ),
         }
       })
