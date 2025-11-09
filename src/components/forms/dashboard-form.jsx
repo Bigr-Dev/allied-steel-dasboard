@@ -312,10 +312,11 @@ const DashboardForm = ({ onCancel }) => {
                   </CardHeader>
                   <CardContent className="px-3 pb-3 pt-0">
                     {(() => {
-                      const vehicle = vehiclesData.find(
-                        (v) =>
-                          v.license_plate === selectedVehicle.vehicleData?.plate
-                      )
+                      const targetPlate = selectedVehicle.vehicleData?.plate?.trim().toUpperCase()
+                      const vehicle = vehiclesData.find((v) => {
+                        const vPlate = (v.license_plate || v.plate || v.reg_number || v.fleet_number || '').trim().toUpperCase()
+                        return vPlate === targetPlate
+                      })
                       //console.log('vehicle :>> ', vehicle)
                       const live = selectedVehicle.vehicleData?.live
                       const branchName = vehicle?.branch_name
@@ -450,11 +451,11 @@ const DashboardForm = ({ onCancel }) => {
             <div className="border rounded-lg h-96 relative">
               <div className="w-full h-full rounded overflow-hidden">
                 {(() => {
-                  const vehicle = vehiclesData?.find(
-                    (v) =>
-                      v.fleet_number === selectedVehicle?.vehicleData?.plate ||
-                      v.license_plate === selectedVehicle?.vehicleData?.plate
-                  )
+                  const targetPlate = selectedVehicle?.vehicleData?.plate?.trim().toUpperCase()
+                  const vehicle = vehiclesData?.find((v) => {
+                    const vPlate = (v.license_plate || v.plate || v.reg_number || v.fleet_number || '').trim().toUpperCase()
+                    return vPlate === targetPlate
+                  })
                   const branchName = vehicle?.branch_name
                   const displayBranch = branchName?.includes('Midvaal')
                     ? 'ASSM'

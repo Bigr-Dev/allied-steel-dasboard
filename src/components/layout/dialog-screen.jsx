@@ -164,6 +164,19 @@ const DialogScreen = ({ open, onOpenChange, id, href }) => {
       }
 
     default:
+      // If we have selectedVehicle data, show the dashboard form
+      if (selectedVehicle) {
+        return (
+          <Modal>
+            <DashboardForm
+              screen="dashboard"
+              id={id}
+              open={open}
+              onCancel={() => onOpenChange()}
+            />
+          </Modal>
+        )
+      }
       return (
         <Modal>
           <DialogDescription>Dialog form space</DialogDescription>

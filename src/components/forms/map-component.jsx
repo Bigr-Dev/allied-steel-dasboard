@@ -125,18 +125,15 @@ export default function MapComponent({ routeLocations = [], vehicleData = null, 
     markersRef.current = []
 
     // Clear existing route segments
-    if (routeLayerRef.current) {
-      try {
-        // Remove all route segments
-        for (let i = 0; i < 20; i++) {  // Assume max 20 segments
-          try {
-            map.removeLayer(`route-segment-${i}`)
-            map.removeSource(`route-segment-${i}`)
-          } catch {}
-        }
-        routeLayerRef.current = null
-      } catch {}
-    }
+    try {
+      for (let i = 0; i < 20; i++) {
+        const layerId = `route-segment-${i}`
+        const sourceId = `route-segment-${i}`
+        if (map.getLayer(layerId)) map.removeLayer(layerId)
+        if (map.getSource(sourceId)) map.removeSource(sourceId)
+      }
+      routeLayerRef.current = null
+    } catch {}
 
     const validLocations = routeLocations.filter(loc => 
       (loc.coordinates?.lat || loc.lat) && (loc.coordinates?.lng || loc.lng)
@@ -252,29 +249,33 @@ export default function MapComponent({ routeLocations = [], vehicleData = null, 
           const sourceId = `route-segment-${i}`
           const layerId = `route-segment-${i}`
           
-          map.addSource(sourceId, {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              properties: {},
-              geometry: route.geometry
-            }
-          })
+          if (!map.getSource(sourceId)) {
+            map.addSource(sourceId, {
+              type: 'geojson',
+              data: {
+                type: 'Feature',
+                properties: {},
+                geometry: route.geometry
+              }
+            })
+          }
 
-          map.addLayer({
-            id: layerId,
-            type: 'line',
-            source: sourceId,
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': segmentColor,
-              'line-width': 4,
-              'line-opacity': 0.8
-            }
-          })
+          if (!map.getLayer(layerId)) {
+            map.addLayer({
+              id: layerId,
+              type: 'line',
+              source: sourceId,
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+              },
+              paint: {
+                'line-color': segmentColor,
+                'line-width': 4,
+                'line-opacity': 0.8
+              }
+            })
+          }
         }
       }
       routeLayerRef.current = true
