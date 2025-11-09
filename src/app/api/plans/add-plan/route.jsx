@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { fetchServerData } from '../../_lib/server-fetch'
 
-const url = 'plans/auto-assign'
+const url = 'plans/add-plan'
 
 // *****************************
 // create plan

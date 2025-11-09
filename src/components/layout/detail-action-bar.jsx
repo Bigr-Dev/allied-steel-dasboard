@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Download, Edit } from 'lucide-react'
+import { ArrowLeft, Download, Edit, Plus } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 
 // components
@@ -149,15 +149,17 @@ const DetailActionBar = ({ id, title, description }) => {
         {pathname == 'load-assignment' && usePathname().split('/')[2] ? (
           <Button
             // variant="outline"
-            onClick={downloadPlan}
-            disabled={canEdit[0]?.access !== 'write'}
+            // onClick={downloadPlan}
+            onClick={() => onEdit({ id })}
+            // disabled={canEdit[0]?.access !== 'write'}
             className={'bg-[#003e69] hover:bg-[#428bca] text-white capitalize'}
           >
-            {loading ? <Spinner /> : <Download className="mr-2 h-4 w-4" />}
+            {/* {loading ? <Spinner /> : <Download className="mr-2 h-4 w-4" />} */}
+            <Plus className="mr-2 h-4 w-4" />
             {pathname == 'load-assignment' && usePathname().split('/')[3]
               ? 'Download Vehicle Plan'
               : pathname == 'load-assignment' && usePathname().split('/')[2]
-              ? 'Download Full Plan'
+              ? 'Assign Vehicles'
               : ` Edit ${pathname}`}
           </Button>
         ) : (

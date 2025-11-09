@@ -47,6 +47,7 @@ export const VehicleCard = memo(function VehicleCard({
   onUnitChange,
   onUnassignAll,
 }) {
+  console.log('unit :>> ', unit)
   const [isLoading, setIsLoading] = useState(false)
   const [expandedRoutes, setExpandedRoutes] = useState(new Set())
   const { toast } = useToast()

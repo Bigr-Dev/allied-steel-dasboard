@@ -247,7 +247,7 @@ function addItemIntoUnitCustomers(customers = [], meta) {
 const LoadAssignmentSingle = ({ id, data }) => {
   const { setAssignmentPreview, fetchData } = useGlobalContext()
   const { unassignAllFromUnit } = useAssignmentPlan()
-
+  console.log('data :>> ', data)
   const { toast } = useToast()
 
   const [assignedUnits, setAssignedUnits] = useState(data?.assigned_units || [])
@@ -271,8 +271,8 @@ const LoadAssignmentSingle = ({ id, data }) => {
       assigned_units: JSON.parse(JSON.stringify(data?.assigned_units || [])),
       unassigned: JSON.parse(JSON.stringify(data?.unassigned || [])),
     }
-    setAssignedUnits(data?.assigned_units || [])
-    setUnassigned(data?.unassigned || [])
+    setAssignedUnits(data?.units || [])
+    setUnassigned(data?.unassigned_orders || [])
     setPlan(data?.plan || null)
     setChanges([])
     setUndoStack([])
