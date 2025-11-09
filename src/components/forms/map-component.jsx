@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 let Mapbox
@@ -42,31 +42,50 @@ function makeMarkerEl(color, label) {
 
 async function fetchDirections(points, mapboxgl) {
   const token = mapboxgl.accessToken
-  if (!token || !Array.isArray(points) || points.length < 2) return null
+  if (!token || !Array.isArray(points) || points.length < 2) {
+    console.log('Invalid params for directions:', { token: !!token, points })
+    return null
+  }
 
   const coords = points.map((p) => `${p[0]},${p[1]}`).join(';')
-  const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?geometries=geojson&overview=full&access_token=${token}`
+  // Use driving profile with truck restrictions (avoid motorways with low bridges)
+  const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?geometries=geojson&overview=full&steps=true&exclude=motorway&access_token=${token}`
 
   try {
     const res = await fetch(url)
     const data = await res.json()
+    
+    if (data.code !== 'Ok') {
+      console.error('Mapbox Directions API error:', data)
+      return null
+    }
+    
     const route = data?.routes?.[0]
-    if (!route) return null
+    if (!route) {
+      console.log('No route found in response')
+      return null
+    }
+    
     return {
       geometry: route.geometry,
       distance: route.distance,
       duration: route.duration,
+      legs: route.legs,
+      steps: route.legs?.[0]?.steps || [],
     }
-  } catch {
+  } catch (err) {
+    console.error('Directions fetch error:', err)
     return null
   }
 }
 
-export default function MapComponent({ routeLocations = [], vehicleData = null, completedStops = [] }) {
+export default function MapComponent({ routeLocations = [], vehicleData = null, completedStops = [], onRouteInfoChange = null }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const markersRef = useRef([])
   const routeLayerRef = useRef(null)
+  const [routeInfo, setRouteInfo] = useState(null)
+  const [nextCustomer, setNextCustomer] = useState(null)
 
   useEffect(() => {
     let disposed = false
@@ -138,8 +157,13 @@ export default function MapComponent({ routeLocations = [], vehicleData = null, 
     const validLocations = routeLocations.filter(loc => 
       (loc.coordinates?.lat || loc.lat) && (loc.coordinates?.lng || loc.lng)
     )
+    
+    console.log('Valid locations for routing:', validLocations)
 
-    if (validLocations.length === 0) return
+    if (validLocations.length === 0) {
+      console.log('No valid locations with coordinates')
+      return
+    }
 
     const mapboxgl = await getMapbox()
     const bounds = new mapboxgl.LngLatBounds()
@@ -220,7 +244,11 @@ export default function MapComponent({ routeLocations = [], vehicleData = null, 
       bounds.extend([lng, lat])
     }
 
-    // Draw route segments with different colors
+    // Draw route segments with different colors and collect route info
+    let totalDistance = 0
+    let totalDuration = 0
+    let nextStop = null
+    
     if (validLocations.length >= 2) {
       for (let i = 0; i < validLocations.length - 1; i++) {
         const start = validLocations[i]
@@ -230,55 +258,77 @@ export default function MapComponent({ routeLocations = [], vehicleData = null, 
         const endPoint = [end.coordinates?.lng || end.lng, end.coordinates?.lat || end.lat]
         
         const route = await fetchDirections([startPoint, endPoint], mapboxgl)
+        console.log(`Route segment ${i}:`, { start, end, startPoint, endPoint, route })
+        
         if (route) {
-          // Determine segment color
-          let segmentColor = ROUTE_PENDING  // Default grey
+          totalDistance += route.distance
+          totalDuration += route.duration
           
-          if (completedStops.includes(i)) {
-            segmentColor = ROUTE_COMPLETED  // Green for completed
+          // Track next customer (first non-completed stop)
+          if (!nextStop && !completedStops.includes(i)) {
+            nextStop = {
+              location: end,
+              distance: route.distance,
+              duration: route.duration,
+              steps: route.steps,
+            }
           }
           
-          // Check if this is the return route (last segment back to depot)
+          // Determine segment color
+          let segmentColor = ROUTE_PENDING
+          if (completedStops.includes(i)) {
+            segmentColor = ROUTE_COMPLETED
+          }
           const isReturnRoute = i === validLocations.length - 2 && 
                                (end.name?.includes('Branch') || end.address?.includes('Road'))
-          
           if (isReturnRoute) {
-            segmentColor = ROUTE_RETURN  // Company color for return
+            segmentColor = ROUTE_RETURN
           }
           
           const sourceId = `route-segment-${i}`
           const layerId = `route-segment-${i}`
           
-          if (!map.getSource(sourceId)) {
-            map.addSource(sourceId, {
-              type: 'geojson',
-              data: {
-                type: 'Feature',
-                properties: {},
-                geometry: route.geometry
-              }
-            })
-          }
+          try {
+            if (!map.getSource(sourceId)) {
+              map.addSource(sourceId, {
+                type: 'geojson',
+                data: {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: route.geometry
+                }
+              })
+            }
 
-          if (!map.getLayer(layerId)) {
-            map.addLayer({
-              id: layerId,
-              type: 'line',
-              source: sourceId,
-              layout: {
-                'line-join': 'round',
-                'line-cap': 'round'
-              },
-              paint: {
-                'line-color': segmentColor,
-                'line-width': 4,
-                'line-opacity': 0.8
-              }
-            })
+            if (!map.getLayer(layerId)) {
+              map.addLayer({
+                id: layerId,
+                type: 'line',
+                source: sourceId,
+                layout: {
+                  'line-join': 'round',
+                  'line-cap': 'round'
+                },
+                paint: {
+                  'line-color': segmentColor,
+                  'line-width': 4,
+                  'line-opacity': 0.8
+                }
+              })
+              console.log(`Added route layer ${layerId} with color ${segmentColor}`)
+            }
+          } catch (err) {
+            console.error(`Error adding route layer ${layerId}:`, err)
           }
+        } else {
+          console.warn(`No route returned for segment ${i}`)
         }
       }
       routeLayerRef.current = true
+      const info = { totalDistance, totalDuration }
+      setRouteInfo(info)
+      setNextCustomer(nextStop)
+      if (onRouteInfoChange) onRouteInfoChange(info)
     }
 
     // Fit map to bounds
@@ -306,6 +356,46 @@ export default function MapComponent({ routeLocations = [], vehicleData = null, 
           </div>
         </div>
       )}
+      
+      {/* Next Customer Card */}
+      {nextCustomer && (
+        <div className="absolute bottom-4 left-4 z-20 bg-white rounded-lg shadow-lg p-4 max-w-sm">
+          <h3 className="font-semibold text-sm mb-2 text-[#003e69]">🚚 Next Stop</h3>
+          <div className="space-y-2 text-xs">
+            <div>
+              <span className="font-medium">{nextCustomer.location.display_name || nextCustomer.location.name}</span>
+              {nextCustomer.location.suburb && (
+                <span className="text-gray-600 ml-1">({nextCustomer.location.suburb})</span>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <div>
+                <span className="text-gray-600">Distance: </span>
+                <span className="font-medium">{(nextCustomer.distance / 1000).toFixed(1)} km</span>
+              </div>
+              <div>
+                <span className="text-gray-600">ETA: </span>
+                <span className="font-medium">{Math.round(nextCustomer.duration / 60)} min</span>
+              </div>
+            </div>
+            {nextCustomer.location.address && (
+              <div className="text-gray-600 text-[11px] border-t pt-2">
+                📍 {nextCustomer.location.address}
+              </div>
+            )}
+            {nextCustomer.steps && nextCustomer.steps.length > 0 && (
+              <div className="border-t pt-2 mt-2">
+                <div className="text-[10px] font-semibold text-gray-700 mb-1">Next Turn:</div>
+                <div className="text-[11px] text-gray-600">
+                  {nextCustomer.steps[0]?.maneuver?.instruction || 'Continue on current road'}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+
     </div>
   )
 }

@@ -502,6 +502,11 @@ export default function CardView({
                       }
                     )
 
+                    console.log('Opening dialog and focusing map for:', item.plate)
+                    
+                    // Focus the vehicle on the map
+                    focus(item.plate)
+                    
                     onEdit({
                       id: item.plate,
                       selectedPlanId: selectedPlanId,
