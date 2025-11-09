@@ -59,6 +59,14 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
     }
   }, [assignment, setAssignmentPreview])
 
+  // Force re-render when component mounts to show latest changes
+  useEffect(() => {
+    // Only set initial data if assignment_preview is empty
+    if (!assignment_preview && assignment?.data) {
+      setAssignmentPreview(assignment.data)
+    }
+  }, [assignment, assignment_preview, setAssignmentPreview])
+
   const data = assignment?.data || assignment_preview
   //console.log('data :>> ', data)
   const assigned_units = data?.units || []
