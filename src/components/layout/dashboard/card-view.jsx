@@ -227,11 +227,13 @@ export default function CardView({
   const unitByPlate = useMemo(() => {
     const map = new Map()
     for (const u of assignedUnits || []) {
-      const horsePlate = u?.horse?.plate?.trim()?.toUpperCase?.()
-      const rigidPlate = u?.rigid?.plate?.trim()?.toUpperCase?.()
-      if (horsePlate) map.set(horsePlate, u)
-      if (rigidPlate) map.set(rigidPlate, u)
+      const plate = u?.vehicle?.plate?.trim()?.toUpperCase?.()
+      if (plate) {
+        map.set(plate, u)
+        console.log('Mapped plate:', plate, 'to unit:', u.planned_unit_id)
+      }
     }
+    console.log('unitByPlate map:', map)
     return map
   }, [assignedUnits])
 
@@ -454,6 +456,13 @@ export default function CardView({
               }
               const speed = Number(item?.live?.Speed ?? 0)
               const unit = unitByPlate.get(String(item.plate).toUpperCase())
+              console.log(
+                'Looking for plate:',
+                String(item.plate).toUpperCase(),
+                'Found unit:',
+                unit
+              )
+
               const showPlanContext =
                 selectedPlanId && selectedPlanId !== 'all' && unit
               const geozone = getGeoZone(item.live)
@@ -465,7 +474,16 @@ export default function CardView({
                 unit?.branch ||
                 'Branch'
 
-              const customerObjs = (unit?.customers || []).filter(Boolean)
+              const customerObjs = (unit?.orders || [])
+                .map((order) => ({
+                  customer_name: order.customer_name,
+                  customer_id: order.customer_id,
+                  customer_bp_code: order.customer_bp_code,
+                  suburb_name: order.suburb_name,
+                  address: order.address,
+                  ...order,
+                }))
+                .filter((c) => c.customer_name)
               const uniqueCustomers = Array.from(
                 new Map(
                   customerObjs.map((c) => [
@@ -474,6 +492,7 @@ export default function CardView({
                   ])
                 ).values()
               )
+              console.log('Customers for', item.plate, ':', uniqueCustomers)
 
               return (
                 <Card
@@ -502,11 +521,8 @@ export default function CardView({
                       }
                     )
 
-                    console.log('Opening dialog and focusing map for:', item.plate)
-                    
-                    // Focus the vehicle on the map (this will clear previous routes and draw new ones)
-                    focus(item.plate)
-                    
+                    console.log('data :>> ', unit)
+
                     onEdit({
                       id: item.plate,
                       selectedPlanId: selectedPlanId,
