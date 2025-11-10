@@ -34,6 +34,19 @@ export const addPlanFailure = () => ({
   type: assignment.REQUEST_FAILURE,
 })
 
+export const deletePlanStart = () => ({
+  type: assignment.REQUEST_START,
+})
+
+export const deletePlanSuccess = (id) => ({
+  type: assignment.DELETE_PLAN,
+  payload: id,
+})
+
+export const deletePlanFailure = (error) => ({
+  type: assignment.REQUEST_FAILURE,
+  payload: error,
+})
 // *****************************
 // manually assign loads
 // *****************************

@@ -4,6 +4,8 @@ import * as assignment_actions from '../actions/assignment-actions'
 
 // api calls
 import { deleteApi, fetchApi, loadAPI, postApi } from '@/hooks/use-apis'
+import Cookies from 'js-cookie'
+import { toast } from '@/hooks/use-toast'
 
 // api url
 const API_URL = 'assignments'
@@ -24,19 +26,61 @@ export const loadAssignments = async (assignmentDispatch, data) =>
 // *****************************
 // auto assign loads
 // *****************************
-export const addPlan = async (assignmentDispatch, data) =>
-  postApi({
-    dispatch: assignmentDispatch,
-    start: assignment_actions.addPlanStart,
-    success: assignment_actions.addPlanSuccess,
-    successMsg: 'success',
-    failure: assignment_actions.addPlanFailure,
-    errorMsg: `Something went wrong, while adding ${
-      data?.notes || 'the assignment plan'
-    }`,
-    url: `/plans/add-plan`,
-    data,
-  })
+// export const addPlan = async (assignmentDispatch, data) =>
+//   postApi({
+//     dispatch: assignmentDispatch,
+//     start: assignment_actions.addPlanStart,
+//     success: assignment_actions.addPlanSuccess,
+//     successMsg: data?.plan_name
+//       ? `${data?.plan_name} was
+//     successfully added`
+//       : 'Assignment plan was successfully added',
+//     failure: assignment_actions.addPlanFailure,
+//     errorMsg: `Something went wrong, while adding ${
+//       data?.notes || 'the assignment plan'
+//     }`,
+//     url: `/plans/add-plan`,
+//     data,
+//   })
+
+export const addPlan = async (assignmentDispatch, data) => {
+  assignmentDispatch(assignment_actions.addPlanStart())
+
+  try {
+    const uid = Cookies.get('uid')
+    // console.log('uid :>> ', uid)
+    if (!uid) {
+      console.log('invalid user :>> ')
+      assignmentDispatch(
+        assignment_actions.addPlanFailure({ error: 'invalid user' })
+      )
+      return
+    }
+
+    const response = await fetchData(`plans/add-plan`, 'POST', data)
+    console.log('response :>> ', response)
+    assignmentDispatch(assignment_actions.addPlanSuccess(response))
+    toast({
+      title: data?.plan_name
+        ? `${data?.plan_name} was successfully added`
+        : 'Assignment plan was successfully added',
+      // description: `Something went wrong, while adding ${
+      //   data?.notes || 'the assignment plan'
+      // }`,
+    })
+  } catch (error) {
+    assignmentDispatch(assignment_actions.addPlanFailure(error))
+    toast({
+      title: 'Something went wrong, while adding the assignment plan',
+      description:
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error.message ||
+        'Unknown error',
+      variant: 'destructive',
+    })
+  }
+}
 
 // *****************************
 // auto assign loads
@@ -45,13 +89,14 @@ export const autoAssignPlan = async (assignmentDispatch, data) =>
   postApi({
     dispatch: assignmentDispatch,
     start: assignment_actions.autoAssignLoadsStart,
-    success: assignment_actions.addPlanSuccess,
+    success: assignment_actions.autoAssignLoadsSuccess,
     successMsg: 'success',
     failure: assignment_actions.autoAssignLoadsFailure,
     errorMsg: 'Something went wrong, while fetching the assignment plan',
     url: `/plans/auto-assign`,
     data,
   })
+
 export const autoAssignLoads = async (assignmentDispatch, data) =>
   postApi({
     dispatch: assignmentDispatch,

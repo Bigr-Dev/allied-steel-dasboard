@@ -101,7 +101,7 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
   }
 
   const getVehicleDisplay = (unit) => {
-    console.log('unit :>> ', unit)
+    //  console.log('unit :>> ', unit)
     if (unit.vehicle_type === 'rigid' && unit.vehicle) {
       const enrichedVehicle = getEnrichedVehicleInfo(unit.vehicle.id)
 

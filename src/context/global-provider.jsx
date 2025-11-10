@@ -44,7 +44,11 @@ import { deleteVehicle, loadVehicles, upsertVehicle } from './apis/vehicle-apis'
 import { deleteDriver, loadDrivers, upsertDriver } from './apis/driver-apis'
 import { deleteRoute, loadRoutes, upsertRoute } from './apis/route-apis'
 import { loadGroupedLoads } from './apis/grouped-load-apis'
-import { addPlan, deletePlannedAssignmentById } from './apis/assignment-apis'
+import {
+  addPlan,
+  autoAssignPlan,
+  deletePlannedAssignmentById,
+} from './apis/assignment-apis'
 
 // components
 import AlertScreen from '@/components/layout/alert-screen'
@@ -272,7 +276,7 @@ const GlobalProvider = ({ children, data }) => {
   //     //  console.log('data :>> ', data)
   //   }
   // }, [current_user, dashboardState])
-
+  //console.log('assignment :>> ', assignment)
   const TABLES = [
     {
       table: 'branches',
@@ -282,21 +286,21 @@ const GlobalProvider = ({ children, data }) => {
         branchesDispatch(branch_actions.deleteBranchSuccess(o.id)),
     },
     // {
-    //   table: 'assignment_plans',
-    //   onInsert: (r) => {
-    //     return console.log('r-insert assignment_plans:>> GlobalProvider', r)
-    //   },
-    //   //assignmentDispatch(assignment_actions.addPlanSuccess(r)),
-    //   onUpdate: (r) => {
-    //     return console.log('r-update assignment_plans:>> GlobalProvider', r)
-    //   },
-    //   //  onInsert: (r) => assignmentDispatch(assignment_actions. (r)),
-    //   //   onUpdate: (r) => assignmentDispatch(assignment_actions.updateBranchSuccess(r)),
+    //   table: 'plans',
+    //   onInsert: (r) => assignmentDispatch(assignment_actions.addPlanSuccess(r)),
+    //   onUpdate: (r) => assignmentDispatch(assignment_actions.addPlanSuccess(r)),
     //   onDelete: (o) =>
-    //     assignmentDispatch(
-    //       assignment_actions.deletePlannedAssignmentByIdSuccess(o.id)
-    //     ),
+    //     assignmentDispatch(assignment_actions.deletePlanSuccess(o.id)),
     // },
+    {
+      table: 'plans',
+      onInsert: (r) => assignmentDispatch(assignment_actions.addPlanSuccess(r)),
+      onUpdate: (r) => assignmentDispatch(assignment_actions.addPlanSuccess(r)),
+      onDelete: (o) =>
+        assignmentDispatch(
+          assignment_actions.deletePlannedAssignmentByIdSuccess(o.id)
+        ),
+    },
     {
       table: 'customers',
       onInsert: (r) =>
@@ -363,8 +367,6 @@ const GlobalProvider = ({ children, data }) => {
     }
 
     const addTable = ({ table, onInsert, onUpdate, onDelete }) => {
-      const filter = makeFilter(table)
-
       // INSERT
       ch.on(
         'postgres_changes',
@@ -372,7 +374,6 @@ const GlobalProvider = ({ children, data }) => {
           event: 'INSERT',
           schema: 'public',
           table,
-          ...(filter ? { filter } : {}),
         },
         (p) => enqueue(() => onInsert?.(p.new))
       )
@@ -383,7 +384,6 @@ const GlobalProvider = ({ children, data }) => {
           event: 'UPDATE',
           schema: 'public',
           table,
-          ...(filter ? { filter } : {}),
         },
         (p) => enqueue(() => onUpdate?.(p.new))
       )
@@ -394,7 +394,6 @@ const GlobalProvider = ({ children, data }) => {
           event: 'DELETE',
           schema: 'public',
           table,
-          ...(filter ? { filter } : {}),
         },
         (p) => enqueue(() => onDelete?.(p.old))
       )
@@ -418,8 +417,12 @@ const GlobalProvider = ({ children, data }) => {
     // autoAssignLoads(assignmentDispatch, data)
     addPlan(assignmentDispatch, data)
 
+  const addNewPlan = async (data) => {
+    await addPlan(assignmentDispatch, data)
+  }
+
   const runAutoAssign = async (data) => {
-    autoAssignLoads(assignmentDispatch, data)
+    autoAssignPlan(assignmentDispatch, data)
   }
 
   const downloadPlan = async () => {
@@ -487,6 +490,7 @@ const GlobalProvider = ({ children, data }) => {
         assignment,
         useLiveStore,
         fetchAssignmentPreview,
+        addNewPlan,
         assignmentDispatch,
         deletePlannedAssignmentById,
         load_assignment,

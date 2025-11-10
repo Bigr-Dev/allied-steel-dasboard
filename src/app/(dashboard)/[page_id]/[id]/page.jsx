@@ -64,7 +64,7 @@ const SinglePage = async ({ params }) => {
         },
         {
           title: 'Unassigned Vehicles',
-          value: assignment?.data?.unassigned_units?.length || 0,
+          value: assignment?.data?.unused_units?.length || 0,
           icon: (
             <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
           ),

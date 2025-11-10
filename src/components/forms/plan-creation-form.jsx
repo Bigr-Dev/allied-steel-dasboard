@@ -29,7 +29,7 @@ function todayTomorrow() {
 const { today } = todayTomorrow()
 
 const PlanCreationForm = ({ id, onCancel }) => {
-  const { branches, fetchAssignmentPreview } = useGlobalContext()
+  const { branches, addNewPlan } = useGlobalContext()
   const {
     current_user: { currentUser: current_user },
   } = useAuth()
@@ -60,7 +60,7 @@ const PlanCreationForm = ({ id, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    fetchAssignmentPreview(formData)
+    addNewPlan(formData)
     onCancel()
   }
 

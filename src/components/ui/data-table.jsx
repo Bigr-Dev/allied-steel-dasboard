@@ -103,7 +103,7 @@ export function DataTable({
           )}
         </div>
         <div className="flex space-x-4 items-center justify-center">
-          {data?.length > 0 && csv_headers && csv_rows ? (
+          {data?.length > 0 && csv_headers && csv_rows && (
             <Button
               variant="outline"
               className="ml-auto border-[#003e69]"
@@ -116,16 +116,6 @@ export function DataTable({
               }
             >
               Download (csv)
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              className="ml-auto border-[#003e69]"
-              onClick={() => {
-                console.log('object :>> ')
-              }}
-            >
-              Download Plan (xlsx)
             </Button>
           )}
           {showColumnToggle && (

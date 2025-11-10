@@ -15,17 +15,18 @@ const assignmentReducer = (state, action) => {
     case assignment.AUTO_ASSIGN_LOADS:
       return {
         ...state,
-        data: action?.payload || {
-          assigned_units: action?.payload?.assigned_units || [],
-          unassigned: action?.payload?.unassigned || [],
-          plan: action?.payload?.plan || [],
+        data: {
+          ...state.data,
+          plans: Array.isArray(state.data.plans)
+            ? [...state.data.plans, action.payload]
+            : [action.payload],
+          ...action.payload,
         },
         loading: false,
       }
     case assignment.ADD_PLAN:
       return {
         ...state,
-
         data: {
           ...state.data,
           plans: Array.isArray(state.data.plans)

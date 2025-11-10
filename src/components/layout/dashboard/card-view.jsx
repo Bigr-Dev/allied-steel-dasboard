@@ -230,10 +230,8 @@ export default function CardView({
       const plate = u?.vehicle?.plate?.trim()?.toUpperCase?.()
       if (plate) {
         map.set(plate, u)
-        console.log('Mapped plate:', plate, 'to unit:', u.planned_unit_id)
       }
     }
-    console.log('unitByPlate map:', map)
     return map
   }, [assignedUnits])
 
@@ -456,12 +454,6 @@ export default function CardView({
               }
               const speed = Number(item?.live?.Speed ?? 0)
               const unit = unitByPlate.get(String(item.plate).toUpperCase())
-              console.log(
-                'Looking for plate:',
-                String(item.plate).toUpperCase(),
-                'Found unit:',
-                unit
-              )
 
               const showPlanContext =
                 selectedPlanId && selectedPlanId !== 'all' && unit
@@ -492,7 +484,7 @@ export default function CardView({
                   ])
                 ).values()
               )
-              console.log('Customers for', item.plate, ':', uniqueCustomers)
+
 
               return (
                 <Card

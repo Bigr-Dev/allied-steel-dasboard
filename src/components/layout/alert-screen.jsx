@@ -103,7 +103,7 @@ const AlertScreen = ({ alertOpen, setAlertOpen, id }) => {
   // console.log('id :>> ', id)
   const handleDelete = async () => {
     const readableScreen = pathname?.replace(/-/g, ' ')
-
+    console.log('readableScreen :>> ', readableScreen)
     if (!dispatch) {
       toast({
         title: 'Error deleting item',

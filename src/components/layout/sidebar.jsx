@@ -153,9 +153,10 @@ const SideBar = () => {
   })
 
   const dashboard_route = filteredRoutes?.filter((item) => item.href === '/')
-  const routing_information = filteredRoutes?.filter(
-    (item) => item.href === '/loads' || item.href === '/load-assignment'
-  )
+  const routing_information = filteredRoutes
+  // ?.filter(
+  //   (item) => item.href === '/loads' || item.href === '/load-assignment'
+  // )
 
   const branch_routes = filteredRoutes?.filter(
     (item) =>
@@ -220,7 +221,7 @@ const SideBar = () => {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="mt-3">
-        <SidebarGroup>
+        {/* <SidebarGroup>
           <SidebarMenu>
             {dashboard_route.map((item) => {
               const isActive =
@@ -257,8 +258,62 @@ const SideBar = () => {
             })}
           </SidebarMenu>
           <SelectSeparator className={'mt-4'} />
+        </SidebarGroup> */}
+        <SidebarGroup>
+          {/* <div className="flex items-center justify-between px-2 py-1.5">
+              <CollapsibleTrigger
+                aria-label="Routing Information"
+                className="flex flex-1 justify-between font-bold text-sm text-[#003e69] capitalize"
+              >
+                <span className="group-data-[collapsible=icon]:hidden text-sm font-bold text-[#003e69] capitalize">
+                  Routing Information
+                </span>
+                <Waypoints className="shrink-0" size={18} />
+              </CollapsibleTrigger>
+            </div> */}
+
+          {/* <SelectSeparator />
+            <CollapsibleContent> */}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {routing_information.map((item) => {
+                const isActive =
+                  item.href === '/'
+                    ? pathname === '/'
+                    : pathname.startsWith(item.href)
+                const Icon = iconMap[item.icon]
+                return (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
+                      asChild
+                      className={
+                        isActive
+                          ? 'bg-[#003e69] hover:bg-[#428bca] hover:text-white'
+                          : 'hover:bg-[#7a7877] hover:text-white'
+                      }
+                      tooltip={item.label}
+                    >
+                      <Link href={item.href}>
+                        <Icon color={isActive ? '#fff ' : '#333333'} />
+                        <span
+                          className={
+                            isActive
+                              ? 'font-bold, text-white'
+                              : 'hover:text-white'
+                          }
+                        >
+                          {item.label}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+          {/* </CollapsibleContent> */}
         </SidebarGroup>
-        <Collapsible defaultOpen>
+        {/* <Collapsible defaultOpen>
           <SidebarGroup>
             <div className="flex items-center justify-between px-2 py-1.5">
               <CollapsibleTrigger
@@ -313,8 +368,8 @@ const SideBar = () => {
               </SidebarGroupContent>
             </CollapsibleContent>
           </SidebarGroup>
-        </Collapsible>
-        <Collapsible defaultOpen>
+        </Collapsible> */}
+        {/* <Collapsible defaultOpen>
           <SidebarGroup>
             <div className="flex items-center justify-between px-2 py-1.5">
               <CollapsibleTrigger
@@ -381,7 +436,7 @@ const SideBar = () => {
               </SidebarGroupContent>
             </CollapsibleContent>
           </SidebarGroup>
-        </Collapsible>
+        </Collapsible> */}
       </SidebarContent>
       <SidebarFooter className="border-t">
         <SidebarMenu>

@@ -7,13 +7,13 @@ export const routes = [
     permission: null, // accessible to all authenticated users
   },
 
-  {
-    label: 'Loads',
-    icon: 'PackageOpen',
-    href: '/loads',
-    color: 'text-emerald-500',
-    permission: 'loads', // permission to manage routes
-  },
+  // {
+  //   label: 'Loads',
+  //   icon: 'PackageOpen',
+  //   href: '/loads',
+  //   color: 'text-emerald-500',
+  //   permission: 'loads', // permission to manage routes
+  // },
   {
     label: 'Load Assignment',
     icon: 'PackagePlus',
