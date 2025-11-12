@@ -176,6 +176,7 @@ export function DataTable({
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                   onClick={() => {
+                    // console.log('url :>> ', url)
                     if (url) {
                       switch (url) {
                         case 'loads':

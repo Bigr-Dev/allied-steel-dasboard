@@ -11,7 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { AlertTriangle, Download, Truck, User } from 'lucide-react'
+import {
+  AlertTriangle,
+  AlertTriangleIcon,
+  Clock,
+  Download,
+  Play,
+  Truck,
+  User,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ProgressBar } from './ProgressBar'
 import { Separator } from '@/components/ui/separator'
@@ -23,8 +31,10 @@ import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import DetailActionBar from '../detail-action-bar'
+import CountUp from '@/components/ui/count-up'
 
-export function LoadAssignment({ id, assignment, onEdit, preview }) {
+export function LoadAssignment({ id, onEdit, preview }) {
   const router = useRouter()
   const pathname = usePathname()
   const {
@@ -33,6 +43,7 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
     vehicles,
     downloadPlan,
     downloading,
+    fetchData,
   } = useGlobalContext()
 
   // Determine capacity (kg) based on vehicle type + trailer
@@ -53,22 +64,38 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
     return unit?.summary?.total_weight || 0
   }
 
+  const fetchPlan = async (id) => {
+    const plansData = await fetchData(`plans/${id}`, 'GET')
+    console.log('assignmentPlan :>> ', plansData)
+    setAssignmentPreview(plansData?.data)
+  }
+
   useEffect(() => {
-    if (assignment) {
-      setAssignmentPreview(assignment?.data)
-    }
-  }, [assignment, setAssignmentPreview])
+    // if (assignment_preview?.length == 0) {
+    fetchPlan(id)
+    // }
+  }, [])
+
+  // useEffect(() => {
+  //   if (assignment) {
+  //     console.log('assignment :>> ', assignment)
+  //     setAssignmentPreview(assignment?.data)
+  //   }
+  // }, [assignment])
 
   // Force re-render when component mounts to show latest changes
-  useEffect(() => {
-    // Only set initial data if assignment_preview is empty
-    if (!assignment_preview && assignment?.data) {
-      setAssignmentPreview(assignment.data)
-    }
-  }, [assignment, assignment_preview, setAssignmentPreview])
+  // useEffect(() => {
+  //   // Only set initial data if assignment_preview is empty
+  //   if (assignment_preview?.length < 1 && assignment?.data) {
+  //     setAssignmentPreview(assignment.data)
+  //   }
+  // }, [assignment, assignment_preview, setAssignmentPreview])
 
-  const data = assignment?.data || assignment_preview
+  // const data = assignment?.data || assignment_preview
   //console.log('data :>> ', data)
+  let data = assignment_preview
+  console.log('data :>> ', assignment_preview)
+
   const assigned_units = data?.units || []
   const unassigned_orders = data?.unassigned_orders || []
   const unassigned_units = data?.unassigned_units || []
@@ -310,6 +337,31 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
   //   )
   // })
 
+  const screenStats = [
+    {
+      title: 'Assigned Vehicles',
+      value: data?.units?.length || 0,
+      icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
+    },
+    {
+      title: 'Unassigned Vehicles',
+      value: data?.unused_units?.length || 0,
+      icon: (
+        <AlertTriangleIcon className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
+      ),
+    },
+    {
+      title: 'Assigned Orders',
+      value: data?.assigned_orders?.length || 0,
+      icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
+    },
+    {
+      title: 'Unassigned Orders',
+      value: data?.unassigned_orders?.length || 0,
+      icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
+    },
+  ]
+
   // Columns for unassigned orders table
   const unassignedColumns = [
     {
@@ -353,226 +405,260 @@ export function LoadAssignment({ id, assignment, onEdit, preview }) {
   ]
 
   return (
-    <div className="grid grid-cols-1">
-      <Tabs defaultValue={tableInfo?.tabs?.[0]?.value} className="w-full">
-        <TabsList
-          className={`grid w-full grid-cols-${tableInfo?.tabs?.length} gap-6`}
-        >
-          {tableInfo?.tabs.map((trigger, index) => {
-            return (
-              <TabsTrigger key={index} value={trigger.value}>
-                <h6 className="capitalize font-bold">{trigger.title}</h6>
-              </TabsTrigger>
-            )
-          })}
-        </TabsList>
-        <TabsContent
-          // key={index}
-          value={tableInfo?.tabs?.[0]?.value}
-          className="space-y-4 "
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    {plan?.id
-                      ? `Vehicle Assignment - ${plan?.plan_name}`
-                      : 'Tomorrows Assignment Preview'}
+    <div className="space-y-6">
+      <DetailActionBar
+        id={id}
+        title={data?.plan?.plan_name || 'Load Assignment'}
+        description={data?.plan?.notes || 'plan details'}
+      />
+
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 p-1">
+        {screenStats?.map((stat, index) => {
+          const Icon = stat.icon
+
+          return (
+            <Card key={index}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {Icon}
+                    <CardTitle>{stat.title}</CardTitle>
                   </div>
-                  <div>
-                    <Button
-                      variant="outline"
-                      className="ml-auto border-[#003e69]"
-                      onClick={downloadPlan}
-                    >
-                      {downloading ? (
-                        <Spinner />
-                      ) : (
-                        <Download className="mr-2 h-4 w-4" />
-                      )}
-                      Download Full Plan
-                    </Button>
+                  <div className="text-2xl font-bold">
+                    <CountUp value={stat.value} />
                   </div>
                 </div>
-              </CardTitle>
-              <CardDescription>{plan?.notes}</CardDescription>
-            </CardHeader>
-            {/* Search Filter */}
-            <CardContent>
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search vehicles, drivers, customers, order numbers..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <div
-                className={
-                  'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 max-h-screen overflow-y-auto'
-                }
-              >
-                {filteredUnits.length > 0 &&
-                  filteredUnits
-                    .sort((a, b) => {
-                      const aPct =
-                        a.capacity_kg > 0
-                          ? (a.used_capacity_kg / a.capacity_kg) * 100
-                          : 0
-                      const bPct =
-                        b.capacity_kg > 0
-                          ? (b.used_capacity_kg / b.capacity_kg) * 100
-                          : 0
-                      return aPct - bPct
-                    })
-                    .map((unit, index) => {
-                      const vehicle = getVehicleDisplay(unit)
-                      const driverInfo = getDriverInfo(unit)
-                      const groupedData = getGroupUnitData(unit)
+              </CardHeader>
+            </Card>
+          )
+        })}
+      </div>
 
-                      const capacityKg = getUnitCapacityKg(unit)
-                      const usedKg = getUnitUsedKg(unit)
+      <div className="grid grid-cols-1">
+        <Tabs defaultValue={tableInfo?.tabs?.[0]?.value} className="w-full">
+          <TabsList
+            className={`grid w-full grid-cols-${tableInfo?.tabs?.length} gap-6`}
+          >
+            {tableInfo?.tabs.map((trigger, index) => {
+              return (
+                <TabsTrigger key={index} value={trigger.value}>
+                  <h6 className="capitalize font-bold">{trigger.title}</h6>
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
+          <TabsContent
+            // key={index}
+            value={tableInfo?.tabs?.[0]?.value}
+            className="space-y-4 "
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      {plan?.id
+                        ? `Vehicle Assignment - ${plan?.plan_name}`
+                        : 'Tomorrows Assignment Preview'}
+                    </div>
+                    <div>
+                      <Button
+                        variant="outline"
+                        className="ml-auto border-[#003e69]"
+                        onClick={downloadPlan}
+                      >
+                        {downloading ? (
+                          <Spinner />
+                        ) : (
+                          <Download className="mr-2 h-4 w-4" />
+                        )}
+                        Download Full Plan
+                      </Button>
+                    </div>
+                  </div>
+                </CardTitle>
+                <CardDescription>{plan?.notes}</CardDescription>
+              </CardHeader>
+              {/* Search Filter */}
+              <CardContent>
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search vehicles, drivers, customers, order numbers..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <div
+                  className={
+                    'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 max-h-screen overflow-y-auto'
+                  }
+                >
+                  {filteredUnits.length > 0 &&
+                    filteredUnits
+                      .sort((a, b) => {
+                        const aPct =
+                          a.capacity_kg > 0
+                            ? (a.used_capacity_kg / a.capacity_kg) * 100
+                            : 0
+                        const bPct =
+                          b.capacity_kg > 0
+                            ? (b.used_capacity_kg / b.capacity_kg) * 100
+                            : 0
+                        return aPct - bPct
+                      })
+                      .map((unit, index) => {
+                        const vehicle = getVehicleDisplay(unit)
+                        const driverInfo = getDriverInfo(unit)
+                        const groupedData = getGroupUnitData(unit)
 
-                      const capacityPercentage =
-                        capacityKg > 0 ? (usedKg / capacityKg) * 100 : 0
-                      const isOverCapacity = capacityPercentage > 100
-                      const isNearCapacity = capacityPercentage >= 85
+                        const capacityKg = getUnitCapacityKg(unit)
+                        const usedKg = getUnitUsedKg(unit)
 
-                      const uniqueCustomerCount = new Set(
-                        (unit.orders || []).map((o) => o.customer_id)
-                      ).size
+                        const capacityPercentage =
+                          capacityKg > 0 ? (usedKg / capacityKg) * 100 : 0
+                        const isOverCapacity = capacityPercentage > 100
+                        const isNearCapacity = capacityPercentage >= 85
 
-                      //`/assignments/${plan.plan_id}/units/${unit.plan_unit_id}`
-                      return (
-                        <Card
-                          key={unit?.planned_unit_id || index}
-                          onClick={() => {
-                            handleClick({
-                              unit: unit.planned_unit_id,
-                              preview,
-                              onEdit,
-                              id,
-                            })
-                          }}
-                          className="cursor-pointer hover:shadow-lg transition-shadow"
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-end justify-between">
-                              <div className="flex items-center gap-2">
-                                {vehicle.icon}
-                                <div>
-                                  <h3 className="font-semibold text-sm">
-                                    {vehicle.name}
-                                  </h3>
-                                  <p className="text-xs text-muted-foreground">
-                                    {vehicle.plate}
-                                  </p>
+                        const uniqueCustomerCount = new Set(
+                          (unit.orders || []).map((o) => o.customer_id)
+                        ).size
+
+                        //`/assignments/${plan.plan_id}/units/${unit.plan_unit_id}`
+                        return (
+                          <Card
+                            key={unit?.planned_unit_id || index}
+                            onClick={() => {
+                              handleClick({
+                                unit: unit.planned_unit_id,
+                                preview,
+                                onEdit,
+                                id,
+                              })
+                            }}
+                            className="cursor-pointer hover:shadow-lg transition-shadow"
+                          >
+                            <CardHeader className="pb-3">
+                              <div className="flex items-end justify-between">
+                                <div className="flex items-center gap-2">
+                                  {vehicle.icon}
+                                  <div>
+                                    <h3 className="font-semibold text-sm">
+                                      {vehicle.name}
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground">
+                                      {vehicle.plate}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2 mt-2">
-                                <User className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">
-                                  {driverInfo.name}
-                                  {/* {driverInfo.source && (
+                                <div className="flex items-center gap-2 mt-2">
+                                  <User className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">
+                                    {driverInfo.name}
+                                    {/* {driverInfo.source && (
                           <span className="ml-1 text-xs opacity-75">
                             ({driverInfo.source})
                           </span>
                         )} */}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between gap-2 mt-2">
-                              <Badge variant="secondary" className="text-xs">
-                                {vehicle.type}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {uniqueCustomerCount} customers
-                              </Badge>
-                            </div>
-                            <Separator className="mt-2" />
-                          </CardHeader>
-
-                          <CardContent className="flex flex-col min-h-[150px] justify-between  ">
-                            <div className="flex items-center gap-2 mt-2 flex-wrap">
-                              {unit.routes_served?.map((route) => (
-                                <Badge
-                                  key={route}
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  {route}
-                                </Badge>
-                              ))}
-                            </div>
-                            <div className="mt-3 ">
-                              <div className="flex items-center justify-between text-xs mb-1">
-                                <div className="flex items-center gap-1">
-                                  <span className="text-muted-foreground">
-                                    Capacity
                                   </span>
-                                  {isOverCapacity && (
-                                    <AlertTriangle className="h-3 w-3 text-destructive" />
-                                  )}
                                 </div>
-                                <span
-                                  className={`font-medium ${
-                                    isOverCapacity
-                                      ? 'text-destructive'
-                                      : isNearCapacity
-                                      ? 'text-amber-600'
-                                      : 'text-foreground'
-                                  }`}
-                                >
-                                  {usedKg}kg / {capacityKg}kg
-                                </span>
                               </div>
-                              <ProgressBar
-                                value={capacityPercentage}
-                                className={
-                                  isOverCapacity
-                                    ? 'bg-destructive'
-                                    : isNearCapacity
-                                    ? 'bg-amber-500'
-                                    : 'bg-primary'
-                                }
-                              />
-                              {isOverCapacity && (
-                                <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                                  <AlertTriangle className="h-3 w-3" />
-                                  Over capacity by{' '}
-                                  {(capacityPercentage - 100).toFixed(1)}%
-                                </p>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value={tableInfo?.tabs?.[1]?.value} className="space-y-4 ">
-          <DetailCard
-            title={`Unassigned Orders - ${plan?.plan_name || 'Preview'}`}
-            description={
-              plan?.id
-                ? 'Orders that could not be assigned to any vehicle'
-                : 'Orders that could not be assigned in the preview'
-            }
+
+                              <div className="flex items-center justify-between gap-2 mt-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {vehicle.type}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {uniqueCustomerCount} customers
+                                </Badge>
+                              </div>
+                              <Separator className="mt-2" />
+                            </CardHeader>
+
+                            <CardContent className="flex flex-col min-h-[150px] justify-between  ">
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {unit.routes_served?.map((route) => (
+                                  <Badge
+                                    key={route}
+                                    variant="outline"
+                                    className="text-xs"
+                                  >
+                                    {route}
+                                  </Badge>
+                                ))}
+                              </div>
+                              <div className="mt-3 ">
+                                <div className="flex items-center justify-between text-xs mb-1">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-muted-foreground">
+                                      Capacity
+                                    </span>
+                                    {isOverCapacity && (
+                                      <AlertTriangle className="h-3 w-3 text-destructive" />
+                                    )}
+                                  </div>
+                                  <span
+                                    className={`font-medium ${
+                                      isOverCapacity
+                                        ? 'text-destructive'
+                                        : isNearCapacity
+                                        ? 'text-amber-600'
+                                        : 'text-foreground'
+                                    }`}
+                                  >
+                                    {usedKg}kg / {capacityKg}kg
+                                  </span>
+                                </div>
+                                <ProgressBar
+                                  value={capacityPercentage}
+                                  className={
+                                    isOverCapacity
+                                      ? 'bg-destructive'
+                                      : isNearCapacity
+                                      ? 'bg-amber-500'
+                                      : 'bg-primary'
+                                  }
+                                />
+                                {isOverCapacity && (
+                                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    Over capacity by{' '}
+                                    {(capacityPercentage - 100).toFixed(1)}%
+                                  </p>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent
+            value={tableInfo?.tabs?.[1]?.value}
+            className="space-y-4 "
           >
-            <DataTable
-              columns={unassignedColumns}
-              data={unassigned_orders}
-              filterColumn="customer_name"
-              filterPlaceholder="Search orders, customers, routes..."
-            />
-          </DetailCard>
-        </TabsContent>
-      </Tabs>
+            <DetailCard
+              title={`Unassigned Orders - ${plan?.plan_name || 'Preview'}`}
+              description={
+                plan?.id
+                  ? 'Orders that could not be assigned to any vehicle'
+                  : 'Orders that could not be assigned in the preview'
+              }
+            >
+              <DataTable
+                columns={unassignedColumns}
+                data={unassigned_orders}
+                filterColumn="customer_name"
+                filterPlaceholder="Search orders, customers, routes..."
+                url="none"
+              />
+            </DetailCard>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   )
 }

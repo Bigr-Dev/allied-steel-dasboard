@@ -17,9 +17,10 @@ const assignmentReducer = (state, action) => {
         ...state,
         data: {
           ...state.data,
-          plans: Array.isArray(state.data.plans)
-            ? [...state.data.plans, action.payload]
-            : [action.payload],
+          plans: state.data.plans,
+          // plans: Array.isArray(state.data.plans)
+          // ? [...state.data.plans, action.payload]
+          // : [action.payload],
           ...action.payload,
         },
         loading: false,
@@ -30,8 +31,8 @@ const assignmentReducer = (state, action) => {
         data: {
           ...state.data,
           plans: Array.isArray(state.data.plans)
-            ? [...state.data.plans, action.payload]
-            : [action.payload],
+            ? [...state.data.plans, action.payload.plan]
+            : [action.payload.plan],
         },
         loading: false,
       }

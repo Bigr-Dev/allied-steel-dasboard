@@ -422,7 +422,8 @@ const GlobalProvider = ({ children, data }) => {
   }
 
   const runAutoAssign = async (data) => {
-    autoAssignPlan(assignmentDispatch, data)
+    const res = await autoAssignPlan(assignmentDispatch, data)
+    setAssignmentPreview(res?.data)
   }
 
   const downloadPlan = async () => {

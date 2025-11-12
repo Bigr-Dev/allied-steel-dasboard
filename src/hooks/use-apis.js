@@ -103,6 +103,7 @@ export const postApi = async ({
       title: successMsg || 'Operation was successful',
       description: responseData?.message || '',
     })
+    return responseData
   } catch (error) {
     dispatch(failure(error))
     toast({

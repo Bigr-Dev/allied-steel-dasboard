@@ -54,73 +54,12 @@ const SinglePage = async ({ params }) => {
       return <LoadsPage id={id} />
 
     case 'load-assignment':
-      const assignment = await fetchServerData(`plans/${id}`, 'GET')
-      //  console.log('assignment?.data?.units :>> ', assignment?.data)
-      const screenStats = [
-        {
-          title: 'Assigned Vehicles',
-          value: assignment?.data?.units?.length || 0,
-          icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
-        },
-        {
-          title: 'Unassigned Vehicles',
-          value: assignment?.data?.unused_units?.length || 0,
-          icon: (
-            <AlertTriangle className="h-6 w-6 xl:h-7 xl:w-7 text-red-500" />
-          ),
-        },
-        {
-          title: 'Assigned Items',
-          value: assignment?.data?.assigned_orders?.length || 0,
-          icon: <Clock className="h-6 w-6 xl:h-7 xl:w-7 text-gray-500" />,
-        },
-        {
-          title: 'Unassigned Items',
-          value: assignment?.data?.unassigned_orders?.length || 0,
-          icon: <Play className="h-6 w-6 xl:h-7 xl:w-7 text-blue-500" />,
-        },
-      ]
-      // console.log('assignment :>> ', assignment?.data?.plan)
+      // const assignment = await fetchServerData(`plans/${id}`, 'GET')
+
       return (
-        <>
-          {assignment?.data && (
-            <>
-              {/* <div className="flex flex-col md:flex-row justify-between items-end gap-4 p-1"> */}
-              <DetailActionBar
-                id={id}
-                title={assignment?.data?.plan?.plan_name || 'Load Assignment'}
-                description={assignment?.data?.plan?.notes || 'plan details'}
-              />
-              {/* </div> */}
-
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 p-1">
-                {screenStats?.map((stat, index) => {
-                  const Icon = stat.icon
-
-                  return (
-                    <Card key={index}>
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {Icon}
-                            <CardTitle>{stat.title}</CardTitle>
-                          </div>
-                          <div className="text-2xl font-bold">
-                            <CountUp value={stat.value} />
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  )
-                })}
-              </div>
-
-              <div className="space-y-6 h-full overflow-y-auto  p-1">
-                <LoadAssignment id={id} assignment={assignment} />
-              </div>
-            </>
-          )}
-        </>
+        <div className="space-y-6 h-full overflow-y-auto  p-1">
+          <LoadAssignment id={id} />
+        </div>
       )
 
     case 'customers':

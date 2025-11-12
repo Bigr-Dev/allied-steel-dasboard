@@ -35,12 +35,13 @@ const AssignmentForm = ({ id, onCancel }) => {
     fetchAssignmentPreview,
     assignment_preview,
     runAutoAssign,
+    vehicles,
   } = useGlobalContext()
-  console.log('assignment_preview :>> ', assignment_preview)
+  // console.log('assignment_preview :>> ', assignment_preview)
   const {
     current_user: { currentUser: current_user },
   } = useAuth()
-
+  //console.log('assignment_preview :>> ', assignment_preview)
   const assignmentData = {
     plan_id: assignment_preview?.plan?.id || null,
     branch_id: 'all',
@@ -49,10 +50,12 @@ const AssignmentForm = ({ id, onCancel }) => {
   }
   const vehicleData = {
     plan_id: assignment_preview?.plan?.id || null,
+
     vehicle_assignment_id: null,
     notes: '',
   }
-
+  const unassignedVehicles = assignment_preview?.unused_units || []
+  // console.log('unassignedVehicles :>> ', unassignedVehicles)
   const [formData, setFormData] = useState(assignmentData)
 
   const tabs = [
@@ -99,9 +102,9 @@ const AssignmentForm = ({ id, onCancel }) => {
       required: true,
       options: [
         { value: 'all', label: 'All Branches' },
-        ...(branches?.data?.map((b) => ({
-          value: b.id,
-          label: b.name,
+        ...(unassignedVehicles?.map((v) => ({
+          value: v.vehicle_assignment_id,
+          label: `v.name`,
         })) || []),
       ],
     },
@@ -125,7 +128,22 @@ const AssignmentForm = ({ id, onCancel }) => {
     // },
   ]
 
-  const vehicleInputs = []
+  const vehicleInputs = [
+    {
+      type: 'select',
+      htmlFor: 'vehicle_assignment_id',
+      label: 'Vehicle*',
+      value: formData.vehicle_assignment_id,
+      required: true,
+      options: [
+        { value: 'all', label: 'All Branches' },
+        ...(branches?.data?.map((b) => ({
+          value: b.id,
+          label: b.name,
+        })) || []),
+      ],
+    },
+  ]
 
   return (
     <form onSubmit={handleSubmit}>
@@ -180,11 +198,13 @@ const AssignmentForm = ({ id, onCancel }) => {
               title="Plan Details"
               description="Enter the plan information"
             >
-              {/* <DynamicInput
-                inputs={assignmentInputs}
-                handleSelectChange={handleSelectChange}
-                handleChange={handleChange}
-              /> */}
+              {currentTab === 'add-vehicle' && (
+                <DynamicInput
+                  inputs={vehicleInputs}
+                  handleSelectChange={handleSelectChange}
+                  handleChange={handleChange}
+                />
+              )}
             </DetailCard>
           </TabsContent>
         </Tabs>
