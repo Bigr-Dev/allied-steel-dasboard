@@ -92,6 +92,7 @@ export const DELETE_ORDER = 'DELETE_ORDER'
 // vehicle assigment actions
 export const AUTO_ASSIGN_LOADS = 'AUTO_ASSIGN_LOADS'
 export const ADD_PLAN = 'ADD_PLAN'
+export const ADD_UNIT = 'ADD_UNIT'
 export const DELETE_PLAN = 'DELETE_PLAN'
 export const MANUAL_ASSIGN_LOADS = 'MANUAL_ASSIGN_LOADS'
 export const UNASSIGN_LOAD = 'UNASSIGN_LOAD'

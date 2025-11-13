@@ -43,6 +43,21 @@ export const deletePlanSuccess = (id) => ({
   payload: id,
 })
 
+
+export const addUnitFailure = () => ({
+  type: assignment.REQUEST_FAILURE,
+})
+
+export const addUnitStart = () => ({
+  type: assignment.REQUEST_START,
+})
+
+export const addUnitSuccess = (data) => ({
+  type: assignment.ADD_UNIT,
+  payload: data,
+})
+
+
 export const deletePlanFailure = (error) => ({
   type: assignment.REQUEST_FAILURE,
   payload: error,

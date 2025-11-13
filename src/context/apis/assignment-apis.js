@@ -82,6 +82,45 @@ export const addPlan = async (assignmentDispatch, data) => {
   }
 }
 
+export const addUnit = async (assignmentDispatch, data) => {
+  assignmentDispatch(assignment_actions.addUnitStart())
+
+  try {
+    const uid = Cookies.get('uid')
+    // console.log('uid :>> ', uid)
+    if (!uid) {
+      console.log('invalid user :>> ')
+      assignmentDispatch(
+        assignment_actions.addPlanFailure({ error: 'invalid user' })
+      )
+      return
+    }
+
+    const response = await fetchData(`plans/${data?.planId}/units/add-unit`, 'POST', data)
+    console.log('response :>> ', response)
+    // assignmentDispatch(assignment_actions.addPlanSuccess(response))
+    toast({
+      title: `Vehicle was successfully added`
+
+      // description: `Something went wrong, while adding ${
+      //   data?.notes || 'the assignment plan'
+      // }`,
+    })
+    return data;
+  } catch (error) {
+    assignmentDispatch(assignment_actions.addPlanFailure(error))
+    toast({
+      title: 'Something went wrong, while adding the assignment plan',
+      description:
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error.message ||
+        'Unknown error',
+      variant: 'destructive',
+    })
+  }
+}
+
 // *****************************
 // auto assign loads
 // *****************************
