@@ -102,9 +102,9 @@ const AssignmentForm = ({ id, onCancel }) => {
       required: true,
       options: [
         { value: 'all', label: 'All Branches' },
-        ...(unassignedVehicles?.map((v) => ({
-          value: v.vehicle_assignment_id,
-          label: `v.name`,
+        ...(branches?.data?.map((b) => ({
+          value: b.id,
+          label: b.name,
         })) || []),
       ],
     },
@@ -135,11 +135,19 @@ const AssignmentForm = ({ id, onCancel }) => {
       label: 'Vehicle*',
       value: formData.vehicle_assignment_id,
       required: true,
+      placeHolder: 'Select a vehicle',
       options: [
-        { value: 'all', label: 'All Branches' },
-        ...(branches?.data?.map((b) => ({
-          value: b.id,
-          label: b.name,
+        {
+          value: '0',
+          label: 'Select a vehicle',
+        },
+        ...(unassignedVehicles?.map((v) => ({
+          value: v.vehicle_assignment_id,
+          label: `${v.vehicle.type} - ${v.vehicle.plate}   ${
+            v.vehicle.type == 'horse' && v.trailer
+              ? ` (Trailer: ${v.trailer.plate})`
+              : ''
+          }`,
         })) || []),
       ],
     },
