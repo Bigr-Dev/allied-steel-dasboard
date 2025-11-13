@@ -574,29 +574,58 @@ const LoadAssignmentSingle = ({ id, data }) => {
   }
 
   const handleAssignItem = (itemId, vehicleId) => {
+    console.log('🔵 ASSIGN - Looking for itemId:', itemId, 'in vehicleId:', vehicleId)
     const meta = unassigned.find((x) => String(x.order_id) === String(itemId))
-    if (!meta) return
+    console.log('🔵 ASSIGN - Found meta:', meta)
+    if (!meta) {
+      console.log('🔴 ASSIGN - No meta found for itemId:', itemId)
+      return
+    }
+
+    // Transform the unassigned order to match the structure expected by VehicleCard
+    const transformedOrder = {
+      order_id: meta.order_id,
+      sales_order_number: meta.sales_order_number,
+      customer_name: meta.customer_name,
+      route_name: meta.route_name,
+      suburb_name: meta.suburb_name,
+      total_weight: meta.total_weight || 0,
+      // Create lines array that hydrateUnitFromPlanPayload expects
+      lines: [{
+        order_line_id: `${meta.order_id}-line-1`,
+        description: `${meta.sales_order_number} - ${meta.customer_name}`,
+        weight: meta.total_weight || 0
+      }],
+      ...meta // Include all original properties
+    }
+    console.log('🔵 ASSIGN - Transformed order:', transformedOrder)
 
     // remove from unassigned
-    setUnassigned((prev) =>
-      prev.filter((x) => String(x.order_id) !== String(itemId))
-    )
+    setUnassigned((prev) => {
+      const filtered = prev.filter((x) => String(x.order_id) !== String(itemId))
+      console.log('🔵 ASSIGN - Removing from unassigned. Before:', prev.length, 'After:', filtered.length)
+      return filtered
+    })
 
-    // add into the destination unit
+    // add into the destination unit with transformed structure
     setAssignedUnits((prev) =>
       prev.map((u) => {
         if (String(u.planned_unit_id) !== String(vehicleId)) return u
-        return {
+        console.log('🔵 ASSIGN - Adding to unit:', vehicleId, 'Current orders:', u.orders?.length || 0)
+        const updated = {
           ...u,
-          orders: [...(u.orders || []), meta],
+          orders: [...(u.orders || []), transformedOrder],
           used_capacity_kg:
             Number(u.used_capacity_kg || 0) + Number(meta.total_weight || 0),
         }
+        console.log('🔵 ASSIGN - Updated unit orders:', updated.orders?.length || 0)
+        return updated
       })
     )
   }
 
   const handleUnassignItem = (itemId) => {
+    console.log('🟡 UNASSIGN - Looking for itemId:', itemId)
     let removedOrder = null
 
     setAssignedUnits((prev) =>
@@ -607,7 +636,9 @@ const LoadAssignmentSingle = ({ id, data }) => {
         if (orderIndex === -1) return u
 
         removedOrder = u.orders[orderIndex]
-        return {
+        console.log('🟡 UNASSIGN - Found order to remove:', removedOrder)
+        console.log('🟡 UNASSIGN - Unit before removal orders:', u.orders?.length || 0)
+        const updated = {
           ...u,
           orders: u.orders.filter((_, index) => index !== orderIndex),
           used_capacity_kg: Math.max(
@@ -616,14 +647,28 @@ const LoadAssignmentSingle = ({ id, data }) => {
               Number(removedOrder.total_weight || 0)
           ),
         }
+        console.log('🟡 UNASSIGN - Unit after removal orders:', updated.orders?.length || 0)
+        return updated
       })
     )
 
     if (removedOrder) {
-      setUnassigned((prev) => [
-        ...prev.filter((x) => String(x.order_id) !== String(itemId)),
-        removedOrder,
-      ])
+      console.log('🟡 UNASSIGN - Adding back to unassigned:', removedOrder)
+      
+      // Transform back to original unassigned structure (remove the 'lines' property we added)
+      const { lines, ...originalOrder } = removedOrder
+      console.log('🟡 UNASSIGN - Transformed back to original:', originalOrder)
+      
+      setUnassigned((prev) => {
+        const updated = [
+          ...prev.filter((x) => String(x.order_id) !== String(itemId)),
+          originalOrder,
+        ]
+        console.log('🟡 UNASSIGN - Unassigned count after adding back:', updated.length)
+        return updated
+      })
+    } else {
+      console.log('🔴 UNASSIGN - No order found to remove for itemId:', itemId)
     }
   }
 
