@@ -371,7 +371,7 @@ export default function CardView({
   }
 
   return (
-    <div className="h-full flex flex-col mt-20 space-y-6">
+    <div className="h-full flex flex-col mt-0 space-y-6">
       {/* Search + Status filter row */}
 
       <DetailCard>
@@ -485,7 +485,6 @@ export default function CardView({
                 ).values()
               )
 
-
               return (
                 <Card
                   key={item.plate}
@@ -513,7 +512,7 @@ export default function CardView({
                       }
                     )
 
-                    console.log('data :>> ', unit)
+                    //  console.log('data :>> ', unit)
 
                     onEdit({
                       id: item.plate,

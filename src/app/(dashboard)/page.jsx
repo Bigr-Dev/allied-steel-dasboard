@@ -46,10 +46,7 @@ function extractPlatesFromAssignedUnits(assignedUnits = []) {
   const set = new Set()
   for (const u of assignedUnits) {
     const plate =
-      u?.vehicle?.plate ??
-      u?.horse?.plate ??
-      u?.rigid?.plate ??
-      u?.plan_unit_id
+      u?.vehicle?.plate ?? u?.horse?.plate ?? u?.rigid?.plate ?? u?.plan_unit_id
     if (!plate) continue
     set.add(String(plate).trim().toUpperCase())
   }
@@ -111,13 +108,15 @@ function remapTcpFields(pkt = {}) {
 }
 
 const Dashboard = () => {
-  const { vehicles, assignment, setAssignmentPreview } = useGlobalContext()
-  const loading = assignment?.loading
+  const { vehicles, assignment, assignment_preview, setAssignmentPreview } =
+    useGlobalContext()
+  const loading = assignment_preview?.loading
+  console.log('assignment_preview :>> ', assignment_preview)
   // console.log('vehicles?.data :>> ', vehicles?.data)
-  //console.log('assignment :>> ', assignment?.data)
+  //console.log('assignment :>> ', assignment_preview)
   const [localFilters, setLocalFilters] = useState({
     currentVehicles: vehicles?.data ?? [],
-    assignmentData: assignment?.data ?? null,
+    assignmentData: assignment_preview ?? null,
     plans: assignment?.data?.plans ?? [],
     selectedPlanId: 'all', // uses 'all' or a plan id
     assignedUnits: [],
@@ -148,26 +147,26 @@ const Dashboard = () => {
 
     try {
       const response = await assignmentAPI.getPlan(value)
-      console.log('Plan API response:', response)
+      // console.log('Plan API response:', response)
       if (response.success) {
         const planData = transformPlanData(response.data)
-        console.log('Transformed plan data:', planData)
+        //  console.log('Transformed plan data:', planData)
         const units = planData.units || []
-        console.log('Units extracted:', units)
+        // console.log('Units extracted:', units)
         // Update both selectedPlanId and assignedUnits atomically
-        setLocalFilters((prev) => ({ 
-          ...prev, 
+        setLocalFilters((prev) => ({
+          ...prev,
           selectedPlanId: value,
-          assignedUnits: units 
+          assignedUnits: units,
         }))
         setAssignmentPreview(planData)
       }
     } catch (e) {
       console.warn('onSelectPlan failed', e)
-      setLocalFilters((prev) => ({ 
-        ...prev, 
+      setLocalFilters((prev) => ({
+        ...prev,
         selectedPlanId: value,
-        assignedUnits: [] 
+        assignedUnits: [],
       }))
     }
   }
@@ -210,13 +209,14 @@ const Dashboard = () => {
 
   // ----- Keep context in sync -----
   useEffect(() => {
-    const plans = assignment?.data?.plans ?? []
+    //const plans = assignment?.data?.plans ?? []
     setLocalFilters((prev) => ({
       ...prev,
-      assignmentData: assignment?.data ?? null,
-      plans,
+      assignmentData: assignment_preview ?? null,
+      assignedUnits: assignment_preview?.units ?? [],
+      // plans,
     }))
-  }, [assignment])
+  }, [assignment_preview, setAssignmentPreview])
 
   useEffect(() => {
     setLocalFilters((prev) => ({
@@ -389,7 +389,7 @@ const Dashboard = () => {
           className="object-cover"
         />
       </div>
-      <div className="flex flex-col md:flex-row justify-between items-end gap-4 pt-6 pl-6">
+      <div className="flex sticky top-0 z-2 bg-white flex-col md:flex-row justify-between items-end gap-4 pt-6 pl-6 pb-4">
         <div>
           <h2 className="text-xl text-[#003e69]   font-bold tracking-tight uppercase">
             {'Dashboard'}
@@ -406,7 +406,9 @@ const Dashboard = () => {
 
             <Select
               value={localFilters?.selectedPlanId || 'all'}
-              onValueChange={(value) => handleSelectChange('selectedPlanId', value)}
+              onValueChange={(value) =>
+                handleSelectChange('selectedPlanId', value)
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a plan" />
