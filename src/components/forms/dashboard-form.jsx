@@ -36,11 +36,14 @@ import {
   Navigation,
   Clock,
   Compass,
+  Save,
 } from 'lucide-react'
 import { useGlobalContext } from '@/context/global-context'
 import { Badge } from '../ui/badge'
 import dynamic from 'next/dynamic'
 import { fetchData } from '@/lib/fetch'
+
+import { Spinner } from '../ui/spinner'
 
 const MapComponent = dynamic(() => import('./map-component'), { ssr: false })
 
@@ -77,11 +80,16 @@ const SortableCustomer = ({ customer, index }) => {
 }
 
 const DashboardForm = ({ onCancel }) => {
-  const { selectedVehicle, vehicles } = useGlobalContext()
+  const {
+    selectedVehicle,
+    vehicles,
+    assignment_preview,
+    setAssignmentPreview,
+  } = useGlobalContext()
 
   const vehiclesData = vehicles?.data
-  console.log('selectedVehicle :>> ', selectedVehicle)
-  const [notes, setNotes] = useState('')
+  // console.log('selectedVehicle :>> ', selectedVehicle)
+  const [notes, setNotes] = useState(selectedVehicle?.unitData?.notes || '')
   const [customers, setCustomers] = useState(
     selectedVehicle?.customersData || []
   )
@@ -89,6 +97,7 @@ const DashboardForm = ({ onCancel }) => {
   const [branchCoords, setBranchCoords] = useState(null)
   const [geocoding, setGeocoding] = useState(false)
   const [routeInfo, setRouteInfo] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   // Auto-geocode on component mount and when selectedVehicle changes
   useEffect(() => {
@@ -169,17 +178,27 @@ const DashboardForm = ({ onCancel }) => {
       console.log('No customer data or vehicle data available')
       return
     }
-    
+
     setGeocoding(true)
-    console.log('Starting geocoding...')
+    // console.log('Starting geocoding...')
 
     // Get branch info
-    const targetPlate = selectedVehicle?.vehicleData?.plate?.trim().toUpperCase()
+    const targetPlate = selectedVehicle?.vehicleData?.plate
+      ?.trim()
+      .toUpperCase()
     const vehicle = vehiclesData.find((v) => {
-      const vPlate = (v.license_plate || v.plate || v.reg_number || v.fleet_number || '').trim().toUpperCase()
+      const vPlate = (
+        v.license_plate ||
+        v.plate ||
+        v.reg_number ||
+        v.fleet_number ||
+        ''
+      )
+        .trim()
+        .toUpperCase()
       return vPlate === targetPlate
     })
-    
+
     const branchName = vehicle?.branch_name
     const displayBranch = branchName?.includes('Midvaal')
       ? 'ASSM'
@@ -195,10 +214,10 @@ const DashboardForm = ({ onCancel }) => {
       branchAddress = 'Vereeniging Road, Alberton, 1451, South Africa'
     }
 
-    console.log('Geocoding branch:', branchAddress)
+    // console.log('Geocoding branch:', branchAddress)
     const branchGeocode = await geocodeAddress(branchAddress)
-    console.log('Branch geocode result:', branchGeocode)
-    
+    // console.log('Branch geocode result:', branchGeocode)
+
     const branchData = {
       lat: branchGeocode?.lat || null,
       lng: branchGeocode?.lng || null,
@@ -209,16 +228,17 @@ const DashboardForm = ({ onCancel }) => {
     setBranchCoords(branchData)
 
     // Geocode customers
-    console.log('Geocoding customers:', selectedVehicle.customersData)
+    // console.log('Geocoding customers:', selectedVehicle.customersData)
     const customerPromises = selectedVehicle.customersData.map(
       async (customer) => {
-        const suburb = customer.suburb || customer.suburb_name || customer.surburb_name
+        const suburb =
+          customer.suburb || customer.suburb_name || customer.surburb_name
         if (!suburb) {
           console.log('No suburb for customer:', customer)
           return { ...customer, coordinates: null, geocoded: false }
         }
         const coords = await geocodeAddress(`${suburb}, South Africa`)
-        console.log(`Geocoded ${suburb}:`, coords)
+        // console.log(`Geocoded ${suburb}:`, coords)
         return {
           ...customer,
           coordinates: coords,
@@ -228,7 +248,7 @@ const DashboardForm = ({ onCancel }) => {
     )
 
     const results = await Promise.all(customerPromises)
-    console.log('All geocoding complete:', results)
+    //console.log('All geocoding complete:', results)
     setCustomersWithCoords(results)
     setGeocoding(false)
   }
@@ -264,25 +284,19 @@ const DashboardForm = ({ onCancel }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    // Handle form submission here
-
-    const plan_id = selectedVehicle?.selectedPlanId
-    const plan_unit_id = selectedVehicle?.unitData?.plan_unit_id
-
-    fetchData(`plans/${plan_id}/units/${plan_unit_id}`, 'POST', {
-      plan_id,
-      plan_unit_id,
+    setLoading(true)
+    const formData = {
+      plan_id: selectedVehicle?.selectedPlanId,
+      planned_unit_id: selectedVehicle?.unitData?.planned_unit_id,
       note: notes,
-    }).then((r) => {
-      console.log('r :>> ', r)
-    })
-    // if (notes) {
-    //   await fetchData('/api/assignment-planner/units/note', {
-    //     // plan_id,
-    //     // plan_unit_id,
-    //     note: notes,
-    //   }).then((r) => r.json())
-    // }
+    }
+    if (notes) {
+      // console.log('formData :>> ', formData)
+      const res = await fetchData(`plans/units/note`, 'POST', formData)
+      setAssignmentPreview(res)
+      //console.log('assignment_preview :>> ', assignment_preview)
+    }
+    setLoading(false)
     onCancel()
   }
   // console.log('plan_unit_id  :>> ', selectedVehicle?.unitData?.plan_unit_id)
@@ -507,26 +521,39 @@ const DashboardForm = ({ onCancel }) => {
                     ? 'ALRODE'
                     : branchName || 'Unknown Branch'
 
-                  const branchInfo = branchCoords && branchCoords.lat && branchCoords.lng ? branchCoords : {
-                    lat: null,
-                    lng: null,
-                    name: displayBranch,
-                    address:
-                      displayBranch === 'ASSM'
-                        ? 'Springbok Road, South Africa'
-                        : displayBranch === 'ALRODE'
-                        ? 'Vereeniging Road, Alberton, 1451, South Africa'
-                        : 'Unknown Address',
-                  }
+                  const branchInfo =
+                    branchCoords && branchCoords.lat && branchCoords.lng
+                      ? branchCoords
+                      : {
+                          lat: null,
+                          lng: null,
+                          name: displayBranch,
+                          address:
+                            displayBranch === 'ASSM'
+                              ? 'Springbok Road, South Africa'
+                              : displayBranch === 'ALRODE'
+                              ? 'Vereeniging Road, Alberton, 1451, South Africa'
+                              : 'Unknown Address',
+                        }
 
                   // Add vehicle current location if available
-                  const vehicleLocation = selectedVehicle?.vehicleData?.live?.Latitude && selectedVehicle?.vehicleData?.live?.Longitude ? {
-                    lat: Number(selectedVehicle.vehicleData.live.Latitude),
-                    lng: Number(selectedVehicle.vehicleData.live.Longitude),
-                    name: 'Current Location',
-                    display_name: `${selectedVehicle.vehicleData.plate} - Current Position`,
-                    address: selectedVehicle.vehicleData.live.Address || 'Current vehicle position',
-                  } : null
+                  const vehicleLocation =
+                    selectedVehicle?.vehicleData?.live?.Latitude &&
+                    selectedVehicle?.vehicleData?.live?.Longitude
+                      ? {
+                          lat: Number(
+                            selectedVehicle.vehicleData.live.Latitude
+                          ),
+                          lng: Number(
+                            selectedVehicle.vehicleData.live.Longitude
+                          ),
+                          name: 'Current Location',
+                          display_name: `${selectedVehicle.vehicleData.plate} - Current Position`,
+                          address:
+                            selectedVehicle.vehicleData.live.Address ||
+                            'Current vehicle position',
+                        }
+                      : null
 
                   const routeLocations = [
                     branchInfo,
@@ -534,11 +561,11 @@ const DashboardForm = ({ onCancel }) => {
                     ...customersWithCoords,
                     branchInfo,
                   ]
-                  
-                  console.log('Route locations:', routeLocations)
-                  console.log('Branch coords:', branchCoords)
-                  console.log('Vehicle location:', vehicleLocation)
-                  console.log('Customers with coords:', customersWithCoords)
+
+                  // console.log('Route locations:', routeLocations)
+                  // console.log('Branch coords:', branchCoords)
+                  // console.log('Vehicle location:', vehicleLocation)
+                  // console.log('Customers with coords:', customersWithCoords)
 
                   // Mock completed stops - in real implementation, this would come from vehicle tracking data
                   const completedStops = [0, 1] // First two segments completed
@@ -560,14 +587,14 @@ const DashboardForm = ({ onCancel }) => {
                   </div>
                 </div>
               )}
-              
-
 
               {selectedVehicle?.vehicleData?.live && routeInfo && (
                 <div className="absolute top-2 right-2 z-20 bg-black bg-opacity-70 text-white p-3 rounded-lg text-xs min-w-[200px]">
                   <div className="space-y-2">
-                    <div className="font-semibold text-sm mb-1">Live Tracking</div>
-                    
+                    <div className="font-semibold text-sm mb-1">
+                      Live Tracking
+                    </div>
+
                     <div className="flex items-center gap-2">
                       <Gauge className="h-3 w-3" />
                       <span>
@@ -598,14 +625,22 @@ const DashboardForm = ({ onCancel }) => {
                         </span>
                       </div>
                     )}
-                    
+
                     <div className="text-xs mt-1">
-                      <div>Distance: {(routeInfo.totalDistance / 1000).toFixed(1)} km</div>
-                      <div>Time: {Math.floor(routeInfo.totalDuration / 3600)}h {Math.round((routeInfo.totalDuration % 3600) / 60)}m</div>
+                      <div>
+                        Distance: {(routeInfo.totalDistance / 1000).toFixed(1)}{' '}
+                        km
+                      </div>
+                      <div>
+                        Time: {Math.floor(routeInfo.totalDuration / 3600)}h{' '}
+                        {Math.round((routeInfo.totalDuration % 3600) / 60)}m
+                      </div>
                     </div>
-                    
+
                     <div className="border-t border-gray-600 pt-2 mt-2">
-                      <div className="text-[10px] text-gray-300">⚠️ Truck Route (avoids bridges &lt;5m)</div>
+                      <div className="text-[10px] text-gray-300">
+                        ⚠️ Truck Route (avoids bridges &lt;5m)
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -623,6 +658,11 @@ const DashboardForm = ({ onCancel }) => {
             className="bg-[#003e69] hover:bg-[#428bca]"
             disabled={disabled}
           >
+            {loading ? (
+              <Spinner className="mr-2 h-4 w-4" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
             Save Changes
           </Button>
         </div>
