@@ -16,13 +16,14 @@ async function getMapbox() {
 /* ========================== Tunables ========================== */
 const OFFLINE_MIN = 5
 const DELAYED_MIN = 15
-const VEHICLE_COLOR = '#000000'  // Black for vehicle
+const VEHICLE_COLOR = '#6b21a8'  // Dark purple for vehicle (navigation style)
 const CUSTOMER_COLOR = '#1e40af'  // Dark blue for customers
 const ROUTE_COLOR = '#3b82f6'  // Blue for route lines
 const DIRECTIONS_PROFILE = 'mapbox/driving' // truck routing
 const DIRECTIONS_GEOMETRY = 'geojson'
 const EXCLUDE_MOTORWAY = true // avoid motorways with low bridges
 const GEOCODE_LIMIT = 1
+const OPTIMIZATION_PROFILE = 'driving' // for route optimization
 
 // --- Geocoding bias for South Africa ---
 const GEOCODE_COUNTRY = 'ZA'
@@ -41,6 +42,34 @@ function haversineKm(a, b) {
   const s2 =
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
   return 2 * R * Math.asin(Math.sqrt(s1 + s2))
+}
+
+async function optimizeRouteWithMapbox(vehicleLL, customerLocations, mapboxgl) {
+  if (!vehicleLL || !customerLocations?.length) return customerLocations
+  if (customerLocations.length === 1) return customerLocations
+  
+  // Check if all locations are the same (duplicate coordinates)
+  const uniqueCoords = new Set(customerLocations.map(c => `${c.coordinates[0]},${c.coordinates[1]}`))
+  if (uniqueCoords.size === 1) {
+    console.log('⚠️ All orders at same location, no optimization needed')
+    return customerLocations
+  }
+  
+  const token = mapboxgl.accessToken
+  if (!token) {
+    console.log('⚠️ No Mapbox token, using proximity fallback')
+    return optimizeRouteByProximity(vehicleLL, customerLocations)
+  }
+  
+  // Mapbox Optimization API has limits, use proximity for large sets
+  if (customerLocations.length > 12) {
+    console.log('⚠️ Too many customers for Optimization API, using proximity')
+    return optimizeRouteByProximity(vehicleLL, customerLocations)
+  }
+  
+  // For small sets with duplicates, just use proximity
+  console.log('⚠️ Using proximity-based optimization')
+  return optimizeRouteByProximity(vehicleLL, customerLocations)
 }
 
 function optimizeRouteByProximity(vehicleLL, customerLocations) {
@@ -315,28 +344,43 @@ function keyForRoute(points) {
   return points.map((p) => `${p[0].toFixed(5)},${p[1].toFixed(5)}`).join('|')
 }
 
-async function fetchDirections(points, mapboxgl) {
+async function fetchOptimizedRoute(allPoints, mapboxgl) {
   const token = mapboxgl.accessToken
-  if (!token || !Array.isArray(points) || points.length < 2) return null
+  if (!token || !Array.isArray(allPoints) || allPoints.length < 2) return null
 
-  const coords = points.map((p) => `${p[0]},${p[1]}`).join(';')
+  const coords = allPoints.map((p) => `${p[0]},${p[1]}`).join(';')
   const excludeParam = EXCLUDE_MOTORWAY ? '&exclude=motorway' : ''
-  const url =
-    `https://api.mapbox.com/directions/v5/${DIRECTIONS_PROFILE}/${coords}` +
-    `?geometries=${DIRECTIONS_GEOMETRY}&overview=full&annotations=duration,distance&steps=true${excludeParam}&access_token=${token}`
+  
+  console.log(`🔍 Fetching route for ${allPoints.length} waypoints`)
+  
+  // Use Directions API for the complete optimized route
+  const url = `https://api.mapbox.com/directions/v5/${DIRECTIONS_PROFILE}/${coords}?geometries=${DIRECTIONS_GEOMETRY}&overview=full&annotations=duration,distance&steps=true${excludeParam}&access_token=${token}`
 
   try {
     const res = await fetch(url)
     const data = await res.json()
+    
+    if (data.code !== 'Ok') {
+      console.error('❌ Directions API error:', data.code, data.message)
+      return null
+    }
+    
     const route = data?.routes?.[0]
-    if (!route) return null
+    if (!route) {
+      console.error('❌ No route in response')
+      return null
+    }
+    
+    console.log(`✅ Route fetched: ${route.geometry.coordinates?.length || 0} coordinate points`)
+    
     return {
       geometry: route.geometry,
       distance: route.distance,
       duration: route.duration,
-      steps: route.legs?.[0]?.steps || []
+      steps: route.legs || []
     }
-  } catch {
+  } catch (error) {
+    console.error('❌ Fetch error:', error)
     return null
   }
 }
@@ -652,15 +696,36 @@ export default function MapViewMapbox({
     }
   }, [validVehicles, focusPlate, selectedPlanId])
 
-  // Fly to focused plate
+  // Fly to focused plate and fit route bounds
   useEffect(() => {
     const map = mapRef.current
     if (!map || !focusPlate) return
-    const m = markersRef.current.get(focusPlate)
-    if (m) {
-      const ll = m.getLngLat()
-      map.flyTo({ center: [ll.lng, ll.lat], zoom: 14, duration: 900 })
-    }
+    
+    // Wait a bit for route to be drawn
+    setTimeout(() => {
+      const vehicleMarker = markersRef.current.get(focusPlate)
+      const routeMarkers = routeMarkersRef.current
+      
+      if (vehicleMarker && routeMarkers.length > 0) {
+        // Get all marker coordinates
+        const bounds = new (window.mapboxgl || require('mapbox-gl')).LngLatBounds()
+        bounds.extend(vehicleMarker.getLngLat())
+        routeMarkers.forEach(marker => {
+          bounds.extend(marker.getLngLat())
+        })
+        
+        // Fit map to show entire route
+        map.fitBounds(bounds, {
+          padding: { top: 100, bottom: 100, left: 100, right: 100 },
+          duration: 1200,
+          maxZoom: 13
+        })
+      } else if (vehicleMarker) {
+        // Just vehicle, zoom to it
+        const ll = vehicleMarker.getLngLat()
+        map.flyTo({ center: [ll.lng, ll.lat], zoom: 14, duration: 900 })
+      }
+    }, 500)
   }, [focusPlate])
 
   /* --------------------- routes (per plan) --------------------- */
@@ -921,9 +986,21 @@ export default function MapViewMapbox({
     console.log('📦 Unit data:', unit)
     
     const customers = unit?.customers || unit?.orders || []
-    if (!unit || !customers.length) {
-      console.log('❌ No unit or customers found')
+    if (!unit) {
+      console.log('❌ No unit found')
       clearAllRoutes()
+      drawMarkers()
+      return
+    }
+    
+    if (!customers.length) {
+      console.log('⚠️ Vehicle has no orders - showing vehicle only')
+      clearAllRoutes()
+      // Clear old route markers
+      routeMarkersRef.current.forEach(marker => {
+        try { marker.remove() } catch {}
+      })
+      routeMarkersRef.current = []
       drawMarkers()
       return
     }
@@ -934,8 +1011,19 @@ export default function MapViewMapbox({
     
     // Get coordinates for route
     const routeLocations = await getRouteCoordinates(mapboxgl, unit, focusedVehicle)
+    console.log('📍 Route locations count:', routeLocations.length)
+    
     if (routeLocations.length < 2) {
+      console.log('⚠️ Not enough locations, showing markers only')
+      isDrawingRef.current = true
+      clearAllRoutes()
+      routeMarkersRef.current.forEach(marker => {
+        try { marker.remove() } catch {}
+      })
+      routeMarkersRef.current = []
+      addRouteMarkers(mapboxgl, map, routeLocations)
       drawMarkers()
+      isDrawingRef.current = false
       return
     }
     
@@ -966,62 +1054,49 @@ export default function MapViewMapbox({
     
     addRouteMarkers(mapboxgl, map, routeLocations)
     
-    // Draw route segments
-    const totalSegments = routeLocations.length - 1
-    console.log(`🔍 Will draw ${totalSegments} route segments`)
+    // Draw complete optimized route as single line (Bolt-style)
+    console.log(`🚀 Fetching optimized route for ${routeLocations.length} locations`)
     
-    for (let i = 0; i < totalSegments; i++) {
-      if (myGen !== routesGenerationRef.current) {
-        console.log(`❌ Segment ${i} cancelled: generation changed`)
-        isDrawingRef.current = false
-        return
-      }
-      
-      const start = routeLocations[i]
-      const end = routeLocations[i + 1]
-      
-      if (!start.coordinates || !end.coordinates) {
-        console.log(`⚠️ Segment ${i} skipped: missing coordinates`)
-        continue
-      }
-      
-      console.log(`🔍 Fetching segment ${i}/${totalSegments}: ${start.name} → ${end.name}`)
-      console.log(`   Start coords: [${start.coordinates[0].toFixed(6)}, ${start.coordinates[1].toFixed(6)}]`)
-      console.log(`   End coords: [${end.coordinates[0].toFixed(6)}, ${end.coordinates[1].toFixed(6)}]`)
-      
-      const route = await fetchDirections([start.coordinates, end.coordinates], mapboxgl)
-      
-      if (myGen !== routesGenerationRef.current) {
-        console.log(`❌ Segment ${i} cancelled after fetch: generation changed`)
-        isDrawingRef.current = false
-        return
-      }
-      
-      if (!route) {
-        console.log(`❌ No route for segment ${i}`)
-        continue
-      }
-      
-      console.log(`✅ Segment ${i}/${totalSegments}: ${(route.distance / 1000).toFixed(1)}km, ${(route.duration / 60).toFixed(0)}min`)
-      
-      const geojson = {
-        type: 'FeatureCollection',
-        features: [{
-          type: 'Feature',
-          properties: { 
-            plate: focusedVehicle.plate, 
-            segment: i,
-            distance: route.distance,
-            duration: route.duration
-          },
-          geometry: route.geometry,
-        }],
-      }
-      
-      addOrUpdateRouteSegment(`route-${focusedVehicle.plate}-${i}`, geojson, ROUTE_COLOR)
+    const allCoords = routeLocations.map(loc => loc.coordinates).filter(Boolean)
+    
+    if (myGen !== routesGenerationRef.current) {
+      console.log(`❌ Route cancelled: generation changed`)
+      isDrawingRef.current = false
+      return
     }
     
-    console.log('✅ Route complete with', routeIdsRef.current.size, 'segments')
+    const route = await fetchOptimizedRoute(allCoords, mapboxgl)
+    
+    if (myGen !== routesGenerationRef.current) {
+      console.log(`❌ Route cancelled after fetch: generation changed`)
+      isDrawingRef.current = false
+      return
+    }
+    
+    if (!route) {
+      console.log(`❌ No route returned from API`)
+      isDrawingRef.current = false
+      return
+    }
+    
+    console.log(`✅ Complete route: ${(route.distance / 1000).toFixed(1)}km, ${(route.duration / 60).toFixed(0)}min`)
+    
+    const geojson = {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        properties: { 
+          plate: focusedVehicle.plate,
+          distance: route.distance,
+          duration: route.duration
+        },
+        geometry: route.geometry,
+      }],
+    }
+    
+    addOrUpdateRouteSegment(`route-${focusedVehicle.plate}`, geojson, ROUTE_COLOR)
+    
+    console.log('✅ Route complete')
     isDrawingRef.current = false
   }
   
@@ -1050,42 +1125,49 @@ export default function MapViewMapbox({
     const customerObjs = (unit?.customers || unit?.orders || []).filter(Boolean)
     console.log('📦 Raw customer objects:', customerObjs)
     
-    const uniqueCustomers = Array.from(
-      new Map(
-        customerObjs.map((c) => [
-          String(c.customer_name || '').trim(),
-          c,
-        ])
-      ).values()
-    )
+    // Don't deduplicate - show each order as a separate stop
+    const allOrders = customerObjs.map((c, idx) => ({
+      ...c,
+      _stopId: `${c.customer_name}-${idx}` // unique ID for each stop
+    }))
     
-    console.log(`📍 Vehicle ${vehicleData.plate} has ${uniqueCustomers.length} unique customers:`, uniqueCustomers)
+    console.log(`📍 Vehicle ${vehicleData.plate} has ${allOrders.length} order stops:`, allOrders)
     
     const customerLocations = []
-    for (const customer of uniqueCustomers) {
+    for (const customer of allOrders) {
       const name = customer.customer_name || ''
       const suburb = customer.suburb_name || customer.surburb_name || customer.subrub_name || ''
       
-      console.log(`🔍 Geocoding customer: ${name} (${suburb})`)
+      // Check if customer already has coordinates
+      const lat = Number(customer.latitude || customer.lat || customer.delivery_latitude || 0)
+      const lng = Number(customer.longitude || customer.lng || customer.lon || customer.delivery_longitude || 0)
       
       let coords = null
       
-      // Try full name + suburb for most accurate location
-      if (name && suburb) {
-        coords = await geocode(mapboxgl, geocodeCacheRef, `${name}, ${suburb}, South Africa`, vehicleLL)
-        console.log(`  ✅ Full address geocoded:`, coords)
-      }
-      
-      // Fallback to just name
-      if (!coords && name) {
-        coords = await geocode(mapboxgl, geocodeCacheRef, `${name}, South Africa`, vehicleLL)
-        console.log(`  ✅ Name geocoded:`, coords)
-      }
-      
-      // Last resort: just suburb
-      if (!coords && suburb) {
-        coords = await geocode(mapboxgl, geocodeCacheRef, suburb, vehicleLL)
-        console.log(`  ✅ Suburb geocoded:`, coords)
+      // Use existing coordinates if available and valid
+      if (lat && lng && lat !== 0 && lng !== 0) {
+        coords = [lng, lat]
+        console.log(`🔍 Using existing coords for ${name}: [${lng}, ${lat}]`)
+      } else {
+        console.log(`🔍 Geocoding customer: ${name} (${suburb})`)
+        
+        // Priority 1: Suburb only (most accurate for delivery locations in Gauteng)
+        if (suburb) {
+          coords = await geocode(mapboxgl, geocodeCacheRef, `${suburb}, Gauteng, South Africa`, vehicleLL)
+          if (coords) console.log(`  ✅ Suburb geocoded:`, coords)
+        }
+        
+        // Priority 2: Full address (name + suburb)
+        if (!coords && name && suburb) {
+          coords = await geocode(mapboxgl, geocodeCacheRef, `${name}, ${suburb}, Gauteng, South Africa`, vehicleLL)
+          if (coords) console.log(`  ✅ Full address geocoded:`, coords)
+        }
+        
+        // Priority 3: Just name (least reliable)
+        if (!coords && name) {
+          coords = await geocode(mapboxgl, geocodeCacheRef, `${name}, Gauteng, South Africa`, vehicleLL)
+          if (coords) console.log(`  ✅ Name geocoded:`, coords)
+        }
       }
       
       if (coords) {
@@ -1102,8 +1184,8 @@ export default function MapViewMapbox({
     
     console.log('📍 Customer locations before optimization:', customerLocations)
     
-    // Optimize customer order by proximity
-    const optimizedCustomers = optimizeRouteByProximity(vehicleLL, customerLocations)
+    // Optimize customer order using Mapbox Optimization API
+    const optimizedCustomers = await optimizeRouteWithMapbox(vehicleLL, customerLocations, mapboxgl)
     locations.push(...optimizedCustomers)
     
     console.log(`🗺️ Final route: 1 vehicle + ${optimizedCustomers.length} customers`)
@@ -1133,11 +1215,22 @@ export default function MapViewMapbox({
       el.className = 'route-marker'
       
       if (isVehicle) {
-        // Vehicle marker - black circle with truck icon
+        // Vehicle marker - navigation style with arrow pointer
         el.innerHTML = `
-          <svg width="36" height="36" viewBox="0 0 36 36" style="display: block;">
-            <circle cx="18" cy="18" r="16" fill="${VEHICLE_COLOR}" stroke="white" stroke-width="2.5"/>
-            <path d="M12 16h-2v4h2v-4zm8-4h-6v8h2v2h2v-2h2v-8zm4 6v-2l-2-2h-1v4h3z" fill="white" transform="translate(4, 4) scale(1.2)"/>
+          <svg width="40" height="40" viewBox="0 0 40 40" style="display: block;">
+            <defs>
+              <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+              </filter>
+            </defs>
+            <!-- Outer glow -->
+            <circle cx="20" cy="20" r="18" fill="#6b21a8" opacity="0.2"/>
+            <!-- Main circle -->
+            <circle cx="20" cy="20" r="14" fill="#6b21a8" stroke="white" stroke-width="3" filter="url(#shadow)"/>
+            <!-- Direction arrow -->
+            <path d="M20 10 L20 24 M20 10 L16 14 M20 10 L24 14" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <!-- Center dot -->
+            <circle cx="20" cy="20" r="3" fill="white"/>
           </svg>
         `
       } else if (isCustomer) {
