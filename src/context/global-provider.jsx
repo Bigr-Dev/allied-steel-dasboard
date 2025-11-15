@@ -304,12 +304,20 @@ const GlobalProvider = ({ children, data }) => {
     // },
     {
       table: "plans",
-      onInsert: (r) => assignmentDispatch(assignment_actions.addPlanSuccess(r)),
-      onUpdate: (r) => assignmentDispatch(assignment_actions.addPlanSuccess(r)),
-      onDelete: (o) =>
+      onInsert: (r) => {
+        console.log('🟢 PLANS LISTENER - INSERT:', r)
+        assignmentDispatch(assignment_actions.addPlanSuccess(r))
+      },
+      onUpdate: (r) => {
+        console.log('🟡 PLANS LISTENER - UPDATE:', r)
+        assignmentDispatch(assignment_actions.addPlanSuccess(r))
+      },
+      onDelete: (o) => {
+        console.log('🔴 PLANS LISTENER - DELETE:', o)
         assignmentDispatch(
           assignment_actions.deletePlannedAssignmentByIdSuccess(o.id)
-        ),
+        )
+      },
     },
     {
       table: "customers",
