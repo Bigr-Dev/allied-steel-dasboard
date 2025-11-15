@@ -204,8 +204,8 @@ async function commitImmediateMove(
 
   // B) Unit → Bucket (unassign)
   if (fromUnitId && !toUnitId) {
-    console.log('Case B: Unit → Bucket')
-    console.log('item_ids :>> ', order_ids)
+    // console.log('Case B: Unit → Bucket')
+    // console.log('item_ids :>> ', order_ids)
     try {
       const res = await fetchData(`plans/${planId}/unassign`, 'POST', {
         plan_id: planId,
@@ -216,7 +216,7 @@ async function commitImmediateMove(
         units: res?.units,
         unassigned_units: res?.unassigned_units,
       })
-      console.log('res :>> ', res)
+      // console.log('res :>> ', res)
       return
     } catch (error) {
       console.log('error :>> ', error)
@@ -468,15 +468,15 @@ const LoadAssignmentSingle = ({ id, data }) => {
   }, [assignment_preview, setAssignmentPreview])
 
   const planned_unit = assignedUnits?.find((v) => v.planned_unit_id === id)
-  console.log('🔍 planned_unit found:', planned_unit)
-  console.log('🔍 Current states:', {
-    plan,
-    assignedUnits: assignedUnits?.length,
-    unassigned: unassigned?.length,
-  })
+  // console.log('🔍 planned_unit found:', planned_unit)
+  // console.log('🔍 Current states:', {
+  //   plan,
+  //   assignedUnits: assignedUnits?.length,
+  //   unassigned: unassigned?.length,
+  // })
   const onUnassignAll = async (plannedUnitId) => {
     setLoading(true)
-    console.log('🚀 onUnassignAll called with plannedUnitId:', plannedUnitId)
+    //   console.log('🚀 onUnassignAll called with plannedUnitId:', plannedUnitId)
 
     const unit = assignedUnits?.find((u) => u.planned_unit_id === plannedUnitId)
     console.log('🔍 Found unit:', unit)
@@ -491,24 +491,24 @@ const LoadAssignmentSingle = ({ id, data }) => {
     const orderIds = (unit.orders || [])
       .map((order) => order.order_id)
       .filter(Boolean)
-    console.log('🔍 Extracted orderIds:', orderIds)
+    // console.log('🔍 Extracted orderIds:', orderIds)
 
     // Use data.plan.id since plan state might not have id
     const planId = data?.plan?.id || plan?.id
 
-    console.log('🔍 Debug plan data:', {
-      plan,
-      dataPlan: data?.plan,
-      planId,
-      planKeys: plan ? Object.keys(plan) : 'null',
-      dataPlanKeys: data?.plan ? Object.keys(data.plan) : 'null',
-    })
+    // console.log('🔍 Debug plan data:', {
+    //   plan,
+    //   dataPlan: data?.plan,
+    //   planId,
+    //   planKeys: plan ? Object.keys(plan) : 'null',
+    //   dataPlanKeys: data?.plan ? Object.keys(data.plan) : 'null',
+    // })
 
-    console.log('📤 Unassigning all from unit payload:', {
-      plan_id: planId,
-      planned_unit_id: plannedUnitId,
-      order_ids: orderIds,
-    })
+    // console.log('📤 Unassigning all from unit payload:', {
+    //   plan_id: planId,
+    //   planned_unit_id: plannedUnitId,
+    //   order_ids: orderIds,
+    // })
 
     if (!planId) {
       toast({ title: 'Error', description: 'Plan ID not found' })
@@ -675,12 +675,12 @@ const LoadAssignmentSingle = ({ id, data }) => {
   }
 
   const handleAssignItem = (itemId, vehicleId) => {
-    console.log(
-      '🔵 ASSIGN - Looking for itemId:',
-      itemId,
-      'in vehicleId:',
-      vehicleId
-    )
+    // console.log(
+    //   '🔵 ASSIGN - Looking for itemId:',
+    //   itemId,
+    //   'in vehicleId:',
+    //   vehicleId
+    // )
     const meta = unassigned.find((x) => String(x.order_id) === String(itemId))
     //  console.log('🔵 ASSIGN - Found meta:', meta)
     if (!meta) {
@@ -706,7 +706,7 @@ const LoadAssignmentSingle = ({ id, data }) => {
       ],
       ...meta, // Include all original properties
     }
-    console.log('🔵 ASSIGN - Transformed order:', transformedOrder)
+    // console.log('🔵 ASSIGN - Transformed order:', transformedOrder)
 
     // remove from unassigned
     setUnassigned((prev) => {
