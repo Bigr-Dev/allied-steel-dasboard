@@ -6,6 +6,8 @@ import DynamicInput from '../ui/dynamic-input'
 import { Button } from '../ui/button'
 import { Plus, Save } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { set } from 'date-fns'
+import { Spinner } from '../ui/spinner'
 
 function todayTomorrow() {
   const now = new Date()
@@ -65,6 +67,7 @@ const AssignmentForm = ({ id, onCancel }) => {
     { name: 'Add Vehicle', value: 'add-vehicle' },
   ]
   const [currentTab, setCurrentTab] = useState(tabs[0].value)
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -83,16 +86,13 @@ const AssignmentForm = ({ id, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // fetchAssignmentPreview(formData)
+    setLoading(true)
     if (currentTab === 'auto-assign') {
       runAutoAssign(formData)
     } else {
-      // addVehicle(formData)
       addNewUnit(formData)
-      console.log('formData :>> ', formData)
     }
-    // console.log('currentTab :>> ', currentTab)
-
+    setLoading(false)
     onCancel()
   }
 
@@ -111,24 +111,6 @@ const AssignmentForm = ({ id, onCancel }) => {
         })) || []),
       ],
     },
-    // {
-    //   htmlFor: 'notes',
-    //   label: 'Notes',
-    //   value: formData.notes,
-    //   placeholder: 'Plan notes',
-    // },
-    // {
-    //   type: 'select',
-    //   htmlFor: 'status',
-    //   label: 'Status*',
-    //   value: formData.status,
-    //   required: true,
-    //   options: [
-    //     { value: 'planning', label: 'Planning' },
-    //     { value: 'active', label: 'Active' },
-    //     { value: 'completed', label: 'Completed' },
-    //   ],
-    // },
   ]
 
   const vehicleInputs = [
@@ -173,7 +155,7 @@ const AssignmentForm = ({ id, onCancel }) => {
                 key={index}
                 value={tab.value}
                 onClick={() => {
-                  console.log('index :>> ', index)
+                  //console.log('index :>> ', index)
                   if (index === 0) {
                     setFormData(assignmentData)
                   } else {
@@ -227,18 +209,33 @@ const AssignmentForm = ({ id, onCancel }) => {
 
           <Button
             type="submit"
-            // disabled={
-            //   currentTab === "add-vehicle" ? false : !vehicleData.vehicle_assignment_id
-            // }
+            disabled={
+              currentTab === 'auto-assign'
+                ? false
+                : currentTab === 'add-vehicle' &&
+                  !formData.vehicle_assignment_id
+                ? true
+                : false
+            }
             className="bg-[#003e69] hover:bg-[#428bca]"
           >
             {currentTab === 'auto-assign' ? (
               <>
-                <Save className="mr-2 h-4 w-4" /> Auto Assign
+                {loading ? (
+                  <Spinner className="mr-2 h-4 w-4" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Auto Assign
               </>
             ) : (
               <>
-                <Plus className="mr-2 h-4 w-4" /> Add Vehicle
+                {loading ? (
+                  <Spinner className="mr-2 h-4 w-4" />
+                ) : (
+                  <Plus className="mr-2 h-4 w-4" />
+                )}
+                Add Vehicle
               </>
             )}
           </Button>

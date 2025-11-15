@@ -395,7 +395,8 @@ const LoadAssignmentSingle = ({ id, data }) => {
   const { unassignAllFromUnit } = useAssignmentPlan()
 
   const { toast } = useToast()
-  // console.log('data :>> ', data)
+  console.log('🔍 LoadAssignmentSingle - Component props:', { id, data })
+  console.log('🔍 LoadAssignmentSingle - Plan data:', data?.plan)
   const [assignedUnits, setAssignedUnits] = useState(data?.units || [])
   const [unassigned, setUnassigned] = useState(data?.unassigned_orders || [])
 
@@ -438,8 +439,65 @@ const LoadAssignmentSingle = ({ id, data }) => {
   }, [assignedUnits, unassigned, plan, setAssignmentPreview])
 
   const planned_unit = assignedUnits?.find((v) => v.planned_unit_id === id)
-
-  const onUnassignAll = unassignAllFromUnit
+  console.log('🔍 planned_unit found:', planned_unit)
+  console.log('🔍 Current states:', { plan, assignedUnits: assignedUnits?.length, unassigned: unassigned?.length })
+  const onUnassignAll = async (plannedUnitId) => {
+    console.log('🚀 onUnassignAll called with plannedUnitId:', plannedUnitId)
+    
+    const unit = assignedUnits?.find((u) => u.planned_unit_id === plannedUnitId)
+    console.log('🔍 Found unit:', unit)
+    
+    if (!unit) {
+      console.log('❌ No unit found for plannedUnitId:', plannedUnitId)
+      return
+    }
+    
+    // Extract order IDs from the unit's orders array
+    const orderIds = (unit.orders || []).map(order => order.order_id).filter(Boolean)
+    console.log('🔍 Extracted orderIds:', orderIds)
+    
+    // Use data.plan.id since plan state might not have id
+    const planId = data?.plan?.id || plan?.id
+    
+    console.log('🔍 Debug plan data:', { 
+      plan, 
+      dataPlan: data?.plan, 
+      planId,
+      planKeys: plan ? Object.keys(plan) : 'null',
+      dataPlanKeys: data?.plan ? Object.keys(data.plan) : 'null'
+    })
+    
+    console.log('📤 Unassigning all from unit payload:', {
+      plan_id: planId,
+      planned_unit_id: plannedUnitId,
+      order_ids: orderIds
+    })
+    
+    if (!planId) {
+      toast({ title: 'Error', description: 'Plan ID not found' })
+      return
+    }
+    
+    try {
+      console.log('📡 Making API call to:', `plans/${planId}/unassign`)
+      const result = await fetchData(`plans/${planId}/unassign`, 'POST', {
+        plan_id: planId,
+        planned_unit_id: plannedUnitId,
+        order_ids: orderIds
+      })
+      console.log('✅ API call successful:', result)
+      
+      toast({ title: 'Success', description: 'All items unassigned from unit' })
+    } catch (error) {
+      console.error('❌ Error unassigning all:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      })
+      toast({ title: 'Error', description: 'Failed to unassign items' })
+    }
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -574,7 +632,12 @@ const LoadAssignmentSingle = ({ id, data }) => {
   }
 
   const handleAssignItem = (itemId, vehicleId) => {
-    console.log('🔵 ASSIGN - Looking for itemId:', itemId, 'in vehicleId:', vehicleId)
+    console.log(
+      '🔵 ASSIGN - Looking for itemId:',
+      itemId,
+      'in vehicleId:',
+      vehicleId
+    )
     const meta = unassigned.find((x) => String(x.order_id) === String(itemId))
     console.log('🔵 ASSIGN - Found meta:', meta)
     if (!meta) {
@@ -591,19 +654,26 @@ const LoadAssignmentSingle = ({ id, data }) => {
       suburb_name: meta.suburb_name,
       total_weight: meta.total_weight || 0,
       // Create lines array that hydrateUnitFromPlanPayload expects
-      lines: [{
-        order_line_id: `${meta.order_id}-line-1`,
-        description: `${meta.sales_order_number} - ${meta.customer_name}`,
-        weight: meta.total_weight || 0
-      }],
-      ...meta // Include all original properties
+      lines: [
+        {
+          order_line_id: `${meta.order_id}-line-1`,
+          description: `${meta.sales_order_number} - ${meta.customer_name}`,
+          weight: meta.total_weight || 0,
+        },
+      ],
+      ...meta, // Include all original properties
     }
     console.log('🔵 ASSIGN - Transformed order:', transformedOrder)
 
     // remove from unassigned
     setUnassigned((prev) => {
       const filtered = prev.filter((x) => String(x.order_id) !== String(itemId))
-      console.log('🔵 ASSIGN - Removing from unassigned. Before:', prev.length, 'After:', filtered.length)
+      console.log(
+        '🔵 ASSIGN - Removing from unassigned. Before:',
+        prev.length,
+        'After:',
+        filtered.length
+      )
       return filtered
     })
 
@@ -611,14 +681,22 @@ const LoadAssignmentSingle = ({ id, data }) => {
     setAssignedUnits((prev) =>
       prev.map((u) => {
         if (String(u.planned_unit_id) !== String(vehicleId)) return u
-        console.log('🔵 ASSIGN - Adding to unit:', vehicleId, 'Current orders:', u.orders?.length || 0)
+        console.log(
+          '🔵 ASSIGN - Adding to unit:',
+          vehicleId,
+          'Current orders:',
+          u.orders?.length || 0
+        )
         const updated = {
           ...u,
           orders: [...(u.orders || []), transformedOrder],
           used_capacity_kg:
             Number(u.used_capacity_kg || 0) + Number(meta.total_weight || 0),
         }
-        console.log('🔵 ASSIGN - Updated unit orders:', updated.orders?.length || 0)
+        console.log(
+          '🔵 ASSIGN - Updated unit orders:',
+          updated.orders?.length || 0
+        )
         return updated
       })
     )
@@ -637,7 +715,10 @@ const LoadAssignmentSingle = ({ id, data }) => {
 
         removedOrder = u.orders[orderIndex]
         console.log('🟡 UNASSIGN - Found order to remove:', removedOrder)
-        console.log('🟡 UNASSIGN - Unit before removal orders:', u.orders?.length || 0)
+        console.log(
+          '🟡 UNASSIGN - Unit before removal orders:',
+          u.orders?.length || 0
+        )
         const updated = {
           ...u,
           orders: u.orders.filter((_, index) => index !== orderIndex),
@@ -647,24 +728,30 @@ const LoadAssignmentSingle = ({ id, data }) => {
               Number(removedOrder.total_weight || 0)
           ),
         }
-        console.log('🟡 UNASSIGN - Unit after removal orders:', updated.orders?.length || 0)
+        console.log(
+          '🟡 UNASSIGN - Unit after removal orders:',
+          updated.orders?.length || 0
+        )
         return updated
       })
     )
 
     if (removedOrder) {
       console.log('🟡 UNASSIGN - Adding back to unassigned:', removedOrder)
-      
+
       // Transform back to original unassigned structure (remove the 'lines' property we added)
       const { lines, ...originalOrder } = removedOrder
       console.log('🟡 UNASSIGN - Transformed back to original:', originalOrder)
-      
+
       setUnassigned((prev) => {
         const updated = [
           ...prev.filter((x) => String(x.order_id) !== String(itemId)),
           originalOrder,
         ]
-        console.log('🟡 UNASSIGN - Unassigned count after adding back:', updated.length)
+        console.log(
+          '🟡 UNASSIGN - Unassigned count after adding back:',
+          updated.length
+        )
         return updated
       })
     } else {

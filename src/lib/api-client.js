@@ -90,11 +90,13 @@ export const assignmentAPI = {
   },
 
   // Unassign all items from vehicle
-  unassignAllItems: (vehicleId) => {
-    return apiRequest('/unassign/all', {
+  unassignAllItems: (planId, plannedUnitId, orderIds) => {
+    return apiRequest(`/plans/${planId}/unassign`, {
       method: 'POST',
       body: JSON.stringify({
-        vehicle_id: vehicleId,
+        plan_id: planId,
+        planned_unit_id: plannedUnitId,
+        order_ids: orderIds,
       }),
     })
   },

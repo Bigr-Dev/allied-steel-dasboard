@@ -53,7 +53,6 @@ const SignInForm = () => {
         password,
       }
       login(userData)
-      // router.push('/') // or dashboard
     } catch (err) {
       setError('Invalid email or password.')
       toast({

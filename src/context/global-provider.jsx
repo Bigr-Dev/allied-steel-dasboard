@@ -1,616 +1,464 @@
-"use client";
+'use client'
 
 // react
-import { useEffect, useReducer, useState } from "react";
-
-// icons
+import { useEffect, useReducer, useState } from 'react'
 
 // actions
-import * as branch_actions from "@/context/actions/branch-actions";
-import * as assignment_actions from "@/context/actions/assignment-actions";
-import * as customer_actions from "@/context/actions/customer-actions";
-import * as driver_actions from "@/context/actions/driver-actions";
-import * as vehicle_actions from "@/context/actions/vehicle-actions";
-import * as user_actions from "@/context/actions/user-actions";
+import * as branch_actions from '@/context/actions/branch-actions'
+import * as assignment_actions from '@/context/actions/assignment-actions'
+import * as customer_actions from '@/context/actions/customer-actions'
+import * as driver_actions from '@/context/actions/driver-actions'
+import * as vehicle_actions from '@/context/actions/vehicle-actions'
+import * as user_actions from '@/context/actions/user-actions'
 
 // context
-import { GlobalContext, initialState } from "./global-context";
+import { GlobalContext, initialState } from './global-context'
 
 // reducers
-import branchReducer from "./reducers/branch-reducer";
-import customerReducer from "./reducers/customer-reducer";
-import userReducer from "./reducers/user-reducer";
-import loadReducer from "./reducers/load-reducer";
-import orderReducer from "./reducers/order-reducer";
-import vehicleReducer from "./reducers/vehicle-apis";
-import driverReducer from "./reducers/driver-reducer";
-import routeReducer from "./reducers/route-reducers";
-import groupedLoadReducer from "./reducers/grouped_load-reducer";
+import branchReducer from './reducers/branch-reducer'
+import customerReducer from './reducers/customer-reducer'
+import userReducer from './reducers/user-reducer'
+import loadReducer from './reducers/load-reducer'
+import orderReducer from './reducers/order-reducer'
+import vehicleReducer from './reducers/vehicle-apis'
+import driverReducer from './reducers/driver-reducer'
+import routeReducer from './reducers/route-reducers'
+import groupedLoadReducer from './reducers/grouped_load-reducer'
+import assignmentReducer from './reducers/assignment-reducer'
 
 // states
-import { useAuth } from "./initial-states/auth-state";
+import { useAuth } from './initial-states/auth-state'
 
 // api's
-import { deleteBranch, loadBranches, upsertBranch } from "./apis/branch-apis";
+import { deleteBranch, loadBranches, upsertBranch } from './apis/branch-apis'
 import {
   deleteCustomer,
   loadCustomers,
   upsertCustomer,
-} from "./apis/customer-apis";
-import { deleteUser, loadUsers, upsertUser } from "./apis/user-apis";
-import {
-  deleteLoad,
-  fetchLoads,
-  loadLoads,
-  upsertLoad,
-} from "./apis/load-apis";
-import { deleteOrder, loadOrders, upsertOrder } from "./apis/order-apis";
-import {
-  deleteVehicle,
-  loadVehicles,
-  upsertVehicle,
-} from "./apis/vehicle-apis";
-import { deleteDriver, loadDrivers, upsertDriver } from "./apis/driver-apis";
-import { deleteRoute, loadRoutes, upsertRoute } from "./apis/route-apis";
-import { loadGroupedLoads } from "./apis/grouped-load-apis";
+} from './apis/customer-apis'
+import { deleteUser, loadUsers, upsertUser } from './apis/user-apis'
+import { deleteLoad, fetchLoads, loadLoads, upsertLoad } from './apis/load-apis'
+import { deleteOrder, loadOrders, upsertOrder } from './apis/order-apis'
+import { deleteVehicle, loadVehicles, upsertVehicle } from './apis/vehicle-apis'
+import { deleteDriver, loadDrivers, upsertDriver } from './apis/driver-apis'
+import { deleteRoute, loadRoutes, upsertRoute } from './apis/route-apis'
 import {
   addPlan,
   addUnit,
   autoAssignPlan,
   deletePlannedAssignmentById,
-} from "./apis/assignment-apis";
+  loadAssignments,
+} from './apis/assignment-apis'
 
 // components
-import AlertScreen from "@/components/layout/alert-screen";
-import DialogScreen from "@/components/layout/dialog-screen";
+import AlertScreen from '@/components/layout/alert-screen'
+import DialogScreen from '@/components/layout/dialog-screen'
 
 // hooks
-import { onCreate, onDelete, onEdit } from "@/hooks/use-modal";
-import { usePathname } from "next/navigation";
-import { replaceHyphenWithUnderscore } from "@/hooks/replace-hyphen";
+import { onCreate, onDelete, onEdit } from '@/hooks/use-modal'
 
 // config
-import supabase from "@/config/supabase";
-import { fetchData } from "@/lib/fetch";
-import assignmentReducer from "./reducers/assignment-reducer";
-import { autoAssignLoads, loadAssignments } from "./apis/assignment-apis";
-import { useLiveStore } from "@/config/zustand";
+import supabase from '@/config/supabase'
+import { useLiveStore } from '@/config/zustand'
+
+// helpers
+import { fetchData } from '@/lib/fetch'
+
+const TABLE_CONFIG = [
+  {
+    table: 'branches',
+    onInsert: (r, dispatch) => dispatch(branch_actions.addBranchSuccess(r)),
+    onUpdate: (r, dispatch) => dispatch(branch_actions.updateBranchSuccess(r)),
+    onDelete: (o, dispatch) =>
+      dispatch(branch_actions.deleteBranchSuccess(o.id)),
+  },
+  {
+    table: 'plans',
+    onInsert: (r, dispatch) => {
+      console.log('🟢 PLANS LISTENER - INSERT:', r)
+      dispatch(assignment_actions.addPlanSuccess(r))
+    },
+    onUpdate: (r, dispatch) => {
+      console.log('🟡 PLANS LISTENER - UPDATE:', r)
+      dispatch(assignment_actions.addPlanSuccess(r))
+    },
+    onDelete: (o, dispatch) => {
+      console.log('🔴 PLANS LISTENER - DELETE:', o)
+      dispatch(assignment_actions.deletePlannedAssignmentByIdSuccess(o.id))
+    },
+  },
+  {
+    table: 'customers',
+    onInsert: (r, dispatch) => dispatch(customer_actions.addCustomerSuccess(r)),
+    onUpdate: (r, dispatch) =>
+      dispatch(customer_actions.updateCustomerSuccess(r)),
+    onDelete: (o, dispatch) =>
+      dispatch(customer_actions.deleteCustomerSuccess(o.id)),
+  },
+  {
+    table: 'drivers',
+    onInsert: (r, dispatch) => dispatch(driver_actions.addDriverSuccess(r)),
+    onUpdate: (r, dispatch) => dispatch(driver_actions.updateDriverSuccess(r)),
+    onDelete: (o, dispatch) =>
+      dispatch(driver_actions.deleteDriverSuccess(o.id)),
+  },
+  {
+    table: 'users',
+    onInsert: (r, dispatch) => dispatch(user_actions.addUserSuccess(r)),
+    onUpdate: (r, dispatch) => dispatch(user_actions.updateUserSuccess(r)),
+    onDelete: (o, dispatch) => dispatch(user_actions.deleteUserSuccess(o.id)),
+  },
+  {
+    table: 'vehicles',
+    onInsert: (r, dispatch) => dispatch(vehicle_actions.addVehicleSuccess(r)),
+    onUpdate: (r, dispatch) =>
+      dispatch(vehicle_actions.updateVehicleSuccess(r)),
+    onDelete: (o, dispatch) =>
+      dispatch(vehicle_actions.deleteVehicleSuccess(o.id)),
+  },
+]
 
 const GlobalProvider = ({ children, data }) => {
-  const pathname = usePathname().slice(1);
-  const screen = replaceHyphenWithUnderscore(pathname);
-
-  // console.log('screen :>> ', screen)
-  // const vehicles_data = data?.vehicles?.map((v) => {
-  //   const driver = data?.drivers?.filter((d) => d.id == v.current_driver)?.[0]
-  //     ?.name
-  //   const link = data?.vehicles?.filter((link) => link.id == v.assigned_to)?.[0]
-  //     ?.fleet_number
-  //   return { ...v, current_driver: driver, assigned_to: link }
-  // })
-  // console.log('vehicles_data :>> ', vehicles_data)
-  // auth
-  const { current_user, currentUserDispatch } = useAuth();
+  const { current_user } = useAuth()
 
   // reducers
   const [branches, branchesDispatch] = useReducer(
     branchReducer,
     initialState.initialBranchesState
-  );
+  )
   const [customers, customersDispatch] = useReducer(
     customerReducer,
     initialState.initialCustomerState
-  );
+  )
   const [users, usersDispatch] = useReducer(
     userReducer,
     initialState.initialUsersState
-  );
+  )
   const [loads, loadsDispatch] = useReducer(
     loadReducer,
     initialState.initialLoadsState
-  );
+  )
   const [load_assignment, groupedLoadsDispatch] = useReducer(
     groupedLoadReducer,
     initialState.initialGroupedLoadsState
-  );
+  )
   const [orders, ordersDispatch] = useReducer(
     orderReducer,
     initialState.initialOrderState
-  );
+  )
   const [vehicles, vehiclesDispatch] = useReducer(
     vehicleReducer,
     initialState.initialVehiclesState
-  );
+  )
   const [drivers, driversDispatch] = useReducer(
     driverReducer,
     initialState.initialDriversState
-  );
+  )
   const [routes, routesDispatch] = useReducer(
     routeReducer,
     initialState.initialRoutesState
-  );
-
+  )
   const [assignment, assignmentDispatch] = useReducer(
     assignmentReducer,
     initialState.initialAssignmentState
-  );
-  // local states
-  const [dashboardRoutes, setDashboardRoutes] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [id, setId] = useState(null);
-  const [href, setHref] = useState(null);
+  )
+  // console.log('assignment :>> ', assignment)
+  // local UI state
+  const [modalOpen, setModalOpen] = useState(false)
+  const [alertOpen, setAlertOpen] = useState(false)
+  const [id, setId] = useState(null)
+  const [href, setHref] = useState(null)
+  const [assignment_preview, setAssignmentPreview] = useState([])
+  const [selectedVehicle, setSelectedVehicle] = useState(null)
+  const [downloading, setDownloading] = useState(false)
+
   const [dashboardState, setDashboardState] = useState({
-    value: current_user?.currentUser?.branch_id || "",
-    label: current_user?.currentUser?.branch_name || "",
-  });
-  const [assignment_preview, setAssignmentPreview] = useState([]);
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [downloading, setDownloading] = useState(false);
-  // console.log('data :>> ', data?.load_assignment)
-  // load data on initial render
-  useEffect(() => {
-    if (data) {
-      if (!current_user?.currentUser?.id) return;
-      loadBranches(branchesDispatch, data?.branches);
-      loadCustomers(customersDispatch, data?.customers);
-      loadOrders(ordersDispatch, data?.orders);
-      loadAssignments(assignmentDispatch, data?.load_assignment);
-      loadUsers(usersDispatch, data?.users);
-      loadLoads(loadsDispatch, data?.loads?.branches);
-      loadRoutes(routesDispatch, data?.routes);
-      loadVehicles(vehiclesDispatch, data?.vehicles);
-      loadDrivers(driversDispatch, data?.drivers);
-    }
-  }, [data, current_user]);
+    value: current_user?.currentUser?.branch_id || '',
+    label: current_user?.currentUser?.branch_name || '',
+  })
 
-  // fetch data when user or current_user changes
+  // load initial data from server props
   useEffect(() => {
-    if (branches?.data?.length > 0 && current_user) {
-      const user = current_user?.currentUser?.branch_id;
-      setDashboardState({
-        value: user,
-        label: branches?.data?.find((b) => b.id == user)?.name || "All",
-      });
-    }
-  }, [branches, current_user, currentUserDispatch]);
+    if (!data) return
+    if (!current_user?.currentUser?.id) return
 
-  // Handle select change for dashboard state
+    loadBranches(branchesDispatch, data.branches)
+    loadCustomers(customersDispatch, data.customers)
+    loadOrders(ordersDispatch, data.orders)
+    loadAssignments(assignmentDispatch, data.load_assignment)
+    loadUsers(usersDispatch, data.users)
+    loadLoads(loadsDispatch, data.loads?.branches)
+    loadRoutes(routesDispatch, data.routes)
+    loadVehicles(vehiclesDispatch, data.vehicles)
+    loadDrivers(driversDispatch, data.drivers)
+  }, [data, current_user?.currentUser?.id])
+
   const handleDashboardState = (value) => {
-    setDashboardState(value);
-  };
+    setDashboardState(value)
+  }
 
-  // reset id and href when modal is closed
+  // reset id + href + selection when modal closes
   useEffect(() => {
-    if (!modalOpen) {
-      setId(null);
-      setHref(null);
-      setSelectedVehicle(null);
-      // Don't clear focus - let it persist so routes stay visible
-    }
-  }, [modalOpen]);
+    if (modalOpen) return
+    setId(null)
+    setHref(null)
+    setSelectedVehicle(null)
+  }, [modalOpen])
 
-  // reset id when alert is closed
+  // reset id when alert closes
   useEffect(() => {
-    if (!alertOpen) {
-      setId(null);
-    }
-  }, [alertOpen]);
+    if (alertOpen) return
+    setId(null)
+  }, [alertOpen])
 
-  // filter data based on dashboard state
-  // useEffect(() => {
-  //   if (data) {
-  //     if (!current_user?.currentUser?.id) return
-
-  //     if (data?.users) {
-  //       if (dashboardState.value == 'all') {
-  //         loadUsers(usersDispatch, data?.users)
-  //       } else {
-  //         loadUsers(
-  //           usersDispatch,
-  //           data?.users?.filter((u) => u.branch_id === dashboardState.value)
-  //         )
-  //       }
-  //     }
-
-  //     if (data?.loads) {
-  //       if (dashboardState.value == 'all') {
-  //         loadLoads(loadsDispatch, data?.loads)
-  //       } else {
-  //         loadLoads(
-  //           loadsDispatch,
-  //           data?.loads?.branches?.filter(
-  //             (l) => l.branch_id === dashboardState.value
-  //           )
-  //         )
-  //       }
-  //     }
-
-  //     if (data?.vehicles) {
-  //       if (dashboardState.value == 'all') {
-  //         loadVehicles(vehiclesDispatch, data?.vehicles)
-  //       } else {
-  //         loadVehicles(
-  //           vehiclesDispatch,
-  //           data?.vehicles?.filter((v) => v.branch_id === dashboardState.value)
-  //         )
-  //       }
-  //     }
-
-  //     if (data?.drivers) {
-  //       if (dashboardState.value == 'all') {
-  //         loadDrivers(driversDispatch, data?.drivers)
-  //       } else {
-  //         loadDrivers(
-  //           driversDispatch,
-  //           data?.drivers?.filter((d) => d.branch_id === dashboardState.value)
-  //         )
-  //       }
-  //     }
-
-  //     if (data?.routes) {
-  //       if (dashboardState.value == 'all') {
-  //         loadRoutes(routesDispatch, data?.routes)
-  //       } else {
-  //         loadRoutes(
-  //           routesDispatch,
-  //           data?.routes?.filter((d) => d.branch_id === dashboardState.value)
-  //         )
-  //       }
-  //     }
-  //   }
-  //   if (data?.assigned_loads && data?.assigned_vehicles) {
-  //     const assigned_loads_data = Object.entries(data?.assigned_loads).map(
-  //       ([id, data]) => ({
-  //         id,
-  //         data,
-  //       })
-  //     )
-
-  //     const assigned_vehicles = data?.assigned_vehicles
-  //     if (dashboardState.value == 'all') {
-  //       const assigned_loads = assigned_loads_data
-  //         ?.map((l) => l.data)
-  //         .filter((l) => l.branch_id === dashboardState.value)
-  //       loadGroupedLoads(groupedLoadsDispatch, [
-  //         assigned_loads,
-  //         assigned_vehicles,
-  //       ])
-  //     } else {
-  //       loadGroupedLoads(groupedLoadsDispatch, [
-  //         assigned_loads_data,
-  //         assigned_vehicles,
-  //       ])
-  //     }
-
-  //     //  console.log('data :>> ', data)
-  //   }
-  // }, [current_user, dashboardState])
-  //console.log('assignment :>> ', assignment)
-  const TABLES = [
-    {
-      table: "branches",
-      onInsert: (r) => branchesDispatch(branch_actions.addBranchSuccess(r)),
-      onUpdate: (r) => branchesDispatch(branch_actions.updateBranchSuccess(r)),
-      onDelete: (o) =>
-        branchesDispatch(branch_actions.deleteBranchSuccess(o.id)),
-    },
-    // {
-    //   table: 'plans',
-    //   onInsert: (r) => assignmentDispatch(assignment_actions.addPlanSuccess(r)),
-    //   onUpdate: (r) => assignmentDispatch(assignment_actions.addPlanSuccess(r)),
-    //   onDelete: (o) =>
-    //     assignmentDispatch(assignment_actions.deletePlanSuccess(o.id)),
-    // },
-    {
-      table: "plans",
-      onInsert: (r) => {
-        console.log('🟢 PLANS LISTENER - INSERT:', r)
-        assignmentDispatch(assignment_actions.addPlanSuccess(r))
-      },
-      onUpdate: (r) => {
-        console.log('🟡 PLANS LISTENER - UPDATE:', r)
-        assignmentDispatch(assignment_actions.addPlanSuccess(r))
-      },
-      onDelete: (o) => {
-        console.log('🔴 PLANS LISTENER - DELETE:', o)
-        assignmentDispatch(
-          assignment_actions.deletePlannedAssignmentByIdSuccess(o.id)
-        )
-      },
-    },
-    {
-      table: "customers",
-      onInsert: (r) =>
-        customersDispatch(customer_actions.addCustomerSuccess(r)),
-      onUpdate: (r) =>
-        customersDispatch(customer_actions.updateCustomerSuccess(r)),
-      onDelete: (o) =>
-        customersDispatch(customer_actions.deleteCustomerSuccess(o.id)),
-    },
-    {
-      table: "drivers",
-      onInsert: (r) => driversDispatch(driver_actions.addDriverSuccess(r)),
-      onUpdate: (r) => driversDispatch(driver_actions.updateDriverSuccess(r)),
-      onDelete: (o) =>
-        driversDispatch(driver_actions.deleteDriverSuccess(o.id)),
-    },
-    {
-      table: "users",
-      onInsert: (r) => usersDispatch(user_actions.addUserSuccess(r)),
-      onUpdate: (r) => usersDispatch(user_actions.updateUserSuccess(r)),
-      onDelete: (o) => usersDispatch(user_actions.deleteUserSuccess(o.id)),
-    },
-    {
-      table: "vehicles",
-      onInsert: (r) => vehiclesDispatch(vehicle_actions.addVehicleSuccess(r)),
-      onUpdate: (r) =>
-        vehiclesDispatch(vehicle_actions.updateVehicleSuccess(r)),
-      onDelete: (o) =>
-        vehiclesDispatch(vehicle_actions.deleteVehicleSuccess(o.id)),
-    },
-  ];
-
-  //  realtime subscription
-  // global-provider.jsx (inside GlobalProvider)
+  // realtime subscription
   useEffect(() => {
-    // Guard: need a branch filter and a logged-in user before subscribing
-    if (!current_user?.currentUser?.id) return;
+    const userId = current_user?.currentUser?.id
+    if (!userId) return
 
-    // Build a simple filter by branch_id if applicable
-    // If you want "All", set filter to null to receive everything (or skip the table).
-    const branchId = dashboardState?.value;
-    const makeFilter = (table) =>
-      branchId && branchId !== "all" ? `branch_id=eq.${branchId}` : null;
+    const branchId = dashboardState?.value
 
-    // Single shared channel for all tables
-    const ch = supabase.channel("app-rt");
+    // shared batching helper per channel
+    let queue = []
+    let scheduled = false
 
-    // helper to batch dispatches
-    let queue = [];
-    let scheduled = false;
     const enqueue = (fn) => {
-      queue.push(fn);
-      if (!scheduled) {
-        scheduled = true;
-        // batch on next tick
-        Promise.resolve().then(() => {
-          const fns = queue;
-          queue = [];
-          scheduled = false;
-          // run all dispatches together
-          fns.forEach((f) => f());
-        });
-      }
-    };
+      queue.push(fn)
+      if (scheduled) return
+      scheduled = true
+      Promise.resolve().then(() => {
+        const fns = queue
+        queue = []
+        scheduled = false
+        fns.forEach((f) => f())
+      })
+    }
 
-    const addTable = ({ table, onInsert, onUpdate, onDelete }) => {
+    const ch = supabase.channel('app-rt')
+
+    const makeHandler = (fn, dispatch) => (payload) => {
+      const row = payload.eventType === 'DELETE' ? payload.old : payload.new
+      enqueue(() => fn(row, dispatch))
+    }
+
+    TABLE_CONFIG.forEach(({ table, onInsert, onUpdate, onDelete }) => {
+      const baseConfig = {
+        schema: 'public',
+        table,
+      }
+
       // INSERT
       ch.on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table,
-        },
-        (p) => enqueue(() => onInsert?.(p.new))
-      );
+        'postgres_changes',
+        { ...baseConfig, event: 'INSERT' },
+        makeHandler(onInsert, getDispatchForTable(table))
+      )
+
       // UPDATE
       ch.on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table,
-        },
-        (p) => enqueue(() => onUpdate?.(p.new))
-      );
+        'postgres_changes',
+        { ...baseConfig, event: 'UPDATE' },
+        makeHandler(onUpdate, getDispatchForTable(table))
+      )
+
       // DELETE
       ch.on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table,
-        },
-        (p) => enqueue(() => onDelete?.(p.old))
-      );
-    };
+        'postgres_changes',
+        { ...baseConfig, event: 'DELETE' },
+        makeHandler(onDelete, getDispatchForTable(table))
+      )
+    })
 
-    // Attach all your tables to the one channel
-    TABLES.forEach(addTable);
+    function getDispatchForTable(table) {
+      switch (table) {
+        case 'branches':
+          return branchesDispatch
+        case 'plans':
+          return assignmentDispatch
+        case 'customers':
+          return customersDispatch
+        case 'drivers':
+          return driversDispatch
+        case 'users':
+          return usersDispatch
+        case 'vehicles':
+          return vehiclesDispatch
+        default:
+          return () => {}
+      }
+    }
 
-    // Subscribe once
-    ch.subscribe((status) => {
-      // optional: console.log('realtime status', status)
-    });
+    ch.subscribe()
 
     return () => {
-      // Remove the whole channel (and every handler registered on it)
-      supabase.removeChannel(ch);
-    };
-  }, [dashboardState?.value, current_user?.currentUser?.id]);
+      supabase.removeChannel(ch)
+    }
+  }, [dashboardState?.value, current_user?.currentUser?.id])
 
-  const fetchAssignmentPreview = async (data) =>
-    // autoAssignLoads(assignmentDispatch, data)
-    addPlan(assignmentDispatch, data);
+  const fetchAssignmentPreview = async (data) => {
+    // currently same as addNewPlan, but kept separate for semantics
+    await addPlan(assignmentDispatch, data)
+  }
 
   const addNewPlan = async (data) => {
-    await addPlan(assignmentDispatch, data);
-  };
+    await addPlan(assignmentDispatch, data)
+  }
 
   const runAutoAssign = async (data) => {
-    const res = await autoAssignPlan(assignmentDispatch, data);
-    setAssignmentPreview(res?.data);
-  };
+    const res = await autoAssignPlan(assignmentDispatch, data)
+    setAssignmentPreview(res?.data)
+  }
 
   const addNewUnit = async (data) => {
-    const res = await addUnit(assignmentDispatch, data);
-    setAssignmentPreview((prev) => ({
-      ...prev,
-      units: [...(prev?.units || []), res?.data],
-    }));
-    console.log("res :>> ", res);
-  };
+    const res = await addUnit(assignmentDispatch, data)
+    setAssignmentPreview(res)
+  }
 
   const downloadPlan = async () => {
-    setDownloading(true);
+    setDownloading(true)
     try {
-      // you have the assignment object in scope—pass it:
-      const res = await fetch("/api/plans/export-load-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(assignment_preview), // <-- send it
-      });
+      const res = await fetch('/api/plans/export-load-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assignment_preview),
+      })
 
       if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || `HTTP ${res.status}`);
+        const txt = await res.text().catch(() => '')
+        throw new Error(txt || `HTTP ${res.status}`)
       }
 
-      const blob = await res.blob();
-      // sanity check: XLSX starts with ZIP magic "PK"
-      const ab = await blob.arrayBuffer();
-      const sig = new Uint8Array(ab).slice(0, 2);
+      const blob = await res.blob()
+      const ab = await blob.arrayBuffer()
+      const sig = new Uint8Array(ab).slice(0, 2)
+
+      // basic XLSX sanity check
       if (!(sig[0] === 0x50 && sig[1] === 0x4b)) {
-        const text = new TextDecoder().decode(new Uint8Array(ab).slice(0, 200));
-        throw new Error("Server did not return an XLSX.\nPreview: " + text);
+        const text = new TextDecoder().decode(new Uint8Array(ab).slice(0, 200))
+        throw new Error('Server did not return an XLSX.\nPreview: ' + text)
       }
 
-      const cd = res.headers.get("Content-Disposition") || "";
-      const m = cd.match(/filename="([^"]+)"/i);
-      const filename = m?.[1] || "load-plan.xlsx";
+      const cd = res.headers.get('Content-Disposition') || ''
+      const m = cd.match(/filename="([^"]+)"/i)
+      const filename = m?.[1] || 'load-plan.xlsx'
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      setDownloading(false);
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
     } catch (error) {
-      setDownloading(false);
-      console.log("download error:", error);
-      alert(error.message || "Export failed");
+      console.log('download error:', error)
+      alert(error.message || 'Export failed')
+    } finally {
+      setDownloading(false)
     }
-  };
+  }
 
-  // console.log('data :>> ', data?.load_assignment)
   return (
     <GlobalContext.Provider
       value={{
         onCreate: onCreate(setModalOpen, modalOpen, setHref),
         onEdit: (data) => {
-          setSelectedVehicle(data);
-          return onEdit(setModalOpen, modalOpen, setId)(data);
+          setSelectedVehicle(data)
+          return onEdit(setModalOpen, modalOpen, setId)(data)
         },
-        downloadPlan,
-        downloading,
-        selectedVehicle,
-        setSelectedVehicle,
         onDelete: onDelete(setAlertOpen, alertOpen, setId),
-        runAutoAssign,
-        addNewUnit,
-        assignment_preview,
-        setAssignmentPreview,
-        setModalOpen,
+
+        // assignment / planning
         assignment,
-        useLiveStore,
-        fetchAssignmentPreview,
-        addNewPlan,
         assignmentDispatch,
-        deletePlannedAssignmentById,
         load_assignment,
         groupedLoadsDispatch,
+        assignment_preview,
+        setAssignmentPreview,
+        fetchAssignmentPreview,
+        addNewPlan,
+        runAutoAssign,
+        addNewUnit,
+        selectedVehicle,
+        setSelectedVehicle,
+        deletePlannedAssignmentById,
+
+        // download
+        downloadPlan,
+        downloading,
+
+        // dashboard + live store
         dashboardState,
         setDashboardState,
         handleDashboardState,
+        useLiveStore,
+
+        // branches
         branches,
         branchesDispatch,
         upsertBranch,
         deleteBranch,
+
+        // customers
         customers,
         customersDispatch,
         upsertCustomer,
         deleteCustomer,
+
+        // users
         users,
         usersDispatch,
         upsertUser,
         deleteUser,
+
+        // loads
         loads,
         loadsDispatch,
         fetchLoads,
         upsertLoad,
         deleteLoad,
+
+        // orders
         orders,
         ordersDispatch,
         upsertOrder,
         deleteOrder,
+
+        // vehicles
         vehicles,
         vehiclesDispatch,
         upsertVehicle,
         deleteVehicle,
+
+        // drivers
         drivers,
         driversDispatch,
         upsertDriver,
         deleteDriver,
+
+        // routes
         routes,
         routesDispatch,
         upsertRoute,
         deleteRoute,
+
+        // generic fetch helper
         fetchData,
-        //useLiveStore
+
+        // modals
+        setModalOpen,
       }}
     >
       {children}
-      <AlertScreen
-        alertOpen={alertOpen}
-        setAlertOpen={setAlertOpen}
-        id={id}
-        // screen={screen}
-      />
+      <AlertScreen alertOpen={alertOpen} setAlertOpen={setAlertOpen} id={id} />
       <DialogScreen
         open={modalOpen}
         onOpenChange={setModalOpen}
-        // screen={screen}
         id={id}
         href={href}
       />
     </GlobalContext.Provider>
-  );
-};
-export default GlobalProvider;
+  )
+}
 
-// useEffect(() => {
-//   const branches_channel = supabase
-//     .channel('branches-realtime')
-//     .on(
-//       'postgres_changes',
-//       { event: '*', schema: 'public', table: 'branches' },
-//       (payload) => {
-//         switch (payload.eventType) {
-//           case 'INSERT':
-//             branchesDispatch(branch_actions.addBranchSuccess(payload.new))
-//             break
-//           case 'UPDATE':
-//             branchesDispatch(branch_actions.updateBranchSuccess(payload.new))
-//             break
-//           case 'DELETE':
-//             branchesDispatch(
-//               branch_actions.deleteBranchSuccess(payload.old.id)
-//             )
-//             break
-//           default:
-//             break
-//         }
-//         console.log('payload :>> ', payload, screen)
-//       }
-//     )
-//     .subscribe()
-
-//   return () => {
-//     supabase.removeChannel(branches_channel)
-//   }
-// }, [])
+export default GlobalProvider

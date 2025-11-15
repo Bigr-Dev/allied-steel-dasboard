@@ -1,14 +1,26 @@
-// // export default AuthProvider
-
 'use client'
+
+// react
 import { useEffect, useReducer, useState } from 'react'
-import { AuthContext, initialAuthState } from './initial-states/auth-state'
-import authReducer from './reducers/auth-reducer'
-import PageLoader from '@/components/ui/loader'
-import { fetchData } from '@/lib/fetch'
-import { fetchCurrentUser, loadCurrentUser } from './apis/auth-apis'
-import Cookies from 'js-cookie'
 import { useRouter } from 'next/navigation'
+
+// cookies
+import Cookies from 'js-cookie'
+
+// initial state
+import { AuthContext, initialAuthState } from './initial-states/auth-state'
+
+// apis
+import { fetchCurrentUser, loadCurrentUser } from './apis/auth-apis'
+
+// reducer
+import authReducer from './reducers/auth-reducer'
+
+// components
+import PageLoader from '@/components/ui/loader'
+
+// helpers
+import { fetchData } from '@/lib/fetch'
 
 const AuthProvider = ({ children, authFallback, currentUser, expiry, uid }) => {
   const { replace } = useRouter()
@@ -49,20 +61,6 @@ const AuthProvider = ({ children, authFallback, currentUser, expiry, uid }) => {
       cancelled = true
     }
   }, [uid, expiry, currentUser])
-
-  // const login = async (userData) => {
-  //   setLoading(true)
-  //   try {
-  //     const response = await fetchData('login', 'POST', userData)
-  //     if (response) {
-  //       await fetchCurrentUser(currentUserDispatch)
-  //       // Go to your dashboard route (matches your folder structure)
-  //       replace('/')
-  //     }
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
 
   const login = async (userData) => {
     setLoading(true)

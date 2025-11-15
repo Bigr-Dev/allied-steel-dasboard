@@ -23,10 +23,14 @@ const url = 'plans'
 export async function POST(req, { params }) {
   const { planId } = await params
 
-  const body = await req.json();
+  const body = await req.json()
   try {
-    const response = await fetchServerData(`${url}/${planId}/units`, 'POST', body)
-    return NextResponse.json(response?.message || response?.data, {
+    const response = await fetchServerData(
+      `${url}/${planId}/units`,
+      'POST',
+      body
+    )
+    return NextResponse.json(response?.data, {
       status: 200,
     })
   } catch (error) {

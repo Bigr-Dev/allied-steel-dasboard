@@ -160,6 +160,15 @@ export function useAssignmentPlan({ autoRefreshMs = 0, initial = null } = {}) {
           unit.customers
             ?.flatMap((c) => c.orders || [])
             .flatMap((o) => o.items || []) || []
+        
+        // Collect unique order IDs from the unit
+        const orderIds = [...new Set(
+          unit.customers
+            ?.flatMap((c) => c.orders || [])
+            .map((o) => o.order_id)
+            .filter(Boolean) || []
+        )]
+        
         draft.unassigned = [
           ...moved.map((it) => ({
             item_id: it.item_id,
@@ -175,12 +184,13 @@ export function useAssignmentPlan({ autoRefreshMs = 0, initial = null } = {}) {
         unit.customers = []
         unit.used_capacity_kg = 0
         setPlan(draft)
-      }
-      try {
-        await assignmentAPI.unassignAllItems(plan_unit_id)
-      } catch (e) {
-        await refresh()
-        throw e
+        
+        try {
+          await assignmentAPI.unassignAllItems(plan.id, plan_unit_id, orderIds)
+        } catch (e) {
+          await refresh()
+          throw e
+        }
       }
     },
     [plan, refresh]

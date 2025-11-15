@@ -26,61 +26,61 @@ export const loadAssignments = async (assignmentDispatch, data) =>
 // *****************************
 // auto assign loads
 // *****************************
-// export const addPlan = async (assignmentDispatch, data) =>
-//   postApi({
-//     dispatch: assignmentDispatch,
-//     start: assignment_actions.addPlanStart,
-//     success: assignment_actions.addPlanSuccess,
-//     successMsg: data?.plan_name
-//       ? `${data?.plan_name} was
-//     successfully added`
-//       : 'Assignment plan was successfully added',
-//     failure: assignment_actions.addPlanFailure,
-//     errorMsg: `Something went wrong, while adding ${
-//       data?.notes || 'the assignment plan'
-//     }`,
-//     url: `/plans/add-plan`,
-//     data,
-//   })
+export const addPlan = async (assignmentDispatch, data) =>
+  postApi({
+    dispatch: assignmentDispatch,
+    start: assignment_actions.addPlanStart,
+    success: assignment_actions.addPlanSuccess,
+    successMsg: data?.plan_name
+      ? `${data?.plan_name} was
+    successfully added`
+      : 'Assignment plan was successfully added',
+    failure: assignment_actions.addPlanFailure,
+    errorMsg: `Something went wrong, while adding ${
+      data?.notes || 'the assignment plan'
+    }`,
+    url: `/plans/add-plan`,
+    data,
+  })
 
-export const addPlan = async (assignmentDispatch, data) => {
-  assignmentDispatch(assignment_actions.addPlanStart())
+// export const addPlan = async (assignmentDispatch, data) => {
+//   assignmentDispatch(assignment_actions.addPlanStart())
 
-  try {
-    const uid = Cookies.get('uid')
-    // console.log('uid :>> ', uid)
-    if (!uid) {
-      console.log('invalid user :>> ')
-      assignmentDispatch(
-        assignment_actions.addPlanFailure({ error: 'invalid user' })
-      )
-      return
-    }
+//   try {
+//     const uid = Cookies.get('uid')
+//     // console.log('uid :>> ', uid)
+//     if (!uid) {
+//       console.log('invalid user :>> ')
+//       assignmentDispatch(
+//         assignment_actions.addPlanFailure({ error: 'invalid user' })
+//       )
+//       return
+//     }
 
-    const response = await fetchData(`plans/add-plan`, 'POST', data)
-    console.log('response :>> ', response)
-    assignmentDispatch(assignment_actions.addPlanSuccess(response))
-    toast({
-      title: data?.plan_name
-        ? `${data?.plan_name} was successfully added`
-        : 'Assignment plan was successfully added',
-      // description: `Something went wrong, while adding ${
-      //   data?.notes || 'the assignment plan'
-      // }`,
-    })
-  } catch (error) {
-    assignmentDispatch(assignment_actions.addPlanFailure(error))
-    toast({
-      title: 'Something went wrong, while adding the assignment plan',
-      description:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error.message ||
-        'Unknown error',
-      variant: 'destructive',
-    })
-  }
-}
+//     const response = await fetchData(`plans/add-plan`, 'POST', data)
+//     console.log('response :>> ', response)
+//     assignmentDispatch(assignment_actions.addPlanSuccess(response))
+//     toast({
+//       title: data?.plan_name
+//         ? `${data?.plan_name} was successfully added`
+//         : 'Assignment plan was successfully added',
+//       // description: `Something went wrong, while adding ${
+//       //   data?.notes || 'the assignment plan'
+//       // }`,
+//     })
+//   } catch (error) {
+//     assignmentDispatch(assignment_actions.addPlanFailure(error))
+//     toast({
+//       title: 'Something went wrong, while adding the assignment plan',
+//       description:
+//         error?.response?.data?.message ||
+//         error?.response?.data?.error ||
+//         error.message ||
+//         'Unknown error',
+//       variant: 'destructive',
+//     })
+//   }
+// }
 
 export const addUnit = async (assignmentDispatch, data) => {
   assignmentDispatch(assignment_actions.addUnitStart())
@@ -96,17 +96,21 @@ export const addUnit = async (assignmentDispatch, data) => {
       return
     }
 
-    const response = await fetchData(`plans/${data?.planId}/units/add-unit`, 'POST', data)
-    console.log('response :>> ', response)
+    const response = await fetchData(
+      `plans/${data?.planId}/units/add-unit`,
+      'POST',
+      data
+    )
+    //console.log('response :>> ', response)
     // assignmentDispatch(assignment_actions.addPlanSuccess(response))
     toast({
-      title: `Vehicle was successfully added`
+      title: `Vehicle was successfully added`,
 
       // description: `Something went wrong, while adding ${
       //   data?.notes || 'the assignment plan'
       // }`,
     })
-    return data;
+    return response
   } catch (error) {
     assignmentDispatch(assignment_actions.addPlanFailure(error))
     toast({

@@ -10,7 +10,7 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: 'planId required' }, { status: 400 })
 
     const body = await req.json()
-    console.log('body :/api/plans/[planId]/unassign [POST]>> ', body)
+    console.log(`body :/api/plans/${planId}/unassign [POST]>> `, body)
     // body shape:
     // {
     //   items: [{ plan_unit_id, item_id }, ...],

@@ -108,9 +108,16 @@ export const VehicleCard = memo(function VehicleCard({
   const vehicle = getVehicleDisplay()
 
   const handleUnassignAll = async () => {
+    console.log('🚀 VehicleCard handleUnassignAll called for unit:', unit.planned_unit_id || unit.plan_unit_id)
     setIsLoading(true)
     try {
-      await assignmentAPI.unassignAllItems(unit.plan_unit_id)
+      // Use the onUnassignAll prop passed from parent component
+      if (onUnassignAll) {
+        await onUnassignAll(unit.planned_unit_id || unit.plan_unit_id)
+      } else {
+        console.log('⚠️ No onUnassignAll prop provided, falling back to API call')
+        await assignmentAPI.unassignAllItems(unit.plan_unit_id)
+      }
 
       onUnitChange({
         ...unit,
@@ -123,6 +130,7 @@ export const VehicleCard = memo(function VehicleCard({
         description: `All items removed from ${vehicle.name}`,
       })
     } catch (error) {
+      console.log('❌ VehicleCard unassign error:', error)
       handleAPIError(error, toast)
     } finally {
       setIsLoading(false)

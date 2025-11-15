@@ -94,7 +94,7 @@ export function LoadAssignment({ id, onEdit, preview }) {
   // const data = assignment?.data || assignment_preview
   //console.log('data :>> ', data)
   let data = assignment_preview
-  console.log('data :>> ', assignment_preview)
+  //console.log('data :>> ', assignment_preview)
 
   const assigned_units = data?.units || []
   const unassigned_orders = data?.unassigned_orders || []
@@ -174,7 +174,7 @@ export function LoadAssignment({ id, onEdit, preview }) {
   const getDriverInfo = (unit) => {
     if (unit.driver) {
       return {
-        name: `${unit.driver.name} ${unit.driver.last_name}`,
+        name: `${unit.driver.name}`,
         source: unit.vehicle_type,
       }
     }
