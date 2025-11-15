@@ -465,7 +465,7 @@ export function LoadAssignment({ id, onEdit, preview }) {
                       <Button
                         variant="outline"
                         className="ml-auto border-[#003e69]"
-                        onClick={downloadPlan}
+                        onClick={() => downloadPlan()}
                       >
                         {downloading ? (
                           <Spinner />

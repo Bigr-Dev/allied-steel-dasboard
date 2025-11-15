@@ -36,7 +36,10 @@ const DetailActionBar = ({ id, title, description }) => {
 
   const canEdit = accessibleRoutes.filter((p) => p.href.includes(pathname))
   const [loading, setLoading] = useState(false)
-
+  // console.log(
+  //   'assignment :>> ',
+  //   assignment?.units?.filter((u) => u.planned_unit_id == id)
+  // )
   // const downloadPlan = async () => {
   //   setLoading(true)
   //   try {
@@ -90,10 +93,14 @@ const DetailActionBar = ({ id, title, description }) => {
     setLoading(true)
     try {
       // you have the assignment object in scope—pass it:
+      const current_unit = assignment?.units?.filter(
+        (u) => u.planned_unit_id == id
+      )
+      const current_load = { ...assignment, units: current_unit }
       const res = await fetch('/api/plans/export-load-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(assignment), // <-- send it
+        body: JSON.stringify(current_load), // <-- send it
       })
 
       if (!res.ok) {
@@ -146,7 +153,17 @@ const DetailActionBar = ({ id, title, description }) => {
       </div>
 
       <div className="flex gap-2">
-        {pathname == 'load-assignment' && usePathname().split('/')[2] ? (
+        {pathname == 'load-assignment' && usePathname().split('/')[3] ? (
+          <Button
+            // variant="outline"
+            onClick={() => downloadPlan(id)}
+            // disabled={canEdit[0]?.access !== 'write'}
+            className={'bg-[#003e69] hover:bg-[#428bca] text-white capitalize'}
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            {`Download Single Plan`}
+          </Button>
+        ) : pathname == 'load-assignment' && usePathname().split('/')[2] ? (
           <Button
             // variant="outline"
             // onClick={downloadPlan}

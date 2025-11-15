@@ -314,48 +314,49 @@ const GlobalProvider = ({ children, data }) => {
     setAssignmentPreview(res)
   }
 
-  const downloadPlan = async () => {
-    setDownloading(true)
-    try {
-      const res = await fetch('/api/plans/export-load-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(assignment_preview),
-      })
+  const downloadPlan = async (id) => {
+    console.log('id :>> ', id)
+    // setDownloading(true)
+    // try {
+    //   const res = await fetch('/api/plans/export-load-plan', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(assignment_preview),
+    //   })
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '')
-        throw new Error(txt || `HTTP ${res.status}`)
-      }
+    //   if (!res.ok) {
+    //     const txt = await res.text().catch(() => '')
+    //     throw new Error(txt || `HTTP ${res.status}`)
+    //   }
 
-      const blob = await res.blob()
-      const ab = await blob.arrayBuffer()
-      const sig = new Uint8Array(ab).slice(0, 2)
+    //   const blob = await res.blob()
+    //   const ab = await blob.arrayBuffer()
+    //   const sig = new Uint8Array(ab).slice(0, 2)
 
-      // basic XLSX sanity check
-      if (!(sig[0] === 0x50 && sig[1] === 0x4b)) {
-        const text = new TextDecoder().decode(new Uint8Array(ab).slice(0, 200))
-        throw new Error('Server did not return an XLSX.\nPreview: ' + text)
-      }
+    //   // basic XLSX sanity check
+    //   if (!(sig[0] === 0x50 && sig[1] === 0x4b)) {
+    //     const text = new TextDecoder().decode(new Uint8Array(ab).slice(0, 200))
+    //     throw new Error('Server did not return an XLSX.\nPreview: ' + text)
+    //   }
 
-      const cd = res.headers.get('Content-Disposition') || ''
-      const m = cd.match(/filename="([^"]+)"/i)
-      const filename = m?.[1] || 'load-plan.xlsx'
+    //   const cd = res.headers.get('Content-Disposition') || ''
+    //   const m = cd.match(/filename="([^"]+)"/i)
+    //   const filename = m?.[1] || 'load-plan.xlsx'
 
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
-    } catch (error) {
-      console.log('download error:', error)
-      alert(error.message || 'Export failed')
-    } finally {
-      setDownloading(false)
-    }
+    //   const url = URL.createObjectURL(blob)
+    //   const a = document.createElement('a')
+    //   a.href = url
+    //   a.download = filename
+    //   document.body.appendChild(a)
+    //   a.click()
+    //   a.remove()
+    //   URL.revokeObjectURL(url)
+    // } catch (error) {
+    //   console.log('download error:', error)
+    //   alert(error.message || 'Export failed')
+    // } finally {
+    //   setDownloading(false)
+    // }
   }
 
   return (
