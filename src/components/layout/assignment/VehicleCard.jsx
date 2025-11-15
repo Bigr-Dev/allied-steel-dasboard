@@ -108,14 +108,19 @@ export const VehicleCard = memo(function VehicleCard({
   const vehicle = getVehicleDisplay()
 
   const handleUnassignAll = async () => {
-    console.log('🚀 VehicleCard handleUnassignAll called for unit:', unit.planned_unit_id || unit.plan_unit_id)
+    console.log(
+      '🚀 VehicleCard handleUnassignAll called for unit:',
+      unit.planned_unit_id || unit.plan_unit_id
+    )
     setIsLoading(true)
     try {
       // Use the onUnassignAll prop passed from parent component
       if (onUnassignAll) {
         await onUnassignAll(unit.planned_unit_id || unit.plan_unit_id)
       } else {
-        console.log('⚠️ No onUnassignAll prop provided, falling back to API call')
+        console.log(
+          '⚠️ No onUnassignAll prop provided, falling back to API call'
+        )
         await assignmentAPI.unassignAllItems(unit.plan_unit_id)
       }
 
@@ -268,14 +273,14 @@ export const VehicleCard = memo(function VehicleCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="gap-2">
+              {/* <DropdownMenuItem className="gap-2">
                 <UserPlus className="h-4 w-4" />
                 Assign Driver
               </DropdownMenuItem>
               <DropdownMenuItem className="gap-2">
                 <RefreshCw className="h-4 w-4" />
                 Change Vehicle
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>

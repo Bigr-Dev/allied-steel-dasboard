@@ -20,7 +20,9 @@ const SingleItemPage = async ({ params }) => {
       const assignment = await fetchServerData(`plans/${slug}`, 'GET')
       console.log('assignment :>> ', assignment)
       //console.log('unit_assignment :>> ', unit_assignment?.data)
-      return <LoadAssignmentSingle id={id} data={assignment?.data} />
+      return (
+        <LoadAssignmentSingle id={id} plan_id={slug} data={assignment?.data} />
+      )
 
     default:
       return <div>hi</div>

@@ -159,10 +159,19 @@ function buildUnassignedItems(unassignedOrders = []) {
   return items
 }
 
-async function commitImmediateMove(planId, payload, fetchData) {
-  const { item_id, order_id, from_plan_unit_id, to_plan_unit_id } = payload
+async function commitImmediateMove(
+  planId,
+  payload,
+  fetchData,
+  setAssignmentPreview
+) {
+  const { item_id, order_id, order_ids, from_plan_unit_id, to_plan_unit_id } =
+    payload
 
-  console.log('payload :>> ', payload)
+  // plan_id: planId,
+  //       planned_unit_id: plannedUnitId,
+  //       order_ids: orderIds,
+  // console.log('payload :>> ', payload)
 
   // Strip "order-" prefix if present
   const cleanOrderId = (order_id || item_id || '').replace(/^order-/, '')
@@ -175,12 +184,12 @@ async function commitImmediateMove(planId, payload, fetchData) {
   const toUnitId =
     to_plan_unit_id && to_plan_unit_id !== 'undefined' ? to_plan_unit_id : null
 
-  console.log('fromUnitId :>> ', fromUnitId)
-  console.log('toUnitId :>> ', toUnitId)
+  // console.log('fromUnitId :>> ', fromUnitId)
+  // console.log('toUnitId :>> ', toUnitId)
 
   // A) Bucket → Unit (assign)
   if (!fromUnitId && toUnitId) {
-    console.log('Case A: Bucket → Unit')
+    // console.log('Case A: Bucket → Unit')
     await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
       plan_id: planId,
       assignments: [
@@ -196,17 +205,27 @@ async function commitImmediateMove(planId, payload, fetchData) {
   // B) Unit → Bucket (unassign)
   if (fromUnitId && !toUnitId) {
     console.log('Case B: Unit → Bucket')
-    await fetchData(`plans/${planId}/unassign`, 'POST', {
-      plan_id: planId,
-      planned_unit_id: fromUnitId,
-      order_ids: [cleanOrderId],
-    })
-    return
+    console.log('item_ids :>> ', order_ids)
+    try {
+      const res = await fetchData(`plans/${planId}/unassign`, 'POST', {
+        plan_id: planId,
+        planned_unit_id: fromUnitId,
+        order_ids: order_ids,
+      })
+      setAssignmentPreview({
+        units: res?.units,
+        unassigned_units: res?.unassigned_units,
+      })
+      console.log('res :>> ', res)
+      return
+    } catch (error) {
+      console.log('error :>> ', error)
+    }
   }
 
   // C) Unit → Unit (move)
   if (fromUnitId && toUnitId && fromUnitId !== toUnitId) {
-    console.log('Case C: Unit → Unit')
+    // console.log('Case C: Unit → Unit')
     await fetchData(`plans/${planId}/unassign`, 'POST', {
       plan_id: planId,
       planned_unit_id: fromUnitId,
@@ -391,19 +410,24 @@ function addItemIntoUnitCustomers(customers = [], meta) {
 }
 
 const LoadAssignmentSingle = ({ id, data }) => {
-  const { setAssignmentPreview, fetchData } = useGlobalContext()
-  const { unassignAllFromUnit } = useAssignmentPlan()
-
+  const { assignment_preview, setAssignmentPreview, fetchData } =
+    useGlobalContext()
+  // const { unassignAllFromUnit } = useAssignmentPlan()
+  //console.log('assignment_preview :>> ', assignment_preview)
   const { toast } = useToast()
-  console.log('🔍 LoadAssignmentSingle - Component props:', { id, data })
-  console.log('🔍 LoadAssignmentSingle - Plan data:', data?.plan)
-  const [assignedUnits, setAssignedUnits] = useState(data?.units || [])
-  const [unassigned, setUnassigned] = useState(data?.unassigned_orders || [])
+  //const planned_unit = assignedUnits?.find((v) => v.planned_unit_id === id)
+  const [assignedUnits, setAssignedUnits] = useState(
+    assignment_preview?.data?.units || []
+  )
+  const [unassigned, setUnassigned] = useState(
+    assignment_preview?.data?.unassigned_orders || []
+  )
 
-  const [plan, setPlan] = useState(data?.plan || null)
+  const [plan, setPlan] = useState(assignment_preview?.data?.plan || null)
   const [activeItem, setActiveItem] = useState(null)
   const [undoStack, setUndoStack] = useState([])
   const [changes, setChanges] = useState([])
+  const [loading, setLoading] = useState(false)
 
   const initialSnapshotRef = useRef({
     plan: data?.plan || null,
@@ -427,73 +451,92 @@ const LoadAssignmentSingle = ({ id, data }) => {
     setPlan(data?.plan || null)
     setChanges([])
     setUndoStack([])
+    setAssignmentPreview({
+      plan,
+      units: data?.units,
+      unassigned_orders: data?.unassigned_orders,
+    })
   }, [data])
 
   // Sync local state changes to global context
   useEffect(() => {
-    setAssignmentPreview({
-      plan,
-      units: assignedUnits,
-      unassigned_orders: unassigned,
-    })
-  }, [assignedUnits, unassigned, plan, setAssignmentPreview])
+    setAssignedUnits(assignment_preview?.units || data?.units || [])
+    setUnassigned(
+      assignment_preview?.unassigned_orders || data?.unassigned_orders || []
+    )
+    setPlan(assignment_preview?.plan || data?.plan || null)
+  }, [assignment_preview, setAssignmentPreview])
 
   const planned_unit = assignedUnits?.find((v) => v.planned_unit_id === id)
   console.log('🔍 planned_unit found:', planned_unit)
-  console.log('🔍 Current states:', { plan, assignedUnits: assignedUnits?.length, unassigned: unassigned?.length })
+  console.log('🔍 Current states:', {
+    plan,
+    assignedUnits: assignedUnits?.length,
+    unassigned: unassigned?.length,
+  })
   const onUnassignAll = async (plannedUnitId) => {
+    setLoading(true)
     console.log('🚀 onUnassignAll called with plannedUnitId:', plannedUnitId)
-    
+
     const unit = assignedUnits?.find((u) => u.planned_unit_id === plannedUnitId)
     console.log('🔍 Found unit:', unit)
-    
+
     if (!unit) {
       console.log('❌ No unit found for plannedUnitId:', plannedUnitId)
+      setLoading(false)
       return
     }
-    
+
     // Extract order IDs from the unit's orders array
-    const orderIds = (unit.orders || []).map(order => order.order_id).filter(Boolean)
+    const orderIds = (unit.orders || [])
+      .map((order) => order.order_id)
+      .filter(Boolean)
     console.log('🔍 Extracted orderIds:', orderIds)
-    
+
     // Use data.plan.id since plan state might not have id
     const planId = data?.plan?.id || plan?.id
-    
-    console.log('🔍 Debug plan data:', { 
-      plan, 
-      dataPlan: data?.plan, 
+
+    console.log('🔍 Debug plan data:', {
+      plan,
+      dataPlan: data?.plan,
       planId,
       planKeys: plan ? Object.keys(plan) : 'null',
-      dataPlanKeys: data?.plan ? Object.keys(data.plan) : 'null'
+      dataPlanKeys: data?.plan ? Object.keys(data.plan) : 'null',
     })
-    
+
     console.log('📤 Unassigning all from unit payload:', {
       plan_id: planId,
       planned_unit_id: plannedUnitId,
-      order_ids: orderIds
+      order_ids: orderIds,
     })
-    
+
     if (!planId) {
       toast({ title: 'Error', description: 'Plan ID not found' })
       return
     }
-    
+
     try {
       console.log('📡 Making API call to:', `plans/${planId}/unassign`)
-      const result = await fetchData(`plans/${planId}/unassign`, 'POST', {
+      // const result = await fetchData(`plans/${planId}/unassign`, 'POST', {
+      //   plan_id: planId,
+      //   planned_unit_id: plannedUnitId,
+      //   order_ids: orderIds,
+      // })
+      const payload = {
         plan_id: planId,
-        planned_unit_id: plannedUnitId,
-        order_ids: orderIds
-      })
-      console.log('✅ API call successful:', result)
-      
+        from_plan_unit_id: plannedUnitId,
+        order_ids: orderIds,
+      }
+      commitImmediateMove(planId, payload, fetchData, setAssignmentPreview)
+      //console.log('✅ API call successful:', result)
+      // setAssignmentPreview
       toast({ title: 'Success', description: 'All items unassigned from unit' })
     } catch (error) {
       console.error('❌ Error unassigning all:', error)
       console.error('❌ Error details:', {
         message: error.message,
         stack: error.stack,
-        response: error.response
+        response: error.response,
       })
       toast({ title: 'Error', description: 'Failed to unassign items' })
     }
@@ -639,7 +682,7 @@ const LoadAssignmentSingle = ({ id, data }) => {
       vehicleId
     )
     const meta = unassigned.find((x) => String(x.order_id) === String(itemId))
-    console.log('🔵 ASSIGN - Found meta:', meta)
+    //  console.log('🔵 ASSIGN - Found meta:', meta)
     if (!meta) {
       console.log('🔴 ASSIGN - No meta found for itemId:', itemId)
       return
@@ -668,12 +711,12 @@ const LoadAssignmentSingle = ({ id, data }) => {
     // remove from unassigned
     setUnassigned((prev) => {
       const filtered = prev.filter((x) => String(x.order_id) !== String(itemId))
-      console.log(
-        '🔵 ASSIGN - Removing from unassigned. Before:',
-        prev.length,
-        'After:',
-        filtered.length
-      )
+      // console.log(
+      //   '🔵 ASSIGN - Removing from unassigned. Before:',
+      //   prev.length,
+      //   'After:',
+      //   filtered.length
+      // )
       return filtered
     })
 
@@ -681,29 +724,29 @@ const LoadAssignmentSingle = ({ id, data }) => {
     setAssignedUnits((prev) =>
       prev.map((u) => {
         if (String(u.planned_unit_id) !== String(vehicleId)) return u
-        console.log(
-          '🔵 ASSIGN - Adding to unit:',
-          vehicleId,
-          'Current orders:',
-          u.orders?.length || 0
-        )
+        // console.log(
+        //   '🔵 ASSIGN - Adding to unit:',
+        //   vehicleId,
+        //   'Current orders:',
+        //   u.orders?.length || 0
+        // )
         const updated = {
           ...u,
           orders: [...(u.orders || []), transformedOrder],
           used_capacity_kg:
             Number(u.used_capacity_kg || 0) + Number(meta.total_weight || 0),
         }
-        console.log(
-          '🔵 ASSIGN - Updated unit orders:',
-          updated.orders?.length || 0
-        )
+        // console.log(
+        //   '🔵 ASSIGN - Updated unit orders:',
+        //   updated.orders?.length || 0
+        // )
         return updated
       })
     )
   }
 
   const handleUnassignItem = (itemId) => {
-    console.log('🟡 UNASSIGN - Looking for itemId:', itemId)
+    //  console.log('🟡 UNASSIGN - Looking for itemId:', itemId)
     let removedOrder = null
 
     setAssignedUnits((prev) =>
@@ -714,11 +757,11 @@ const LoadAssignmentSingle = ({ id, data }) => {
         if (orderIndex === -1) return u
 
         removedOrder = u.orders[orderIndex]
-        console.log('🟡 UNASSIGN - Found order to remove:', removedOrder)
-        console.log(
-          '🟡 UNASSIGN - Unit before removal orders:',
-          u.orders?.length || 0
-        )
+        // console.log('🟡 UNASSIGN - Found order to remove:', removedOrder)
+        // console.log(
+        //   '🟡 UNASSIGN - Unit before removal orders:',
+        //   u.orders?.length || 0
+        // )
         const updated = {
           ...u,
           orders: u.orders.filter((_, index) => index !== orderIndex),
@@ -728,30 +771,30 @@ const LoadAssignmentSingle = ({ id, data }) => {
               Number(removedOrder.total_weight || 0)
           ),
         }
-        console.log(
-          '🟡 UNASSIGN - Unit after removal orders:',
-          updated.orders?.length || 0
-        )
+        // console.log(
+        //   '🟡 UNASSIGN - Unit after removal orders:',
+        //   updated.orders?.length || 0
+        // )
         return updated
       })
     )
 
     if (removedOrder) {
-      console.log('🟡 UNASSIGN - Adding back to unassigned:', removedOrder)
+      //  console.log('🟡 UNASSIGN - Adding back to unassigned:', removedOrder)
 
       // Transform back to original unassigned structure (remove the 'lines' property we added)
       const { lines, ...originalOrder } = removedOrder
-      console.log('🟡 UNASSIGN - Transformed back to original:', originalOrder)
+      //  console.log('🟡 UNASSIGN - Transformed back to original:', originalOrder)
 
       setUnassigned((prev) => {
         const updated = [
           ...prev.filter((x) => String(x.order_id) !== String(itemId)),
           originalOrder,
         ]
-        console.log(
-          '🟡 UNASSIGN - Unassigned count after adding back:',
-          updated.length
-        )
+        // console.log(
+        //   '🟡 UNASSIGN - Unassigned count after adding back:',
+        //   updated.length
+        // )
         return updated
       })
     } else {
@@ -773,7 +816,7 @@ const LoadAssignmentSingle = ({ id, data }) => {
       description: 'Last action has been undone',
     })
   }
-
+  // console.log('planned_unit :>> ', planned_unit)
   return (
     <DndContext
       sensors={sensors}
@@ -786,9 +829,19 @@ const LoadAssignmentSingle = ({ id, data }) => {
         <DetailActionBar
           id={id}
           title={
-            planned_unit?.rigid ? planned_unit?.rigid?.fleet_number : 'N/A'
+            planned_unit?.vehicle?.license_plate
+              ? planned_unit?.vehicle?.license_plate
+              : 'N/A'
           }
-          description={planned_unit?.rigid ? planned_unit?.rigid?.plate : 'N/A'}
+          description={
+            planned_unit?.vehicle?.type == 'rigid'
+              ? `${planned_unit?.vehicle?.type || null} - ${
+                  planned_unit?.vehicle?.fleet_number || null
+                }`
+              : `${planned_unit?.vehicle?.type || null} & Trailer - ${
+                  planned_unit?.vehicle?.fleet_number || null
+                } - ${planned_unit?.trailer?.fleet_number || null}`
+          }
         />
 
         <div className="grid gap-6  ">

@@ -25,7 +25,7 @@ export async function POST(req, { params }) {
       body
     )
     console.log('resp :/api/plans/[planId]/unassign [POST]>> ', resp)
-    return NextResponse.json(resp?.message ?? resp, { status: 200 })
+    return NextResponse.json(resp?.data, { status: 200 })
   } catch (error) {
     console.error('unassign error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
