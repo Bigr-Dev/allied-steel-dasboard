@@ -5,7 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Search, User, Gauge, MapPin, Navigation, Truck } from 'lucide-react'
+import {
+  Search,
+  User,
+  Gauge,
+  MapPin,
+  Navigation,
+  Truck,
+  Maximize2,
+} from 'lucide-react'
 import { useLiveStore } from '@/config/zustand'
 import { useGlobalContext } from '@/context/global-context'
 import DetailCard from '@/components/ui/detail-card'
@@ -203,19 +211,26 @@ export default function CardView({
   vehicleCards = [],
   selectedPlanId = 'all',
   assignedUnits = [],
+  goFullScreen,
+  q,
+  setQ,
+  statusFilter,
+  setStatusFilter,
+  lastSeenFilter,
+  setLastSeenFilter,
 }) {
   const { onEdit } = useGlobalContext()
-  const [q, setQ] = useState('')
+  // const [q, setQ] = useState('')
   const liveByPlate = useLiveStore((s) => s.liveByPlate)
   const lastMoveRef = useRef(new Map()) // plate -> timestamp(ms)
   const prevOrderRef = useRef(new Map()) // plate -> last on-screen index (stability tiebreaker)
   const sortBy = 'lastSeen' // or 'speed'
 
   // status filter state
-  const [statusFilter, setStatusFilter] = useState(new Set(STATUS_KEYS))
+  // const [statusFilter, setStatusFilter] = useState(new Set(STATUS_KEYS))
 
   // last seen filter state
-  const [lastSeenFilter, setLastSeenFilter] = useState('all')
+  // const [lastSeenFilter, setLastSeenFilter] = useState('all')
 
   // persistent order (shared across views via localStorage + event)
   const [savedOrder, setSavedOrder] = usePersistentOrder(selectedPlanId)
@@ -371,296 +386,231 @@ export default function CardView({
   }
 
   return (
-    <div className="h-full flex flex-col mt-0 space-y-6">
+    <div
+      className="h-full flex overflow-y-auto flex-col mt-0 space-y-6"
+      id="card-view"
+    >
       {/* Search + Status filter row */}
 
-      <DetailCard>
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search plate or driver…"
-            className="pl-8 h-8 "
-          />
-        </div>
-        <div className=" space-y-4 flex justify-between mt-4">
-          {/* Status filter chips */}
-          <div className="space-y-2 ">
-            {/* <div className="text-xs font-medium text-muted-foreground">
-              Status
-            </div> */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Button
-                type="button"
-                variant={allSelected ? 'default' : 'outline'}
-                size="sm"
-                className="h-7"
-                onClick={toggleAll}
-              >
-                All
-              </Button>
-              {STATUS_KEYS.map((k) => (
-                <Button
-                  key={k}
-                  type="button"
-                  size="sm"
-                  variant={statusFilter.has(k) ? 'default' : 'outline'}
-                  className="h-7"
-                  onClick={() => toggleOne(k)}
-                  title={statusLabel[k]}
-                >
-                  {statusLabel[k]}
-                </Button>
-              ))}
-            </div>
-          </div>
+      {/* <DetailCard> */}
+      {/* Grid of cards (draggable) */}
+      <div className="flex-1 h-full w-full overflow-auto py-4 px-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+          {cards.map((item) => {
+            const s = item.__status
+            const badgeStyle = {
+              backgroundColor: s.color,
+              animation: s.flash ? 'pulse 1s ease-in-out infinite' : undefined,
+            }
+            const speed = Number(item?.live?.Speed ?? 0)
+            const unit = unitByPlate.get(String(item.plate).toUpperCase())
 
-          {/* Last seen filter */}
-          <div className="space-y-2 ">
-            {/* <div className="text-xs font-medium text-muted-foreground">
-              Last Seen
-            </div> */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {LAST_SEEN_OPTIONS.map((option) => (
-                <Button
-                  key={option.key}
-                  type="button"
-                  size="sm"
-                  variant={
-                    lastSeenFilter === option.key ? 'default' : 'outline'
-                  }
-                  className="h-7"
-                  onClick={() => setLastSeenFilter(option.key)}
-                >
-                  {option.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <Separator />
+            const showPlanContext =
+              selectedPlanId && selectedPlanId !== 'all' && unit
+            const geozone = getGeoZone(item.live)
 
-        {/* Grid of cards (draggable) */}
-        <div className="flex-1 overflow-auto py-4 px-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {cards.map((item) => {
-              const s = item.__status
-              const badgeStyle = {
-                backgroundColor: s.color,
-                animation: s.flash
-                  ? 'pulse 1s ease-in-out infinite'
-                  : undefined,
-              }
-              const speed = Number(item?.live?.Speed ?? 0)
-              const unit = unitByPlate.get(String(item.plate).toUpperCase())
+            const branchName =
+              item?.branch_name ||
+              item?.branch ||
+              unit?.branch_name ||
+              unit?.branch ||
+              'Branch'
 
-              const showPlanContext =
-                selectedPlanId && selectedPlanId !== 'all' && unit
-              const geozone = getGeoZone(item.live)
+            const customerObjs = (unit?.orders || [])
+              .map((order) => ({
+                customer_name: order.customer_name,
+                customer_id: order.customer_id,
+                customer_bp_code: order.customer_bp_code,
+                suburb_name: order.suburb_name,
+                address: order.address,
+                ...order,
+              }))
+              .filter((c) => c.customer_name)
+            const uniqueCustomers = Array.from(
+              new Map(
+                customerObjs.map((c) => [
+                  String(c.customer_name || '').trim(),
+                  c,
+                ])
+              ).values()
+            )
 
-              const branchName =
-                item?.branch_name ||
-                item?.branch ||
-                unit?.branch_name ||
-                unit?.branch ||
-                'Branch'
+            return (
+              <Card
+                key={item.plate}
+                className="cursor-grab hover:shadow-sm"
+                draggable
+                onDragStart={onDragStart(item.plate)}
+                onDragOver={onDragOver(item.plate)}
+                onDrop={onDrop(item.plate)}
+                // onClick={() => focus(item.plate)}
+                onClick={() => {
+                  // Prepare customer data with coordinates if available
+                  const customersWithCoords = uniqueCustomers.map(
+                    (customer) => {
+                      const name = String(customer.customer_name || '').trim()
+                      const suburb = String(getSuburbName(customer)).trim()
 
-              const customerObjs = (unit?.orders || [])
-                .map((order) => ({
-                  customer_name: order.customer_name,
-                  customer_id: order.customer_id,
-                  customer_bp_code: order.customer_bp_code,
-                  suburb_name: order.suburb_name,
-                  address: order.address,
-                  ...order,
-                }))
-                .filter((c) => c.customer_name)
-              const uniqueCustomers = Array.from(
-                new Map(
-                  customerObjs.map((c) => [
-                    String(c.customer_name || '').trim(),
-                    c,
-                  ])
-                ).values()
-              )
-
-              return (
-                <Card
-                  key={item.plate}
-                  className="cursor-grab hover:shadow-sm"
-                  draggable
-                  onDragStart={onDragStart(item.plate)}
-                  onDragOver={onDragOver(item.plate)}
-                  onDrop={onDrop(item.plate)}
-                  // onClick={() => focus(item.plate)}
-                  onClick={() => {
-                    // Prepare customer data with coordinates if available
-                    const customersWithCoords = uniqueCustomers.map(
-                      (customer) => {
-                        const name = String(customer.customer_name || '').trim()
-                        const suburb = String(getSuburbName(customer)).trim()
-
-                        // You can add geocoded coordinates here if you have them
-                        // For now, we'll include the raw customer data
-                        return {
-                          ...customer,
-                          display_name: name,
-                          suburb: suburb,
-                          // coordinates: null // Add geocoded coords here if available
-                        }
+                      // You can add geocoded coordinates here if you have them
+                      // For now, we'll include the raw customer data
+                      return {
+                        ...customer,
+                        display_name: name,
+                        suburb: suburb,
+                        // coordinates: null // Add geocoded coords here if available
                       }
-                    )
+                    }
+                  )
 
-                    //  console.log('data :>> ', unit)
+                  //  console.log('data :>> ', unit)
 
-                    onEdit({
-                      id: item.plate,
-                      selectedPlanId: selectedPlanId,
-                      vehicleData: item,
-                      unitData: unit,
-                      customersData: customersWithCoords,
-                      branchName: branchName,
-                    })
-                  }}
-                >
-                  <CardHeader className="py-2 px-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-mono">
-                        {item.plate}
-                      </CardTitle>
-                      <Badge
-                        style={badgeStyle}
-                        className="text-[10px] capitalize"
-                      >
-                        {s.key}
-                      </Badge>
-                    </div>
-                  </CardHeader>
+                  onEdit({
+                    id: item.plate,
+                    selectedPlanId: selectedPlanId,
+                    vehicleData: item,
+                    unitData: unit,
+                    customersData: customersWithCoords,
+                    branchName: branchName,
+                  })
+                }}
+              >
+                <CardHeader className="py-2 px-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-mono">
+                      {item.plate}
+                    </CardTitle>
+                    <Badge
+                      style={badgeStyle}
+                      className="text-[10px] capitalize"
+                    >
+                      {s.key}
+                    </Badge>
+                  </div>
+                </CardHeader>
 
-                  <CardContent className="px-3 pb-3 pt-0">
-                    {/* Live block */}
-                    {item.live ? (
-                      <div className="space-y-1.5 text-xs">
+                <CardContent className="px-3 pb-3 pt-0">
+                  {/* Live block */}
+                  {item.live ? (
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium">
+                          {speed.toFixed(1)} km/h
+                        </span>
+                      </div>
+
+                      {item.live.DriverName && (
                         <div className="flex items-center gap-2">
-                          <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="font-medium">
-                            {speed.toFixed(1)} km/h
+                          <User className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>{item.live.DriverName}</span>
+                        </div>
+                      )}
+
+                      {item.live.Address && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
+                          <span className="text-[11px] text-muted-foreground line-clamp-2">
+                            {item.live.Address}
                           </span>
                         </div>
+                      )}
 
-                        {item.live.DriverName && (
-                          <div className="flex items-center gap-2">
-                            <User className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span>{item.live.DriverName}</span>
-                          </div>
-                        )}
-
-                        {item.live.Address && (
-                          <div className="flex items-start gap-2">
-                            <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
-                            <span className="text-[11px] text-muted-foreground line-clamp-2">
-                              {item.live.Address}
-                            </span>
-                          </div>
-                        )}
-
-                        {geozone && (
-                          <div className="flex items-center gap-2">
-                            <Navigation className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-[11px] text-muted-foreground">
-                              {geozone}
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="text-[11px] text-muted-foreground border-t pt-1">
-                          Last seen: {lastSeen(item.live)}
+                      {geozone && (
+                        <div className="flex items-center gap-2">
+                          <Navigation className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-[11px] text-muted-foreground">
+                            {geozone}
+                          </span>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground">
-                        No live data.
-                      </div>
-                    )}
+                      )}
 
-                    {/* Plan context */}
-                    {showPlanContext && (
-                      <div className="mt-2 border-t pt-2 space-y-2">
-                        {unit?.horse && unit?.trailer && (
-                          <div className="flex items-center gap-2 text-xs">
-                            <Truck className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">
-                              Trailer:{' '}
-                              <span className="font-medium">
-                                {unit.trailer.plate}
-                              </span>
-                              {unit.trailer.fleet_number
-                                ? ` (${unit.trailer.fleet_number})`
-                                : ''}
+                      <div className="text-[11px] text-muted-foreground border-t pt-1">
+                        Last seen: {lastSeen(item.live)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">
+                      No live data.
+                    </div>
+                  )}
+
+                  {/* Plan context */}
+                  {showPlanContext && (
+                    <div className="mt-2 border-t pt-2 space-y-2">
+                      {unit?.horse && unit?.trailer && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <Truck className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground">
+                            Trailer:{' '}
+                            <span className="font-medium">
+                              {unit.trailer.plate}
                             </span>
-                          </div>
-                        )}
+                            {unit.trailer.fleet_number
+                              ? ` (${unit.trailer.fleet_number})`
+                              : ''}
+                          </span>
+                        </div>
+                      )}
 
-                        {/* Route strip: Branch -> customers -> Branch */}
-                        <div className="flex flex-wrap items-center gap-1">
-                          <Badge variant="secondary" className="text-[10px]">
-                            {branchName}
+                      {/* Route strip: Branch -> customers -> Branch */}
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant="secondary" className="text-[10px]">
+                          {branchName}
+                        </Badge>
+
+                        {uniqueCustomers.length === 0 && (
+                          <Badge variant="outline" className="text-[10px]">
+                            No customers
                           </Badge>
-
-                          {uniqueCustomers.length === 0 && (
-                            <Badge variant="outline" className="text-[10px]">
-                              No customers
+                        )}
+                        {uniqueCustomers.map((c, idx) => {
+                          const name =
+                            String(c.customer_name || '').trim() ||
+                            `Customer ${idx + 1}`
+                          const suburb = String(getSuburbName(c)).trim()
+                          const match =
+                            suburb &&
+                            geozone &&
+                            suburb.toUpperCase() === geozone.toUpperCase()
+                          const cls = match
+                            ? 'bg-green-600 text-white hover:bg-green-600'
+                            : 'bg-muted text-foreground hover:bg-muted'
+                          return (
+                            <Badge
+                              key={name + idx}
+                              className={`text-[10px] ${cls}`}
+                            >
+                              {name}
                             </Badge>
-                          )}
-                          {uniqueCustomers.map((c, idx) => {
-                            const name =
-                              String(c.customer_name || '').trim() ||
-                              `Customer ${idx + 1}`
-                            const suburb = String(getSuburbName(c)).trim()
-                            const match =
-                              suburb &&
-                              geozone &&
-                              suburb.toUpperCase() === geozone.toUpperCase()
-                            const cls = match
-                              ? 'bg-green-600 text-white hover:bg-green-600'
-                              : 'bg-muted text-foreground hover:bg-muted'
-                            return (
-                              <Badge
-                                key={name + idx}
-                                className={`text-[10px] ${cls}`}
-                              >
-                                {name}
-                              </Badge>
-                            )
-                          })}
+                          )
+                        })}
 
-                          <Badge variant="secondary" className="text-[10px]">
-                            {branchName}
-                          </Badge>
-                        </div>
-
-                        {unit?.driver_name &&
-                          unit?.driver_name !== item?.live?.DriverName && (
-                            <div className="flex items-center gap-2 text-xs">
-                              <User className="h-3.5 w-3.5 text-muted-foreground" />
-                              <span className="text-muted-foreground">
-                                Planned driver:{' '}
-                                <span className="font-medium">
-                                  {unit.driver_name}
-                                </span>
-                              </span>
-                            </div>
-                          )}
+                        <Badge variant="secondary" className="text-[10px]">
+                          {branchName}
+                        </Badge>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+
+                      {unit?.driver_name &&
+                        unit?.driver_name !== item?.live?.DriverName && (
+                          <div className="flex items-center gap-2 text-xs">
+                            <User className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              Planned driver:{' '}
+                              <span className="font-medium">
+                                {unit.driver_name}
+                              </span>
+                            </span>
+                          </div>
+                        )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
-      </DetailCard>
+      </div>
+      {/* </DetailCard> */}
 
       {/* simple pulse keyframes */}
       <style jsx global>{`

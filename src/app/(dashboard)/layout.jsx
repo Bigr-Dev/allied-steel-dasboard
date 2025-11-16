@@ -84,9 +84,9 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
     <GlobalProvider data={data}>
       <SidebarProvider>
         {sidebar}
-        <main className="flex-1 min-h-screen">
+        <main className="flex-1 h-screen">
           {header}
-          <div className="overflow-y-auto">{children}</div>
+          <div className="">{children}</div>
         </main>
       </SidebarProvider>
     </GlobalProvider>

@@ -15,13 +15,35 @@ import { useLiveStore } from '@/config/zustand'
 import { useGlobalContext } from '@/context/global-context'
 import { fetchData } from '@/lib/fetch'
 import { assignmentAPI, transformPlanData } from '@/lib/assignment-helpers'
-import { LayoutGrid, Map } from 'lucide-react'
+import {
+  Funnel,
+  LayoutGrid,
+  Map,
+  Maximize2,
+  Minimize2,
+  Search,
+  Truck,
+} from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 // image
 import page_bg from '@/assets/allied_plain_bg.png'
 import Image from 'next/image'
 import PageTitle from './[page_id]/@title/default'
+import PlanSelector from '@/components/layout/dashboard/plan-selector'
+import { ButtonGroup } from '@/components/ui/button-group'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Toggle } from '@/components/ui/toggle'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Label } from 'recharts'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import CardsViewSidebar from '@/components/layout/dashboard/cards-view-slider-bar'
 
 /* ---------------- Helpers ---------------- */
 
@@ -107,11 +129,50 @@ function remapTcpFields(pkt = {}) {
   return out
 }
 
+/**
+ * Tunables
+ */
+const OFFLINE_MIN = 10 // minutes without any packet -> offline
+const DELAYED_MIN = 15 // minutes stationary since last movement -> delayed
+const DEPOT_COLOR = '#003e69'
+const ORDER_EVENT = 'fleet:cardOrder:update' // cross-view sync event
+
+// status keys we expose to the filter
+const STATUS_KEYS = [
+  'moving',
+  'stationary',
+  'delayed',
+  'depot',
+  'offline',
+  // 'unknown',
+]
+
+// status priority order (lower number = higher priority)
+const STATUS_PRIORITY = {
+  delayed: 0, // highest priority - at top
+  moving: 1,
+  stationary: 2,
+  depot: 3,
+  offline: 4,
+  unknown: 5, // lowest priority - at bottom
+}
+
+// last seen filter options (in minutes)
+const LAST_SEEN_OPTIONS = [
+  { key: 'all', label: 'All', maxMinutes: Infinity },
+  { key: 'live', label: 'Live', maxMinutes: 1 },
+  { key: '5min', label: '5 min', maxMinutes: 5 },
+  { key: '15min', label: '15 min', maxMinutes: 15 },
+  { key: '1hour', label: '1 hour', maxMinutes: 60 },
+  { key: '1day', label: '1 day', maxMinutes: 1440 },
+]
+
 const Dashboard = () => {
   const { vehicles, assignment, assignment_preview, setAssignmentPreview } =
     useGlobalContext()
   const loading = assignment_preview?.loading
-  console.log('assignment_preview :>> ', assignment_preview)
+  // console.log('assignment :>> ', assignment)
+  // console.log('assignment_preview :>> ', assignment_preview)
   // console.log('vehicles?.data :>> ', vehicles?.data)
   //console.log('assignment :>> ', assignment_preview)
   const [localFilters, setLocalFilters] = useState({
@@ -122,13 +183,67 @@ const Dashboard = () => {
     assignedUnits: [],
     currentView: 'cards',
   })
+  const [q, setQ] = useState('')
+
+  // const { onEdit } = useGlobalContext()
+  // const [q, setQ] = useState('')
+  const liveByPlate = useLiveStore((s) => s.liveByPlate)
+
+  // status filter state
+  const [statusFilter, setStatusFilter] = useState(new Set(STATUS_KEYS))
+
+  // last seen filter state
+  const [lastSeenFilter, setLastSeenFilter] = useState('all')
+
+  // // persistent order (shared across views via localStorage + event)
+  // const [savedOrder, setSavedOrder] = usePersistentOrder(selectedPlanId)
+
+  // --- Status filter UI helpers
+  const allSelected = statusFilter.size === STATUS_KEYS.length
+  const toggleAll = () =>
+    setStatusFilter(allSelected ? new Set() : new Set(STATUS_KEYS))
+  const toggleOne = (k) =>
+    setStatusFilter((prev) => {
+      const next = new Set(prev)
+      if (next.has(k)) next.delete(k)
+      else next.add(k)
+      return next
+    })
+  const statusLabel = {
+    moving: 'Moving',
+    stationary: 'Stationary',
+    delayed: 'Delayed',
+    depot: 'Depot',
+    offline: 'Offline',
+    unknown: 'Unknown',
+  }
+  const [fullscreen, setFullscreen] = useState(false)
+
+  const goFullScreen = () => {
+    const elem = document.getElementById('fullscreen')
+
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen()
+      setFullscreen(true)
+    }
+  }
+
+  const exitFullScreen = () => {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen()
+      setFullscreen(false)
+    } else {
+      setFullscreen(false)
+    }
+  }
+
   //console.log('localFilters.assignedUnits :>> ', localFilters.assignedUnits)
   const [tcpError, setTcpError] = useState(null)
   const [mapShowTick, setMapShowTick] = useState(0)
   //console.log('localFilters :>> ', localFilters)
   // Zustand actions/state
   const upsertPackets = useLiveStore((s) => s.upsertPackets)
-  const liveByPlate = useLiveStore((s) => s.liveByPlate)
+  // const liveByPlate = useLiveStore((s) => s.liveByPlate)
 
   // // ----- Live TCP store (keyed by Plate) -----
   // const liveByPlateRef = useRef(Object.create(null))
@@ -367,116 +482,219 @@ const Dashboard = () => {
     }
   }, [localFilters.currentView])
 
-  /* ---------- Debug while testing ---------- */
-  // useEffect(() => {
-  //   console.log('[Vehicle Cards]', vehicleCards)
-  // }, [vehicleCards])
+  let plan_list = [
+    {
+      value: 'all',
+      label: 'All Vehicles',
+    },
+  ]
 
-  // useEffect(() => {
-  //   if (tcpError) console.warn('[TCP Error]', tcpError)
-  // }, [tcpError])
+  if (assignment?.data?.plans) {
+    localFilters.plans?.forEach((plan) => {
+      plan_list.push({
+        value: plan.id,
+        label: plan.plan_name || `Plan ${plan.id}`,
+      })
+    })
+  }
 
-  //console.log('localFilters :>> ', localFilters)
   return (
-    <div className="h-screen space-y-6 p-0 md:p-0 relative">
-      <div className="fixed h-full inset-0 -z-10 pointer-events-none">
-        <Image
-          src={page_bg}
-          alt="motion-live-bg"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
-      </div>
-      <div className="flex sticky top-0 z-2 bg-white flex-col md:flex-row justify-between items-end gap-4 pt-6 pl-6 pb-4">
-        <div>
-          <h2 className="text-xl text-[#003e69]   font-bold tracking-tight uppercase">
-            {'Dashboard'}
-          </h2>
-          <p className="text-[#428bca]]">{'View current vehicle status'}</p>
+    <div className="h-screen space-y-6  relative ">
+      <ScrollArea className="h-full w-full " id="fullscreen">
+        <div className="fixed h-full inset-0 -z-10 pointer-events-none">
+          <Image
+            src={page_bg}
+            alt="motion-live-bg"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
         </div>
-        <div
-          className={`flex flex-col md:flex-row  items-center justify-between gap-4   `}
-        >
-          <div className="flex items-center  gap-2  w-[300px]">
-            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-              Plan:
-            </span>
+        <div className="flex px-4 md:px-6 pt-4 md:pt-6 sticky top-0 z-2  flex-col md:flex-row justify-between items-end gap-4  ">
+          <div>
+            <ButtonGroup
+              className={'bg-[#f3f3f3] border rounded-lg shadow-md p-1 '}
+            >
+              <Button
+                variant={
+                  localFilters.currentView === 'cards' ? 'default' : 'outline'
+                }
+                size="sm"
+                onClick={() => handleSelectChange('currentView', 'cards')}
+                className="gap-2"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                <span className="hidden sm:inline">Cards</span>
+              </Button>
 
-            <Select
-              value={localFilters?.selectedPlanId || 'all'}
-              onValueChange={(value) =>
-                handleSelectChange('selectedPlanId', value)
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a plan" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Vehicles</SelectItem>
-                {localFilters.plans?.map((plan) => (
-                  <SelectItem key={plan.id} value={plan.id}>
-                    {plan.notes || `Plan ${plan.id}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Button
+                variant={
+                  localFilters.currentView === 'map' ? 'default' : 'outline'
+                }
+                size="sm"
+                onClick={() => handleSelectChange('currentView', 'map')}
+                className="gap-2 "
+              >
+                <span className="hidden sm:inline">Map</span>
+                <Map className="h-4 w-4" />
+              </Button>
+            </ButtonGroup>
           </div>
-          <div
-            className="flex items-center gap-1 bg-muted p-1 mr-10 rounded-lg"
-            data-testid="toolbar-view"
-          >
-            <Button
-              variant={
-                localFilters.currentView === 'cards' ? 'default' : 'ghost'
-              }
-              size="sm"
-              onClick={() => handleSelectChange('currentView', 'cards')}
-              className="gap-2"
+          <div>
+            <ButtonGroup
+              className={'bg-[#f3f3f3] border rounded-lg shadow-md p-1 '}
             >
-              <LayoutGrid className="h-4 w-4" />
-              <span className="hidden sm:inline">Cards</span>
-            </Button>
-            <Button
-              variant={localFilters.currentView === 'map' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => handleSelectChange('currentView', 'map')}
-              className="gap-2"
-            >
-              <Map className="h-4 w-4" />
-              <span className="hidden sm:inline">Map</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant={'outline'} size="sm">
+                    <Funnel className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                  <div className="space-y-3 ">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Search plate or driver…"
+                        className="pl-8 h-8 "
+                      />
+                    </div>
+                    <Separator className=" " />
 
-      {loading ? (
-        <div className="flex items-center justify-center">loading</div>
-      ) : (
-        <div>
-          {localFilters.currentView === 'cards' ? (
-            <div className=" p-4 md:p-6 ">
-              <CardsView
-                vehicleCards={vehicleCards}
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        type="button"
+                        variant={allSelected ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7"
+                        onClick={toggleAll}
+                      >
+                        All
+                      </Button>
+                      {STATUS_KEYS.map((k) => (
+                        <Button
+                          key={k}
+                          type="button"
+                          size="sm"
+                          variant={statusFilter.has(k) ? 'default' : 'outline'}
+                          className="h-7"
+                          onClick={() => toggleOne(k)}
+                          title={statusLabel[k]}
+                        >
+                          {statusLabel[k]}
+                        </Button>
+                      ))}
+                    </div>
+                    <Separator className=" " />
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {LAST_SEEN_OPTIONS.map((option) => (
+                        <Button
+                          key={option.key}
+                          type="button"
+                          size="sm"
+                          variant={
+                            lastSeenFilter === option.key
+                              ? 'default'
+                              : 'outline'
+                          }
+                          className="h-7"
+                          onClick={() => setLastSeenFilter(option.key)}
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    disabled={localFilters.currentView === 'cards' ?? true}
+                    variant={'outline'}
+                    size="sm"
+                  >
+                    <Truck className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  // sideOffset={10}
+                  className={'p-0 h-screen overflow-clip '}
+                >
+                  <CardsViewSidebar
+                    q={q}
+                    setQ={setQ}
+                    vehicleCards={vehicleCards}
+                    selectedPlanId={localFilters.selectedPlanId}
+                    assignedUnits={localFilters.assignedUnits}
+                  />
+                </PopoverContent>
+              </Popover>
+              <PlanSelector
                 selectedPlanId={localFilters.selectedPlanId}
-                targetPlates={targetPlates}
-                assignedUnits={localFilters.assignedUnits}
+                handleSelectChange={handleSelectChange}
+                plans={plan_list}
               />
-            </div>
-          ) : (
-            <div className="w-full h-screen p-0 m-0">
-              <MapWithCards
-                refreshKey={mapShowTick}
-                vehicleCards={vehicleCards}
-                selectedPlanId={localFilters.selectedPlanId}
-                targetPlates={targetPlates}
-                assignedUnits={localFilters.assignedUnits}
-              />
-            </div>
-          )}
+              {!fullscreen ? (
+                <Button
+                  size="sm"
+                  onClick={goFullScreen}
+                  className="  rounded-lg"
+                  variant={'outline'}
+                >
+                  <Maximize2 />
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={exitFullScreen}
+                  className="  rounded-lg"
+                >
+                  <Minimize2 />
+                </Button>
+              )}
+            </ButtonGroup>
+          </div>
         </div>
-      )}
+
+        {loading ? (
+          <div className="flex items-center justify-center">loading</div>
+        ) : (
+          <div>
+            {localFilters.currentView === 'cards' ? (
+              <div className="h-full w-full px-4 md:px-6 ">
+                <CardsView
+                  q={q}
+                  setQ={setQ}
+                  statusFilter={statusFilter}
+                  setStatusFilter={setStatusFilter}
+                  lastSeenFilter={lastSeenFilter}
+                  setLastSeenFilter={setLastSeenFilter}
+                  // goFullScreen={goFullScreen}
+                  vehicleCards={vehicleCards}
+                  selectedPlanId={localFilters.selectedPlanId}
+                  targetPlates={targetPlates}
+                  assignedUnits={localFilters.assignedUnits}
+                />
+              </div>
+            ) : (
+              <div className="absolute top-0 w-full h-screen  p-0 m-0">
+                <MapWithCards
+                  refreshKey={mapShowTick}
+                  vehicleCards={vehicleCards}
+                  selectedPlanId={localFilters.selectedPlanId}
+                  targetPlates={targetPlates}
+                  assignedUnits={localFilters.assignedUnits}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </ScrollArea>
     </div>
   )
 }

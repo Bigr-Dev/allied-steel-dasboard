@@ -13,7 +13,7 @@ const ArchivePageLayout = async ({ children, params }) => {
   //  console.log('page_id :Layout>> ', page_id, id)
   return (
     // <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50  space-y-6 h-full overflow-y-auto   p-4 md:p-6">
-    <div className="min-h-screen z-1    overflow-y-auto   p-4 md:p-6">
+    <div className="h-screen z-1 p-4 md:p-6">
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <Image
           src={page_bg}

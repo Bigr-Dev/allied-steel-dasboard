@@ -20,9 +20,11 @@ import Image from 'next/image'
 // import { useAuth } from '@/context/auth-context/context'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/initial-states/auth-state'
-import allied_logo from '@/assets/steel_logo.png'
+import allied_logo from '@/assets/allied_logo_dark.png'
 import { Eye, EyeOff } from 'lucide-react'
 import PageLoader from '../ui/loader'
+import { ScrollArea } from '@radix-ui/react-scroll-area'
+import { Separator } from '../ui/separator'
 
 const SignInForm = () => {
   const { login, loading } = useAuth()
@@ -63,11 +65,12 @@ const SignInForm = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen justify-center items-center space-y-4 relative">
+    <div className="flex flex-col h-full justify-center items-center space-y-4 relative">
       <div className="flex  aspect-square size-30 self-center items-center justify-center ">
         <Image
           src={allied_logo}
           alt="Allied Steelrode"
+          className="w-[100px] "
           style={{ objectFit: 'contain', zIndex: 1 }}
         />
       </div>
@@ -75,14 +78,16 @@ const SignInForm = () => {
       <form onSubmit={handleSubmit} className=" z-10">
         <Card className="min-w-[500px] space-y-2">
           <CardHeader>
-            <CardTitle className="text-xl text-center text-[#003e69] ">
+            <CardTitle className="text-xl text-center text-[#003e69] uppercase">
               Sign In
             </CardTitle>
-            <CardDescription className={'text-[#428bca] text-center'}>
+            {/* <CardDescription className={'text-[#428bca] text-center'}>
               Access the fleet management dashboard to manage your vehicles,
               drivers, and trips.
-            </CardDescription>
+            </CardDescription> */}
+            {/* <Separator /> */}
           </CardHeader>
+
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email" className={'font-semibold text-[#003e69]'}>
@@ -171,20 +176,6 @@ const SignInForm = () => {
       </form>
 
       {loading && <PageLoader />}
-
-      <Image
-        alt="motion-live-bg"
-        src={Hero_bg}
-        placeholder="blur"
-        quality={100}
-        fill
-        sizes="100vw"
-        style={{
-          objectFit: 'cover',
-          zIndex: -1,
-        }}
-      />
-      <div className="absolute top-0 right-0 h-full w-full bg-black/10 z-0"></div>
     </div>
   )
 }

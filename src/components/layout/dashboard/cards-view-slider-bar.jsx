@@ -781,8 +781,10 @@ export default function CardsViewSidebar({
   vehicleCards = [],
   selectedPlanId = 'all',
   assignedUnits = [],
+  q,
+  setQ,
 }) {
-  const [q, setQ] = useState('')
+  // const [q, setQ] = useState('')
   const [focusPlate, setFocusPlate] = useState('')
   const liveByPlate = useLiveStore((s) => s.liveByPlate)
 

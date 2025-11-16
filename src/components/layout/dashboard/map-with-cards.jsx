@@ -104,61 +104,6 @@ export default function MapWithCards({
           assignedUnits={assignedUnits}
         />
       </div>
-
-      <aside
-        className={`fixed right-0 bottom-0 top-16 transition-all duration-300 ease-in-out border-l bg-background pt-2 mt-21  ${
-          isMinimized ? 'w-12' : 'w-96 overflow-auto'
-        }`}
-        data-testid="map-cards-panel"
-        onTransitionEnd={(e) => {
-          if (e.propertyName === 'width') {
-            window.dispatchEvent(new CustomEvent('fleet:map:resize'))
-          }
-        }}
-      >
-        {isMinimized ? (
-          <div className="h-full flex flex-col  py-4 pt-0 gap-4">
-            <div className=" flex h-10 w-10 justify-center items-center  rounded-md ">
-              <Truck
-                className="w-5 h-5 text-[#333]"
-                onClick={() => setIsMinimized(false)}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="h-full flex flex-col pt-0">
-            <div className="border-0 border-b rounded-none flex ">
-              <div className="px-4 py-0 m-0 w-full">
-                <div className="flex   items-center justify-between">
-                  <div className="flex items-center  gap-2">
-                    <Truck className="w-5 h-5 text-foreground" />
-                    <h3 className="font-semibold">Vehicles</h3>
-                    <span className="text-sm text-muted-foreground">
-                      ({vehicleCards.length})
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsMinimized(true)}
-                    aria-label="Minimize vehicles panel"
-                    data-testid="map-cards-toggle"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 overflow-auto">
-              <CardsViewSidebar
-                vehicleCards={vehicleCards}
-                selectedPlanId={selectedPlanId}
-                assignedUnits={assignedUnits}
-              />
-            </div>
-          </div>
-        )}
-      </aside>
     </div>
   )
 }
