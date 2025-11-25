@@ -99,9 +99,13 @@ const DynamicInput = ({ inputs, handleSelectChange, handleChange }) => {
                 >
                   <SelectValue placeholder={input.placeholder} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-full">
                   {input.options?.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem
+                      className="w-full"
+                      key={option.value}
+                      value={option.value}
+                    >
                       {option.label}
                     </SelectItem>
                   ))}

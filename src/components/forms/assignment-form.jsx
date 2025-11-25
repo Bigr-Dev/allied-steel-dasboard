@@ -8,6 +8,7 @@ import { Plus, Save } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { set } from 'date-fns'
 import { Spinner } from '../ui/spinner'
+import { Badge } from '../ui/badge'
 
 function todayTomorrow() {
   const now = new Date()
@@ -128,7 +129,9 @@ const AssignmentForm = ({ id, onCancel }) => {
         },
         ...(unassignedVehicles?.map((v) => ({
           value: v.vehicle_assignment_id,
-          label: `${v.vehicle.plate} - ${v.vehicle.type} - ${v.capacity_kg}Kg`,
+          label: `${v.vehicle.plate} - ${v?.vehicle?.fleet_number}${
+            v.trailer?.fleet_number ? ` & ${v.trailer?.fleet_number}` : ''
+          } - ${`${v.capacity_kg}Kg`}`,
         })) || []),
       ],
     },

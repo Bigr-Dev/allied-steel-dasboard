@@ -2,6 +2,7 @@
 
 import { useState, useMemo, memo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,16 +24,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { ProgressBar } from './ProgressBar'
-import { DraggableItemRow } from './DraggableItemRow'
-import {
-  Truck,
-  User,
-  MoreVertical,
-  UserPlus,
-  RefreshCw,
-  Trash2,
-  AlertTriangle,
-} from 'lucide-react'
+import { SortableOrder } from './SortableOrder'
+import { Truck, User, MoreVertical, Trash2, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { assignmentAPI, handleAPIError } from '@/lib/api-client'
 import {
@@ -41,13 +34,15 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { SortableCustomer } from './Sortable-customer'
 
 export const VehicleCard = memo(function VehicleCard({
   unit,
   onUnitChange,
   onUnassignAll,
 }) {
-  //console.log('unit :>> ', unit)
   const [isLoading, setIsLoading] = useState(false)
   const [expandedRoutes, setExpandedRoutes] = useState(new Set())
   const { toast } = useToast()
@@ -108,19 +103,11 @@ export const VehicleCard = memo(function VehicleCard({
   const vehicle = getVehicleDisplay()
 
   const handleUnassignAll = async () => {
-    console.log(
-      '🚀 VehicleCard handleUnassignAll called for unit:',
-      unit.planned_unit_id || unit.plan_unit_id
-    )
     setIsLoading(true)
     try {
-      // Use the onUnassignAll prop passed from parent component
       if (onUnassignAll) {
         await onUnassignAll(unit.planned_unit_id || unit.plan_unit_id)
       } else {
-        console.log(
-          '⚠️ No onUnassignAll prop provided, falling back to API call'
-        )
         await assignmentAPI.unassignAllItems(unit.plan_unit_id)
       }
 
@@ -135,7 +122,6 @@ export const VehicleCard = memo(function VehicleCard({
         description: `All items removed from ${vehicle.name}`,
       })
     } catch (error) {
-      console.log('❌ VehicleCard unassign error:', error)
       handleAPIError(error, toast)
     } finally {
       setIsLoading(false)
@@ -160,7 +146,7 @@ export const VehicleCard = memo(function VehicleCard({
   }
 
   const getUniqueRoutes = () => {
-    const routes = new Set(unit.customers.map((c) => c.route_name))
+    const routes = new Set((unit.customers || []).map((c) => c.route_name))
     return routes.size
   }
 
@@ -182,7 +168,7 @@ export const VehicleCard = memo(function VehicleCard({
   const groupedData = useMemo(() => {
     const routeGroups = new Map()
 
-    unit.customers.forEach((customer) => {
+    ;(unit.customers || []).forEach((customer) => {
       const routeName = customer.route_name
 
       if (!routeGroups.has(routeName)) {
@@ -208,12 +194,12 @@ export const VehicleCard = memo(function VehicleCard({
 
       const suburb = route.suburbs.get(suburbName)
 
-      const customerWeight = customer.orders.reduce(
-        (sum, order) => sum + order.total_assigned_weight_kg,
+      const customerWeight = (customer.orders || []).reduce(
+        (sum, order) => sum + (order.total_assigned_weight_kg || 0),
         0
       )
-      const customerItems = customer.orders.reduce(
-        (sum, order) => sum + order.items.length,
+      const customerItems = (customer.orders || []).reduce(
+        (sum, order) => sum + (order.items || []).length,
         0
       )
 
@@ -242,6 +228,11 @@ export const VehicleCard = memo(function VehicleCard({
     }
     setExpandedRoutes(newExpanded)
   }
+
+  const sequenceOrMax = (seq) =>
+    typeof seq === 'number' && !Number.isNaN(seq)
+      ? seq
+      : Number.MAX_SAFE_INTEGER
 
   return (
     <Card
@@ -273,15 +264,6 @@ export const VehicleCard = memo(function VehicleCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {/* <DropdownMenuItem className="gap-2">
-                <UserPlus className="h-4 w-4" />
-                Assign Driver
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
-                <RefreshCw className="h-4 w-4" />
-                Change Vehicle
-              </DropdownMenuItem> */}
-
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem
@@ -386,7 +368,7 @@ export const VehicleCard = memo(function VehicleCard({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0  max-h-screen overflow-y-auto">
+      <CardContent className="pt-0 max-h-screen overflow-y-auto">
         {/* Items List */}
         <div className="space-y-3">
           {groupedData.length === 0 ? (
@@ -430,81 +412,121 @@ export const VehicleCard = memo(function VehicleCard({
                 </CollapsibleTrigger>
 
                 <CollapsibleContent className="ml-6 mt-2 space-y-3">
-                  {route.suburbs.map((suburb) => (
-                    <div key={suburb.suburb_name} className="space-y-2">
-                      {/* Suburb Header */}
-                      <div className="flex items-center justify-between">
-                        <h5 className="font-medium text-sm text-muted-foreground">
-                          {suburb.suburb_name}
-                        </h5>
-                        <Badge variant="secondary" className="text-xs">
-                          {suburb.total_weight}kg
-                        </Badge>
-                      </div>
+                  {route.suburbs.map((suburb) => {
+                    const suburbKey = `${route.route_name || ''}|${
+                      suburb.suburb_name || ''
+                    }`
+                    // sort customers within suburb by their minimum stop_sequence
+                    const sortedCustomers = (suburb.customers || [])
+                      .slice()
+                      .sort((a, b) => {
+                        const aMin = Math.min(
+                          ...(a.orders || []).map((o) =>
+                            sequenceOrMax(o.stop_sequence)
+                          ),
+                          Number.MAX_SAFE_INTEGER
+                        )
+                        const bMin = Math.min(
+                          ...(b.orders || []).map((o) =>
+                            sequenceOrMax(o.stop_sequence)
+                          ),
+                          Number.MAX_SAFE_INTEGER
+                        )
+                        return aMin - bMin
+                      })
 
-                      {/* Customers in Suburb */}
-                      {suburb.customers.map((customer) => (
-                        <div
-                          // key={`${unit.plan_unit_id}:${customer?.customer_id}:${
-                          //   customer.route_name || ''
-                          // }:${customer.suburb_name || ''}`}
-                          key={`${unit.plan_unit_id}:${
-                            customer.customer_id ?? 'anon'
-                          }:${customer.customer_name ?? ''}:${
-                            customer.suburb_name ?? ''
-                          }:${customer.route_name ?? ''}`}
-                          //  key={customer.customer_id || customer.customer_name}
-                          className="ml-4 space-y-2"
-                        >
-                          {/* Customer Header */}
-                          <div className="flex items-center justify-between">
-                            <h6 className="font-medium text-sm">
-                              {customer.customer_name}
-                            </h6>
-                            <Badge variant="outline" className="text-xs">
-                              {customer.orders.reduce(
-                                (total, order) =>
-                                  total + order.total_assigned_weight_kg,
-                                0
-                              )}
-                              kg
-                            </Badge>
-                          </div>
-
-                          {/* Orders */}
-                          {customer.orders.map((order) => (
-                            <DraggableItemRow
-                              key={`${unit.planned_unit_id}:${order.order_id}`}
-                              item={{
-                                id: `order-${order.order_id}`,
-                                order_number:
-                                  order.items?.[0]?.order_number || 'N/A',
-                                order_id: order.order_id,
-                                items: order.items || [],
-                                itemCount: order.items?.length || 0,
-                                totalWeight:
-                                  order.total_assigned_weight_kg || 0,
-                                customer_name: customer.customer_name,
-                                route_name: customer.route_name,
-                                suburb_name: customer.suburb_name,
-                                weight_left:
-                                  order.total_assigned_weight_kg || 0,
-                                description: `Order ${
-                                  order.items?.[0]?.order_number || 'N/A'
-                                } - ${customer.customer_name} (${
-                                  order.items?.length || 0
-                                } items)`,
-                                isOrderGroup: true,
-                              }}
-                              containerId={`unit:${unit.planned_unit_id}`} // FIX: Use planned_unit_id instead of plan_unit_id
-                              isDraggable
-                              isOrderGroup
-                            />
-                          ))}
+                    return (
+                      <div key={suburb.suburb_name} className="space-y-2">
+                        {/* Suburb Header */}
+                        <div className="flex items-center justify-between">
+                          <h5 className="font-medium text-sm text-muted-foreground">
+                            {suburb.suburb_name}
+                          </h5>
+                          <Badge variant="secondary" className="text-xs">
+                            {suburb.total_weight}kg
+                          </Badge>
                         </div>
-                      ))}
-                    </div>
-                  ))}
+
+                        {/* Customers in Suburb */}
+                        <SortableContext
+                          items={sortedCustomers.map((customer) => {
+                            const cid = customer.customer_id ?? 'anon'
+                            return `customer-${cid}-${suburbKey}`
+                          })}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {sortedCustomers.map((customer) => {
+                            // sort orders by stop_sequence for this customer
+                            const sortedOrders = (customer.orders || [])
+                              .slice()
+                              .sort(
+                                (a, b) =>
+                                  sequenceOrMax(a.stop_sequence) -
+                                  sequenceOrMax(b.stop_sequence)
+                              )
+
+                            const customerOrderIds = sortedOrders.map(
+                              (o) => o.order_id
+                            )
+
+                            const customerKey = customer.customer_id ?? 'anon'
+                            const sortableId = `customer-${customerKey}-${suburbKey}`
+
+                            return (
+                              <SortableCustomer
+                                key={sortableId}
+                                id={sortableId}
+                                unit={unit}
+                                customer={customer}
+                              >
+                                <div className="space-y-2 rounded-lg border bg-muted/50 px-2 py-2">
+                                  {/* Customer Header */}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <h6 className="text-sm font-medium">
+                                        {customer.customer_name}
+                                      </h6>
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        {sortedOrders.reduce(
+                                          (total, order) =>
+                                            total +
+                                            (order.total_assigned_weight_kg ||
+                                              0),
+                                          0
+                                        )}
+                                        kg
+                                      </Badge>
+                                    </div>
+                                  </div>
+
+                                  {/* Orders */}
+                                  <SortableContext
+                                    items={sortedOrders.map(
+                                      (order) => `order-${order.order_id}`
+                                    )}
+                                    strategy={verticalListSortingStrategy}
+                                  >
+                                    {sortedOrders.map((order) => (
+                                      <SortableOrder
+                                        key={`${unit.planned_unit_id}:${order.order_id}`}
+                                        order={order}
+                                        unit={unit}
+                                        customer={customer}
+                                        customerOrderIds={customerOrderIds}
+                                      />
+                                    ))}
+                                  </SortableContext>
+                                </div>
+                              </SortableCustomer>
+                            )
+                          })}
+                        </SortableContext>
+                      </div>
+                    )
+                  })}
                 </CollapsibleContent>
               </Collapsible>
             ))

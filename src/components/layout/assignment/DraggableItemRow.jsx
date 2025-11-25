@@ -1,6 +1,8 @@
 'use client'
 
 import { useDraggable } from '@dnd-kit/core'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { Badge } from '@/components/ui/badge'
 import {
   Tooltip,
@@ -18,38 +20,65 @@ export const DraggableItemRow = memo(function DraggableItemRow({
   isDraggable = false,
   isUnassigned = false,
   isOrderGroup = false,
+  isSortable = false,
+  dragHandleProps = {},
+  onReorder,
 }) {
   const weight = isUnassigned ? item.weight_left : item.assigned_weight_kg
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: isOrderGroup ? item.id : item.item_id,
-      disabled: !isDraggable,
-      data: isOrderGroup ? {
-        containerId: containerId || 'unassigned',
-        isOrderGroup: true,
-        order_number: item.order_number,
-        items: item.items,
-        customer_name: item.customer_name,
-        route_name: item.route_name,
-        suburb_name: item.suburb_name,
-        totalWeight: item.totalWeight,
-        totalVolume: item.totalVolume,
-        itemCount: item.itemCount,
-      } : {
-        containerId: containerId || (isUnassigned ? 'unassigned' : null),
-        item_id: item.item_id,
-        assignment_id: item.assignment_id || null,
-        order_id: item.order_id || null,
-        customer_name: customer?.customer_name || item.customer_name,
-        route_name: customer?.route_name || item.route_name,
-        suburb_name: customer?.suburb_name || item.suburb_name,
-        weight: weight,
-        description: item.description,
-      },
-    })
+  // Use sortable for reordering within container, draggable for cross-container moves
+  const sortableProps = useSortable({
+    id: isOrderGroup ? item.id : item.item_id,
+    disabled: !isSortable,
+    data: {
+      type: 'sortable',
+      containerId,
+      isOrderGroup,
+    }
+  })
 
-  const style = transform
+  const draggableProps = useDraggable({
+    id: isOrderGroup ? item.id : item.item_id,
+    disabled: !isDraggable || isSortable, // Disable draggable when sortable is active
+    data: isOrderGroup ? {
+      containerId: containerId || 'unassigned',
+      isOrderGroup: true,
+      order_number: item.order_number,
+      items: item.items,
+      customer_name: item.customer_name,
+      route_name: item.route_name,
+      suburb_name: item.suburb_name,
+      totalWeight: item.totalWeight,
+      totalVolume: item.totalVolume,
+      itemCount: item.itemCount,
+    } : {
+      containerId: containerId || (isUnassigned ? 'unassigned' : null),
+      item_id: item.item_id,
+      assignment_id: item.assignment_id || null,
+      order_id: item.order_id || null,
+      customer_name: customer?.customer_name || item.customer_name,
+      route_name: customer?.route_name || item.route_name,
+      suburb_name: customer?.suburb_name || item.suburb_name,
+      weight: weight,
+      description: item.description,
+    },
+  })
+
+  // Use sortable props when available, fallback to draggable
+  const {
+    attributes = draggableProps.attributes,
+    listeners = draggableProps.listeners,
+    setNodeRef = draggableProps.setNodeRef,
+    transform = draggableProps.transform,
+    isDragging = draggableProps.isDragging
+  } = isSortable ? sortableProps : draggableProps
+
+  const style = isSortable && transform
+    ? {
+        transform: CSS.Transform.toString(transform),
+        transition: sortableProps.transition,
+      }
+    : transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
         willChange: 'transform',
@@ -66,8 +95,8 @@ export const DraggableItemRow = memo(function DraggableItemRow({
             ? 'cursor-grab active:cursor-grabbing hover:shadow-md'
             : ''
         } ${isDragging ? 'opacity-50 rotate-3 shadow-lg scale-105 z-50' : ''}`}
-        {...listeners}
-        {...attributes}
+        {...(dragHandleProps.listeners || listeners)}
+        {...(dragHandleProps.attributes || attributes)}
       >
         {isDraggable && (
           <Tooltip>
@@ -75,15 +104,22 @@ export const DraggableItemRow = memo(function DraggableItemRow({
               <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0 hover:text-foreground transition-colors" />
             </TooltipTrigger>
             <TooltipContent>
-              <p>Drag to assign</p>
+              <p>{isSortable ? 'Drag to reorder' : dragHandleProps.listeners ? 'Drag to reorder' : 'Drag to assign'}</p>
             </TooltipContent>
           </Tooltip>
         )}
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate mb-1">
-            {isOrderGroup ? `Order ${item.order_number}` : item.description}
-          </p>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm font-medium truncate">
+              {isOrderGroup ? `Order ${item.order_number}` : item.description}
+            </p>
+            {isOrderGroup && item.stop_sequence && (
+              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                #{item.stop_sequence}
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="outline" className="text-xs font-medium">
               {isOrderGroup ? `${item.totalWeight.toFixed(1)}kg` : `${weight}kg`}

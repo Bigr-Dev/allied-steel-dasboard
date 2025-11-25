@@ -1,0 +1,317 @@
+# Frontend Application Overview
+
+## 1. High-Level Architecture
+
+### Framework & Technology Stack
+- **Next.js 15.4.6** with App Router (`app/` directory structure)
+- **React 19.1.0** with both Server and Client Components
+- **JavaScript** (JSX) - no TypeScript usage detected
+- **Tailwind CSS v4** for styling with custom design system
+- **Supabase** for backend communication and real-time subscriptions
+
+### Architecture Pattern
+- **Feature-based folder structure** with domain-driven organization
+- **Context + Reducer pattern** for global state management
+- **Zustand** for live telemetry data store
+- **Route groups** for layout organization: `(auth)` and `(dashboard)`
+- **Parallel routes** with slots (`@header`, `@sidebar`, `@statistics`, `@title`)
+
+### Backend Communication
+- **REST API** endpoints via custom fetch wrapper (`/lib/fetch.js`)
+- **Supabase client** for real-time subscriptions and direct database operations
+- **WebSocket connection** for live vehicle telemetry data
+- **Server-side data fetching** in layouts and pages
+
+## 2. Routing & Navigation
+
+### Route Structure
+
+| Path | File | Description |
+|------|------|-------------|
+| `/` | `app/(dashboard)/page.jsx` | Main dashboard with vehicle tracking |
+| `/login` | `app/(auth)/login/page.jsx` | Authentication page |
+| `/[page_id]` | `app/(dashboard)/[page_id]/page.jsx` | Dynamic page routing |
+| `/[page_id]/[id]` | `app/(dashboard)/[page_id]/[id]/page.jsx` | Nested dynamic routing |
+| `/[page_id]/[id]/[...slug]` | `app/(dashboard)/[page_id]/[id]/[...slug]/page.jsx` | Catch-all routes |
+| `/[page_id]/create-plan` | `app/(dashboard)/[page_id]/create-plan/page.jsx` | Plan creation interface |
+| `/[page_id]/create-plan/[id]` | `app/(dashboard)/[page_id]/create-plan/[id]/page.jsx` | Edit existing plan |
+
+### Layout Hierarchy
+- **Root Layout** (`app/layout.jsx`): Authentication wrapper, global providers, fonts
+- **Dashboard Layout** (`app/(dashboard)/layout.jsx`): Sidebar, header via parallel routes
+- **Page Layout** (`app/(dashboard)/[page_id]/layout.jsx`): Page-specific layout with statistics and title slots
+
+### Route Protection
+- **Middleware** (`src/middleware.js`): Token-based authentication with automatic refresh
+- **AuthProvider** context: Client-side authentication state management
+- **Server-side checks** in layouts for user validation
+
+## 3. Pages & Key Screens
+
+### Dashboard (`/`)
+- **Purpose**: Real-time vehicle tracking and fleet management
+- **Key Components**: CardsView, MapWithCards, PlanSelector, vehicle status filters
+- **Data Sources**: WebSocket for live telemetry, Supabase for vehicle/plan data
+- **Interactions**: Plan selection, view switching (cards/map), vehicle filtering, fullscreen mode
+
+### Login (`/login`)
+- **Purpose**: User authentication
+- **Key Components**: SignInForm with background image
+- **Data Sources**: Login API endpoint
+- **Interactions**: Form submission, redirect to dashboard on success
+
+### Dynamic Pages (`/[page_id]`)
+- **Purpose**: Various management interfaces (loads, vehicles, drivers, etc.)
+- **Key Components**: Single-page components from `components/single-pages/`
+- **Data Sources**: Context providers with API integration
+- **Interactions**: CRUD operations, data tables, forms
+
+## 4. State Management & Context
+
+### AuthProvider (`src/context/auth-provider.jsx`)
+- **Purpose**: User authentication state and session management
+- **State**: `current_user`, `loading`
+- **Actions**: `login()`, `logout()`
+- **Provider Location**: Root layout (`app/layout.jsx`)
+
+### GlobalProvider (`src/context/global-provider.jsx`)
+- **Purpose**: Application-wide state for all business entities
+- **State**: branches, customers, users, loads, vehicles, drivers, routes, assignments
+- **Actions**: CRUD operations for all entities, modal management, plan operations
+- **Provider Location**: Dashboard layout (inferred)
+
+### Zustand Store (`src/config/zustand.js`)
+- **Purpose**: Live vehicle telemetry data management
+- **State**: `liveByPlate` (keyed by vehicle plate number)
+- **Actions**: `upsertPackets()`, `clearLive()`
+- **Persistence**: SessionStorage for brief data retention
+
+### Real-time Subscriptions
+- **Supabase channels** for database change notifications
+- **WebSocket connection** for live vehicle tracking data
+- **Batched updates** to prevent UI thrashing
+
+## 5. Custom Hooks
+
+### Core Hooks (`src/hooks/`)
+
+#### `use-apis.js`
+- **Purpose**: Standardized API interaction patterns
+- **Functions**: `loadAPI()`, `fetchApi()`, `postApi()`, `putApi()`, `deleteApi()`
+- **Features**: Error handling, toast notifications, authentication checks
+
+#### `use-modal.js`
+- **Purpose**: Modal state management helpers
+- **Functions**: `onCreate()`, `onEdit()`, `onDelete()`
+- **Return**: State setters for modal visibility and data
+
+#### `use-toast.js`
+- **Purpose**: Toast notification system
+- **Integration**: Sonner library wrapper
+
+#### Domain-specific Hooks
+- `assignment-plan/` - Assignment and planning operations
+- `loads/` - Load management functionality
+- `use-mobile.js` - Mobile device detection
+- `use-greeting.js` - Time-based greeting messages
+- `use-badges.js` - Status badge logic
+
+## 6. Components
+
+### UI Components (`src/components/ui/`)
+Built on **Radix UI** primitives with custom styling:
+- **Form Controls**: Button, Input, Select, Checkbox, Switch, Textarea
+- **Layout**: Card, Separator, Sheet, Tabs, Accordion, Collapsible
+- **Feedback**: Alert, Dialog, Toast, Progress, Skeleton, Spinner
+- **Data Display**: Table, Badge, Avatar, Tooltip
+- **Navigation**: Command palette, Dropdown menu, Popover
+
+### Layout Components (`src/components/layout/`)
+
+#### Dashboard Components
+- **CardsView**: Grid layout for vehicle status cards
+- **MapWithCards**: Integrated map view with vehicle markers
+- **PlanSelector**: Dropdown for selecting assignment plans
+
+#### Assignment Components
+- **AssignmentBoard**: Drag-and-drop interface for load assignments
+- **VehicleCard**: Individual vehicle status display
+- **UnassignedList**: List of unassigned loads
+
+#### Core Layout
+- **Header**: Top navigation bar
+- **Sidebar**: Navigation menu
+- **PageContainer**: Consistent page wrapper
+
+### Form Components (`src/components/forms/`)
+- **Entity Forms**: Branch, Customer, Driver, Vehicle, User forms
+- **Specialized Forms**: Assignment, Plan creation, Trip forms
+- **Map Integration**: MapComponent for location selection
+
+### Feature Components (`src/components/single-pages/`)
+- **Data Management**: Customers, Drivers, Vehicles, Users, Branches
+- **Operations**: Load assignment, Route assignment, Sales orders
+- **Planning**: Load assignment preview and management
+
+## 7. Utilities & Helpers
+
+### Core Utilities (`src/lib/`)
+
+#### `utils.js`
+- **cn()**: Tailwind class merging utility using clsx and tailwind-merge
+
+#### `fetch.js`
+- **fetchData()**: Centralized API client with authentication
+- **Features**: Token management, error handling, login flow
+
+#### `assignment-helpers.js`
+- **assignmentAPI**: Assignment-specific API operations
+- **transformPlanData()**: Data transformation for plan objects
+
+#### `formatters.js`
+- **Purpose**: Data formatting utilities (inferred)
+
+#### `api-client.js`
+- **Purpose**: Generic API client wrapper
+
+#### Domain Helpers
+- `mapbox-geocoding.js` - Location services integration
+- `routeService.js` - Route calculation utilities
+- `realtime.js` - Real-time data handling
+- `errorMap.js` - Error message mapping
+
+### Configuration (`src/config/`)
+- **supabase.js**: Supabase client configuration
+- **zustand.js**: Zustand store setup with persistence
+
+### Constants (`src/constants/`)
+- **routes.js**: Application route definitions
+- **types.js**: Type definitions and enums
+
+## 8. Styling System
+
+### Tailwind CSS v4 Configuration
+- **Entry Point**: `app/globals.css`
+- **Config**: `postcss.config.mjs` with Tailwind PostCSS plugin
+- **Custom Properties**: CSS custom properties for design tokens
+
+### Design System
+- **Color Palette**: Custom color scheme with light/dark mode support
+- **Typography**: Geist Sans and Geist Mono fonts
+- **Spacing**: Standard Tailwind spacing scale
+- **Components**: Consistent component styling via CSS custom properties
+
+### Responsive Design
+- **Breakpoints**: Standard Tailwind breakpoints (sm, md, lg, xl)
+- **Mobile-first**: Responsive utilities throughout components
+- **Adaptive Layouts**: Different layouts for mobile vs desktop
+
+### Custom Styling
+- **CSS Variables**: Extensive use of CSS custom properties for theming
+- **Utility Classes**: Custom utilities for text stroke effects
+- **Component Variants**: Class variance authority for component variations
+
+## 9. Public Assets & Templates
+
+### Static Assets (`public/`)
+- **Icons**: SVG icons (file.svg, globe.svg, next.svg, vercel.svg, window.svg)
+- **Templates**: Excel template for load planning (`templates/load-plan-template.xlsx`)
+
+### Image Assets (`src/assets/`)
+- **Branding**: Allied Steelrode logos in various formats
+- **Backgrounds**: Hero images and background textures
+- **UI Elements**: Steel-themed overlays and textures
+
+### Asset Usage
+- **Next.js Image**: Optimized image loading with `next/image`
+- **Static References**: Direct public path references for templates
+- **Dynamic Imports**: ES6 imports for processed assets
+
+## 10. Data Fetching & APIs
+
+### Client-side Patterns
+- **Custom fetch wrapper**: `lib/fetch.js` with authentication
+- **Context-based loading**: Reducers manage loading states
+- **Real-time updates**: Supabase subscriptions + WebSocket
+
+### API Client Architecture
+- **Base URL**: Environment variable configuration
+- **Authentication**: Bearer token in headers
+- **Error Handling**: Centralized error processing with user feedback
+
+### Data Flow
+1. **Server-side**: Initial data fetching in layouts
+2. **Client hydration**: Context providers populate client state
+3. **Real-time sync**: Supabase subscriptions update state
+4. **User actions**: API calls through context actions
+
+### Loading States
+- **Global loading**: AuthProvider loading state
+- **Feature loading**: Individual reducer loading states
+- **UI feedback**: Skeleton components and spinners
+
+## 11. Authentication & Authorization
+
+### Authentication Flow
+- **Login**: Form submission to `/api/login` endpoint
+- **Token Storage**: HTTP-only cookies for security
+- **Session Management**: Automatic token refresh via middleware
+- **Logout**: Clear cookies and redirect to login
+
+### Route Protection
+- **Middleware**: Server-side route protection with token validation
+- **Client Guards**: AuthProvider wraps protected content
+- **Fallback**: Login page shown for unauthenticated users
+
+### User Context
+- **Current User**: Available throughout app via AuthContext
+- **Permissions**: Branch-based access control (inferred)
+- **Session Persistence**: Server-side session validation
+
+## 12. NPM Packages & External Dependencies
+
+### Core Framework
+- **next**: 15.4.6 - React framework with App Router
+- **react**: 19.1.0 - UI library
+- **react-dom**: 19.1.0 - DOM renderer
+
+### UI & Styling
+- **@radix-ui/***: Comprehensive UI primitive library
+- **tailwindcss**: 4.x - Utility-first CSS framework
+- **lucide-react**: 0.544.0 - Icon library
+- **next-themes**: 0.4.6 - Theme switching
+- **class-variance-authority**: 0.7.1 - Component variants
+- **clsx**: 2.1.1 - Conditional classes
+- **tailwind-merge**: 3.3.1 - Class merging
+
+### State Management
+- **zustand**: 5.0.8 - Lightweight state management
+- **@supabase/supabase-js**: 2.54.0 - Backend client
+
+### Forms & Validation
+- **react-hook-form**: 7.60.0 - Form library
+- **@hookform/resolvers**: 3.10.0 - Form validation
+- **zod**: 3.25.67 - Schema validation
+
+### Data & Tables
+- **@tanstack/react-table**: 8.21.3 - Table management
+- **date-fns**: 4.1.0 - Date utilities
+- **recharts**: 2.15.4 - Chart library
+
+### Drag & Drop
+- **@dnd-kit/core**: 6.3.1 - Drag and drop core
+- **@dnd-kit/sortable**: 10.0.0 - Sortable lists
+- **@dnd-kit/modifiers**: 9.0.0 - DnD modifiers
+
+### Maps & Location
+- **mapbox-gl**: 3.14.0 - Interactive maps
+
+### Utilities
+- **js-cookie**: 3.0.5 - Cookie management
+- **exceljs**: 4.4.0 - Excel file generation
+- **sonner**: 1.7.4 - Toast notifications
+- **react-spinners**: 0.17.0 - Loading spinners
+
+### Development
+- **@tailwindcss/postcss**: 4.x - PostCSS integration
+- **postcss**: 8.5.6 - CSS processing

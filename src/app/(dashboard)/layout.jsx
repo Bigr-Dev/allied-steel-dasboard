@@ -2,7 +2,7 @@
 import { cookies } from 'next/headers'
 
 // context
-import GlobalProvider from '@/context/global-provider'
+import { RootAppProvider } from '@/context/providers'
 
 // components
 import { SidebarProvider } from '@/components/ui/sidebar-provider'
@@ -81,7 +81,7 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
   }
 
   return (
-    <GlobalProvider data={data}>
+    <RootAppProvider data={data}>
       <SidebarProvider>
         {sidebar}
         <main className="flex-1 h-screen">
@@ -89,7 +89,7 @@ const DashboardLayout = async ({ children, sidebar, header }) => {
           <div className="">{children}</div>
         </main>
       </SidebarProvider>
-    </GlobalProvider>
+    </RootAppProvider>
   )
 }
 

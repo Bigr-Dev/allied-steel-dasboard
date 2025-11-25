@@ -10,7 +10,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
 import { VehicleCard } from './VehicleCard'
 import { UnassignedList } from './UnassignedList'
 import { DraggableItemRow } from './DraggableItemRow'
@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { assignmentAPI, transformPlanData } from '@/lib/assignment-helpers'
+import { handleAPIError } from '@/lib/api-client'
 import { RefreshCw, Save, RotateCcw } from 'lucide-react'
 import { useGlobalContext } from '@/context/global-context'
 import DetailCard from '@/components/ui/detail-card'
@@ -86,6 +87,20 @@ export function AssignmentBoard() {
 
   const handleDragStart = (event) => {
     const { active } = event
+    const dragData = active.data.current
+
+    // Handle sortable order drag start
+    if (dragData?.type === 'sortable-order') {
+      setActiveItem({
+        item: {
+          id: active.id,
+          description: `Order ${dragData.order.items?.[0]?.order_number || 'N/A'} - ${dragData.customer.customer_name}`,
+          isOrderGroup: true,
+        },
+        sourceType: 'sortable',
+      })
+      return
+    }
 
     let draggedItem = null
     let sourceType = null
@@ -129,6 +144,12 @@ export function AssignmentBoard() {
 
     const dragData = active.data.current
     if (!dragData) return
+
+    // Handle sortable reordering within same container
+    if (dragData.type === 'sortable-order' || (active.id.toString().startsWith('order-') && over.id.toString().startsWith('order-'))) {
+      handleSortableReorder(active.id, over.id, dragData)
+      return
+    }
 
     const from = dragData.containerId
     const to = over.id
@@ -357,6 +378,56 @@ export function AssignmentBoard() {
     })
   }
 
+  const handleSortableReorder = (activeId, overId, dragData) => {
+    if (activeId === overId) return
+
+    // Extract unit and customer info from drag data
+    const activeOrder = dragData.order
+    const activeCustomer = dragData.customer
+    const activeUnit = dragData.unit
+    
+    if (!activeOrder || !activeCustomer || !activeUnit) return
+
+    setAssignedUnits(prev => prev.map(unit => {
+      if (unit.plan_unit_id !== activeUnit.plan_unit_id && unit.planned_unit_id !== activeUnit.planned_unit_id) return unit
+
+      const updatedUnit = { ...unit }
+      updatedUnit.customers = updatedUnit.customers.map(customer => {
+        if (customer.customer_name !== activeCustomer.customer_name) return customer
+        
+        const orderIds = customer.orders.map(order => `order-${order.order_id}`)
+        
+        if (orderIds.includes(activeId) && orderIds.includes(overId)) {
+          const oldIndex = orderIds.indexOf(activeId)
+          const newIndex = orderIds.indexOf(overId)
+          
+          const reorderedOrders = arrayMove(customer.orders, oldIndex, newIndex)
+          
+          // Update stop_sequence based on new order
+          const updatedOrders = reorderedOrders.map((order, index) => ({
+            ...order,
+            stop_sequence: index + 1
+          }))
+          
+          return { ...customer, orders: updatedOrders }
+        }
+        return customer
+      })
+      
+      return updatedUnit
+    }))
+
+    toast({
+      title: 'Orders Reordered',
+      description: 'Order sequence updated successfully',
+    })
+  }
+
+  const handleOrderReorder = (unitId, customerId, newOrderSequence) => {
+    // This function can be used for more complex reordering logic if needed
+    console.log('Order reorder:', { unitId, customerId, newOrderSequence })
+  }
+
   const handleCommitPlan = async () => {
     if (changes.length === 0) {
       toast({
@@ -446,6 +517,7 @@ export function AssignmentBoard() {
                       )
                     )
                   }}
+                  onOrderReorder={handleOrderReorder}
                 />
               ))}
 

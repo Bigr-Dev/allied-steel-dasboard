@@ -4,6 +4,7 @@ import * as assignment_actions from '../actions/assignment-actions'
 
 // api calls
 import { deleteApi, fetchApi, loadAPI, postApi } from '@/hooks/use-apis'
+import { planningAPI, assignmentAPI } from '@/lib/api'
 import Cookies from 'js-cookie'
 import { toast } from '@/hooks/use-toast'
 
@@ -87,39 +88,23 @@ export const addUnit = async (assignmentDispatch, data) => {
 
   try {
     const uid = Cookies.get('uid')
-    // console.log('uid :>> ', uid)
     if (!uid) {
-      console.log('invalid user :>> ')
       assignmentDispatch(
         assignment_actions.addPlanFailure({ error: 'invalid user' })
       )
       return
     }
 
-    const response = await fetchData(
-      `plans/${data?.planId}/units/add-unit`,
-      'POST',
-      data
-    )
-    //console.log('response :>> ', response)
-    // assignmentDispatch(assignment_actions.addPlanSuccess(response))
+    const response = await planningAPI.addUnit(data?.planId, data)
     toast({
       title: `Vehicle was successfully added`,
-
-      // description: `Something went wrong, while adding ${
-      //   data?.notes || 'the assignment plan'
-      // }`,
     })
     return response
   } catch (error) {
     assignmentDispatch(assignment_actions.addPlanFailure(error))
     toast({
       title: 'Something went wrong, while adding the assignment plan',
-      description:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error.message ||
-        'Unknown error',
+      description: error.message || 'Unknown error',
       variant: 'destructive',
     })
   }
@@ -132,39 +117,28 @@ export const autoAssignPlan = async (assignmentDispatch, data) => {
   assignmentDispatch(assignment_actions.autoAssignLoadsStart())
   try {
     const uid = Cookies.get('uid')
-    // console.log('uid :>> ', uid)
     if (!uid) {
-      console.log('invalid user :>> ')
       assignmentDispatch(
         assignment_actions.autoAssignLoadsFailure({ error: 'invalid user' })
       )
       return
     }
 
-    const response = await fetchData(`plans/auto-assign`, 'POST', data)
-    // console.log('response :>> ', response)
+    const response = await planningAPI.autoAssignPlan(data)
 
     if (response.id) {
       try {
-        const plan = await fetchData(`plans/${response.id}`, 'GET')
-        console.log('plan :>> ', plan)
+        const plan = await planningAPI.getPlan(response.id)
         assignmentDispatch(assignment_actions.autoAssignLoadsSuccess(plan))
         toast({
           title: 'Assignment plan was successfully added',
-          // description: `Something went wrong, while adding ${
-          //   data?.notes || 'the assignment plan'
-          // }`,
         })
         return plan
       } catch (error) {
         assignmentDispatch(assignment_actions.autoAssignLoadsFailure(error))
         toast({
           title: 'Something went wrong, while fetching the assignment plan',
-          description:
-            error?.response?.data?.message ||
-            error?.response?.data?.error ||
-            error.message ||
-            'Unknown error',
+          description: error.message || 'Unknown error',
           variant: 'destructive',
         })
       }
@@ -173,11 +147,7 @@ export const autoAssignPlan = async (assignmentDispatch, data) => {
     assignmentDispatch(assignment_actions.autoAssignLoadsFailure(error))
     toast({
       title: 'Something went wrong, while fetching the assignment plan',
-      description:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error.message ||
-        'Unknown error',
+      description: error.message || 'Unknown error',
       variant: 'destructive',
     })
   }

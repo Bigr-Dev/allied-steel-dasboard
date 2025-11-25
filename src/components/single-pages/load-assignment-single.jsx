@@ -11,13 +11,12 @@ import {
   useSensors,
   PointerSensor,
 } from '@dnd-kit/core'
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable'
 import { useMemo, useState, useEffect, useRef } from 'react'
 import DetailActionBar from '../layout/detail-action-bar'
 import { UnassignedList } from '../layout/assignment/UnassignedList'
 import { VehicleCard } from '../layout/assignment/VehicleCard'
 import { createPortal } from 'react-dom'
-import { useAssignmentPlan } from '@/hooks/assignment-plan/use-assignment-plan'
 
 // helpers
 // Take a unit from buildPlanPayload and make it look like what VehicleCard expects
@@ -75,11 +74,27 @@ function hydrateUnitFromPlanPayload(rawUnit) {
     customer.orders.push({
       order_id: order.order_id,
       total_assigned_weight_kg: totalWeight,
+      stop_sequence: order.stop_sequence,
       items,
     })
   })
 
   const customers = Array.from(customersMap.values())
+
+  // sort orders for each customer by stop_sequence (defined first)
+  customers.forEach((customer) => {
+    customer.orders = (customer.orders || []).slice().sort((a, b) => {
+      const aSeq =
+        typeof a.stop_sequence === 'number' && !Number.isNaN(a.stop_sequence)
+          ? a.stop_sequence
+          : Number.MAX_SAFE_INTEGER
+      const bSeq =
+        typeof b.stop_sequence === 'number' && !Number.isNaN(b.stop_sequence)
+          ? b.stop_sequence
+          : Number.MAX_SAFE_INTEGER
+      return aSeq - bSeq
+    })
+  })
 
   const used_capacity_kg = customers
     .flatMap((c) => c.orders || [])
@@ -165,18 +180,17 @@ async function commitImmediateMove(
   fetchData,
   setAssignmentPreview
 ) {
-  const { item_id, order_id, order_ids, from_plan_unit_id, to_plan_unit_id } =
-    payload
+  const {
+    item_id,
+    order_id,
+    order_ids,
+    from_plan_unit_id,
+    to_plan_unit_id,
+    stop_sequence,
+  } = payload
 
-  // plan_id: planId,
-  //       planned_unit_id: plannedUnitId,
-  //       order_ids: orderIds,
-  // console.log('payload :>> ', payload)
-
-  // Strip "order-" prefix if present
   const cleanOrderId = (order_id || item_id || '').replace(/^order-/, '')
 
-  // Ensure we don't send 'undefined' string
   const fromUnitId =
     from_plan_unit_id && from_plan_unit_id !== 'undefined'
       ? from_plan_unit_id
@@ -184,48 +198,62 @@ async function commitImmediateMove(
   const toUnitId =
     to_plan_unit_id && to_plan_unit_id !== 'undefined' ? to_plan_unit_id : null
 
-  // console.log('fromUnitId :>> ', fromUnitId)
-  // console.log('toUnitId :>> ', toUnitId)
-
   // A) Bucket → Unit (assign)
   if (!fromUnitId && toUnitId) {
-    // console.log('Case A: Bucket → Unit')
-    await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
+    const res = await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
       plan_id: planId,
       assignments: [
         {
           planned_unit_id: toUnitId,
-          orders: [{ order_id: cleanOrderId }],
+          orders: [
+            {
+              order_id: cleanOrderId,
+              ...(typeof stop_sequence === 'number' &&
+                !Number.isNaN(stop_sequence) && {
+                  stop_sequence,
+                }),
+            },
+          ],
         },
       ],
     })
+    if (typeof setAssignmentPreview === 'function' && res) {
+      setAssignmentPreview({
+        units: res?.units,
+        unassigned_orders: res?.unassigned_orders,
+        plan: res?.plan,
+      })
+    }
     return
   }
 
   // B) Unit → Bucket (unassign)
   if (fromUnitId && !toUnitId) {
-    // console.log('Case B: Unit → Bucket')
-    // console.log('item_ids :>> ', order_ids)
-    try {
-      const res = await fetchData(`plans/${planId}/unassign`, 'POST', {
-        plan_id: planId,
-        planned_unit_id: fromUnitId,
-        order_ids: order_ids,
-      })
+    const idsToUnassign =
+      Array.isArray(order_ids) && order_ids.length > 0
+        ? order_ids
+        : cleanOrderId
+        ? [cleanOrderId]
+        : []
+
+    const res = await fetchData(`plans/${planId}/unassign`, 'POST', {
+      plan_id: planId,
+      planned_unit_id: fromUnitId,
+      order_ids: idsToUnassign,
+    })
+
+    if (typeof setAssignmentPreview === 'function' && res) {
       setAssignmentPreview({
         units: res?.units,
-        unassigned_units: res?.unassigned_units,
+        unassigned_orders: res?.unassigned_orders,
+        plan: res?.plan,
       })
-      // console.log('res :>> ', res)
-      return
-    } catch (error) {
-      console.log('error :>> ', error)
     }
+    return
   }
 
   // C) Unit → Unit (move)
   if (fromUnitId && toUnitId && fromUnitId !== toUnitId) {
-    // console.log('Case C: Unit → Unit')
     await fetchData(`plans/${planId}/unassign`, 'POST', {
       plan_id: planId,
       planned_unit_id: fromUnitId,
@@ -237,7 +265,15 @@ async function commitImmediateMove(
       assignments: [
         {
           planned_unit_id: toUnitId,
-          orders: [{ order_id: cleanOrderId }],
+          orders: [
+            {
+              order_id: cleanOrderId,
+              ...(typeof stop_sequence === 'number' &&
+                !Number.isNaN(stop_sequence) && {
+                  stop_sequence,
+                }),
+            },
+          ],
         },
       ],
     })
@@ -283,7 +319,6 @@ const sameCustomerIdOrName = (aId, aName, bId, bName) => {
   const aHas = aId != null && aId !== ''
   const bHas = bId != null && bId !== ''
   if (aHas && bHas) return String(aId) === String(bId)
-  // fallback to name if id missing on either side
   return norm(aName) === norm(bName)
 }
 const sameGroup = (c, meta) =>
@@ -297,8 +332,6 @@ const sameGroup = (c, meta) =>
   norm(c.suburb_name) === norm(meta.suburb_name)
 
 function addItemIntoUnitCustomers(customers = [], meta) {
-  // meta must include: customer_id, customer_name, route_name, suburb_name, order_id, item_id, description, weight_left
-
   const {
     customer_id,
     customer_name,
@@ -310,7 +343,6 @@ function addItemIntoUnitCustomers(customers = [], meta) {
     weight_left,
   } = meta
 
-  // deep-ish copy to preserve immutability
   let next = customers.map((c) => ({
     ...c,
     orders: (c.orders || []).map((o) => ({
@@ -319,10 +351,8 @@ function addItemIntoUnitCustomers(customers = [], meta) {
     })),
   }))
 
-  // 1) Try to find an exact group match (id/name + route/suburb)
   let cIdx = next.findIndex((c) => sameGroup(c, meta))
 
-  // 2) If not found, try to find the same customer by id OR name, then prefer route/suburb, else first
   if (cIdx === -1) {
     const candidates = next
       .map((c, idx) => ({ c, idx }))
@@ -346,13 +376,12 @@ function addItemIntoUnitCustomers(customers = [], meta) {
     }
   }
 
-  // 3) Still not found? Create the customer group
   if (cIdx === -1) {
     next = [
       ...next,
       {
         customer_id,
-        customer_name, // keep for rendering; never for keys
+        customer_name,
         route_name: route_name || null,
         suburb_name: suburb_name || null,
         orders: [],
@@ -361,7 +390,6 @@ function addItemIntoUnitCustomers(customers = [], meta) {
     cIdx = next.length - 1
   }
 
-  // 4) Find or create the order group
   const cust = next[cIdx]
   let oIdx = (cust.orders || []).findIndex(
     (o) => String(o.order_id) === String(order_id)
@@ -377,12 +405,11 @@ function addItemIntoUnitCustomers(customers = [], meta) {
     oIdx = next[cIdx].orders.length - 1
   }
 
-  // 5) Duplicate guard at item level
   const order = next[cIdx].orders[oIdx]
   if (
     (order.items || []).some((it) => String(it.item_id) === String(item_id))
   ) {
-    return { nextCustomers: next, addedWeight: 0 } // no-op if already present
+    return { nextCustomers: next, addedWeight: 0 }
   }
 
   const w = Number(weight_left || 0)
@@ -412,10 +439,8 @@ function addItemIntoUnitCustomers(customers = [], meta) {
 const LoadAssignmentSingle = ({ id, data }) => {
   const { assignment_preview, setAssignmentPreview, fetchData } =
     useGlobalContext()
-  // const { unassignAllFromUnit } = useAssignmentPlan()
-  //console.log('assignment_preview :>> ', assignment_preview)
   const { toast } = useToast()
-  //const planned_unit = assignedUnits?.find((v) => v.planned_unit_id === id)
+
   const [assignedUnits, setAssignedUnits] = useState(
     assignment_preview?.data?.units || []
   )
@@ -437,7 +462,6 @@ const LoadAssignmentSingle = ({ id, data }) => {
     ),
   })
 
-  // If the page receives new data (e.g., navigation), refresh the snapshot
   useEffect(() => {
     initialSnapshotRef.current = {
       plan: data?.plan || null,
@@ -452,93 +476,189 @@ const LoadAssignmentSingle = ({ id, data }) => {
     setChanges([])
     setUndoStack([])
     setAssignmentPreview({
-      plan,
+      plan: data?.plan || null,
       units: data?.units,
       unassigned_orders: data?.unassigned_orders,
     })
-  }, [data])
+  }, [data, setAssignmentPreview])
 
-  // Sync local state changes to global context
   useEffect(() => {
-    setAssignedUnits(assignment_preview?.units || data?.units || [])
-    setUnassigned(
-      assignment_preview?.unassigned_orders || data?.unassigned_orders || []
-    )
-    setPlan(assignment_preview?.plan || data?.plan || null)
-  }, [assignment_preview, setAssignmentPreview])
+    if (assignment_preview?.units) {
+      setAssignedUnits(assignment_preview.units)
+      setUnassigned(assignment_preview.unassigned_orders || [])
+      setPlan(assignment_preview.plan || data?.plan || null)
+    }
+  }, [assignment_preview?.units, assignment_preview?.unassigned_orders])
 
   const planned_unit = assignedUnits?.find((v) => v.planned_unit_id === id)
-  // console.log('🔍 planned_unit found:', planned_unit)
-  // console.log('🔍 Current states:', {
-  //   plan,
-  //   assignedUnits: assignedUnits?.length,
-  //   unassigned: unassigned?.length,
-  // })
-  const onUnassignAll = async (plannedUnitId) => {
-    setLoading(true)
-    //   console.log('🚀 onUnassignAll called with plannedUnitId:', plannedUnitId)
 
-    const unit = assignedUnits?.find((u) => u.planned_unit_id === plannedUnitId)
-    console.log('🔍 Found unit:', unit)
+  // const getNextStopSequenceForUnit = (unitId) => {
+  //   if (!unitId) return 1
 
-    if (!unit) {
-      console.log('❌ No unit found for plannedUnitId:', plannedUnitId)
-      setLoading(false)
+  //   const unit = assignedUnits.find(
+  //     (u) => String(u.planned_unit_id) === String(unitId)
+  //   )
+  //   if (!unit) return 1
+
+  //   const orders = unit.orders || []
+
+  //   const seqs = orders.map((o, idx) =>
+  //     typeof o.stop_sequence === 'number' && !Number.isNaN(o.stop_sequence)
+  //       ? o.stop_sequence
+  //       : idx + 1
+  //   )
+
+  //   if (!seqs.length) return 1
+
+  //   const max = Math.max(...seqs)
+  //   return (Number.isFinite(max) ? max : 0) + 1
+  // }
+
+  const getCustomerIndexInUnit = (unitId, customerId) => {
+    const unit = assignedUnits.find(
+      (u) => String(u.planned_unit_id) === String(unitId)
+    )
+    if (!unit) return 1
+
+    const customers = unit.customers || []
+    const idx = customers.findIndex(
+      (c) => String(c.customer_id) === String(customerId)
+    )
+
+    return idx === -1 ? 1 : idx + 1 // 1-based
+  }
+
+  const getNextStopSequenceForUnit = (unitId) => {
+    if (!unitId) return 1
+
+    const unit = assignedUnits.find(
+      (u) => String(u.planned_unit_id) === String(unitId)
+    )
+    if (!unit) return 1
+
+    const orders =
+      (unit.customers || []).flatMap((c) => c.orders || []) || unit.orders || []
+
+    const seqs = orders.map((o, idx) =>
+      typeof o.stop_sequence === 'number' && !Number.isNaN(o.stop_sequence)
+        ? o.stop_sequence
+        : idx + 1
+    )
+
+    if (!seqs.length) return 1
+
+    const max = Math.max(...seqs)
+    return (Number.isFinite(max) ? max : 0) + 1
+  }
+
+  const handleOrderResequence = async (
+    unitId,
+    orderId,
+    newSequence,
+    { silent } = {}
+  ) => {
+    const planId = plan?.id || data?.plan?.id
+    if (!planId) {
+      if (!silent) {
+        toast({ title: 'Error', description: 'Plan ID not found' })
+      }
       return
     }
 
-    // Extract order IDs from the unit's orders array
-    const orderIds = (unit.orders || [])
-      .map((order) => order.order_id)
-      .filter(Boolean)
-    // console.log('🔍 Extracted orderIds:', orderIds)
+    const unit = assignedUnits.find(
+      (u) => String(u.planned_unit_id) === String(unitId)
+    )
+    const order = unit?.orders?.find(
+      (o) => String(o.order_id) === String(orderId)
+    )
 
-    // Use data.plan.id since plan state might not have id
-    const planId = data?.plan?.id || plan?.id
-
-    // console.log('🔍 Debug plan data:', {
-    //   plan,
-    //   dataPlan: data?.plan,
-    //   planId,
-    //   planKeys: plan ? Object.keys(plan) : 'null',
-    //   dataPlanKeys: data?.plan ? Object.keys(data.plan) : 'null',
-    // })
-
-    // console.log('📤 Unassigning all from unit payload:', {
-    //   plan_id: planId,
-    //   planned_unit_id: plannedUnitId,
-    //   order_ids: orderIds,
-    // })
-
-    if (!planId) {
-      toast({ title: 'Error', description: 'Plan ID not found' })
+    if (!order) {
+      if (!silent) {
+        toast({ title: 'Error', description: 'Order not found' })
+      }
       return
     }
 
     try {
-      console.log('📡 Making API call to:', `plans/${planId}/unassign`)
-      // const result = await fetchData(`plans/${planId}/unassign`, 'POST', {
-      //   plan_id: planId,
-      //   planned_unit_id: plannedUnitId,
-      //   order_ids: orderIds,
-      // })
+      await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
+        plan_id: planId,
+        assignments: [
+          {
+            planned_unit_id: unitId,
+            orders: [
+              {
+                order_id: orderId,
+                stop_sequence: newSequence,
+                sales_order_number: order.sales_order_number,
+              },
+            ],
+          },
+        ],
+      })
+
+      setAssignedUnits((prev) =>
+        prev.map((u) => {
+          if (String(u.planned_unit_id) !== String(unitId)) return u
+          return {
+            ...u,
+            orders: (u.orders || []).map((ord) =>
+              String(ord.order_id) === String(orderId)
+                ? { ...ord, stop_sequence: newSequence }
+                : ord
+            ),
+          }
+        })
+      )
+
+      if (!silent) {
+        toast({ title: 'Success', description: 'Order sequence updated' })
+      }
+    } catch (error) {
+      handleAPIError(error, toast)
+    }
+  }
+
+  const onUnassignAll = async (plannedUnitId) => {
+    setLoading(true)
+
+    const unit = assignedUnits?.find((u) => u.planned_unit_id === plannedUnitId)
+
+    if (!unit) {
+      setLoading(false)
+      return
+    }
+
+    const orderIds = (unit.orders || [])
+      .map((order) => order.order_id)
+      .filter(Boolean)
+
+    const planId = data?.plan?.id || plan?.id
+
+    if (!planId) {
+      toast({ title: 'Error', description: 'Plan ID not found' })
+      setLoading(false)
+      return
+    }
+
+    try {
       const payload = {
         plan_id: planId,
         from_plan_unit_id: plannedUnitId,
         order_ids: orderIds,
       }
-      commitImmediateMove(planId, payload, fetchData, setAssignmentPreview)
-      //console.log('✅ API call successful:', result)
-      // setAssignmentPreview
+      await commitImmediateMove(
+        planId,
+        payload,
+        fetchData,
+        setAssignmentPreview
+      )
+
       toast({ title: 'Success', description: 'All items unassigned from unit' })
     } catch (error) {
       console.error('❌ Error unassigning all:', error)
-      console.error('❌ Error details:', {
-        message: error.message,
-        stack: error.stack,
-        response: error.response,
-      })
       toast({ title: 'Error', description: 'Failed to unassign items' })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -555,21 +675,22 @@ const LoadAssignmentSingle = ({ id, data }) => {
     })
   )
 
-  // Memoize item lookup for better performance
-
   const itemLookupMap = useMemo(() => {
     const map = new Map()
 
-    // Add unassigned items
     unassigned.forEach((order) => {
       map.set(order.order_id, {
         item: order,
         sourceType: 'unassigned',
         sourceVehicleId: null,
       })
+      map.set(`order-${order.order_id}`, {
+        item: order,
+        sourceType: 'unassigned',
+        sourceVehicleId: null,
+      })
     })
 
-    // Add assigned items
     assignedUnits.forEach((unit) => {
       unit.orders?.forEach((order) => {
         order.order_lines?.forEach((line) => {
@@ -601,12 +722,239 @@ const LoadAssignmentSingle = ({ id, data }) => {
     }
   }
 
+  // const handleSortableReorder = (active, over, dragData) => {
+  //   if (!over) return
+  //   const overData = over.data.current
+  //   if (!overData || overData.type !== 'sortable-order') return
+
+  //   const { unitId, customerOrderIds } = dragData
+  //   const activeOrderId = dragData.orderId
+  //   const overOrderId = overData.orderId
+
+  //   if (
+  //     !customerOrderIds ||
+  //     !Array.isArray(customerOrderIds) ||
+  //     activeOrderId === overOrderId
+  //   ) {
+  //     return
+  //   }
+
+  //   const oldIndex = customerOrderIds.indexOf(activeOrderId)
+  //   const newIndex = customerOrderIds.indexOf(overOrderId)
+
+  //   if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+  //   const newIds = arrayMove(customerOrderIds, oldIndex, newIndex)
+
+  //   newIds.forEach((orderId, idx) => {
+  //     handleOrderResequence(unitId, orderId, idx + 1, { silent: true })
+  //   })
+
+  //   toast({ title: 'Saved', description: 'Order sequence updated' })
+  // }
+
+  const handleSortableReorder = (active, over, dragData) => {
+    if (!over) return
+    const overData = over.data.current
+    if (!overData || overData.type !== 'sortable-order') return
+
+    const { unitId, customerId, customerOrderIds } = dragData
+    const activeOrderId = dragData.orderId
+    const overOrderId = overData.orderId
+
+    if (
+      !customerOrderIds ||
+      !Array.isArray(customerOrderIds) ||
+      activeOrderId === overOrderId
+    ) {
+      return
+    }
+
+    const oldIndex = customerOrderIds.indexOf(activeOrderId)
+    const newIndex = customerOrderIds.indexOf(overOrderId)
+
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+    const newIds = arrayMove(customerOrderIds, oldIndex, newIndex)
+
+    const customerIndex = getCustomerIndexInUnit(unitId, customerId)
+
+    newIds.forEach((orderId, idx) => {
+      const orderIndex = idx + 1
+      const newSequence = customerIndex * 1000 + orderIndex
+      handleOrderResequence(unitId, orderId, newSequence, { silent: true })
+    })
+
+    toast({ title: 'Saved', description: 'Order sequence updated' })
+  }
+
+  const handleCustomerReorder = async (active, over, dragData) => {
+    if (!over) return
+    const overData = over.data.current
+    if (!overData || overData.type !== 'sortable-customer') return
+
+    const { unitId, suburbKey, customerIds } = dragData
+    const activeCustomerId = dragData.customerId
+    const overCustomerId = overData.customerId
+
+    if (
+      !Array.isArray(customerIds) ||
+      customerIds.length === 0 ||
+      activeCustomerId === overCustomerId
+    ) {
+      return
+    }
+
+    const oldIndex = customerIds.findIndex(
+      (id) => String(id) === String(activeCustomerId)
+    )
+    const newIndex = customerIds.findIndex(
+      (id) => String(id) === String(overCustomerId)
+    )
+
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+    const newCustomerIds = arrayMove(customerIds, oldIndex, newIndex)
+
+    const planId = plan?.id || data?.plan?.id
+    if (!planId) {
+      toast({ title: 'Error', description: 'Plan ID not found' })
+      return
+    }
+
+    const assignments = []
+
+    setAssignedUnits((prev) =>
+      prev.map((u) => {
+        if (String(u.planned_unit_id) !== String(unitId)) return u
+
+        const existingCustomers = u.customers || []
+        const customerMap = new Map(
+          existingCustomers.map((c) => [String(c.customer_id), c])
+        )
+
+        const updatedCustomers = existingCustomers.slice()
+
+        // Reorder only the customers in this suburb group
+        const reorderedForGroup = newCustomerIds
+          .map((cid, idx) => {
+            const key = String(cid)
+            const existing = customerMap.get(key)
+            if (!existing) return null
+
+            const customerIndex = idx + 1 // 1-based for this suburb group
+
+            const updatedOrders = (existing.orders || []).map(
+              (order, orderIdx) => {
+                const orderIndex = orderIdx + 1
+                const newSequence = customerIndex * 1000 + orderIndex
+
+                assignments.push({
+                  order_id: order.order_id,
+                  stop_sequence: newSequence,
+                  sales_order_number:
+                    order.sales_order_number ||
+                    order.items?.[0]?.order_number ||
+                    null,
+                })
+
+                return {
+                  ...order,
+                  stop_sequence: newSequence,
+                }
+              }
+            )
+
+            return {
+              ...existing,
+              orders: updatedOrders,
+            }
+          })
+          .filter(Boolean)
+
+        // Merge reordered customers back into the full list
+        const updatedById = new Map(
+          (reorderedForGroup || []).map((c) => [String(c.customer_id), c])
+        )
+
+        const finalCustomers = updatedCustomers.map((c) => {
+          const overridden = updatedById.get(String(c.customer_id))
+          return overridden || c
+        })
+
+        // Also update flat orders view to stay in sync
+        const flatOrders = finalCustomers.flatMap((c) => c.orders || [])
+
+        return {
+          ...u,
+          customers: finalCustomers,
+          orders: flatOrders.length ? flatOrders : u.orders,
+        }
+      })
+    )
+
+    if (!assignments.length) return
+
+    try {
+      await fetchData(`plans/${planId}/bulk-assign`, 'POST', {
+        plan_id: planId,
+        assignments: [
+          {
+            planned_unit_id: unitId,
+            orders: assignments.map((o) => ({
+              order_id: o.order_id,
+              stop_sequence: o.stop_sequence,
+              sales_order_number: o.sales_order_number,
+            })),
+          },
+        ],
+      })
+
+      toast({
+        title: 'Saved',
+        description: 'Customer sequence updated',
+      })
+    } catch (error) {
+      handleAPIError(error, toast)
+      // Optional: you can refetch assignment_preview here to fully resync
+    }
+  }
+
   const handleDragEnd = (event) => {
     const { active, over } = event
     setActiveItem(null)
     if (!over) return
+
     const dragData = active.data.current
     if (!dragData) return
+
+    if (dragData.type === 'sortable-customer') {
+      const overData = over.data.current
+      const sameContainer =
+        overData &&
+        overData.type === 'sortable-customer' &&
+        overData.containerId === dragData.containerId
+
+      if (sameContainer) {
+        handleCustomerReorder(active, over, dragData)
+      }
+
+      return
+    }
+
+    if (dragData.type === 'sortable-order') {
+      const overData = over.data.current
+      const sameSortableList =
+        overData &&
+        overData.type === 'sortable-order' &&
+        overData.containerId === dragData.containerId
+
+      if (sameSortableList) {
+        handleSortableReorder(active, over, dragData)
+        return
+      }
+      // else: dragging out of the list → fall through to normal cross-container move
+    }
 
     const from = dragData.containerId
     const to = over.id
@@ -621,7 +969,7 @@ const LoadAssignmentSingle = ({ id, data }) => {
         from === 'bucket:unassigned'
           ? null
           : from === 'unit:undefined'
-          ? id // Use the current page's unit ID
+          ? id
           : from && from.startsWith('unit:')
           ? from.slice(5)
           : null,
@@ -633,120 +981,216 @@ const LoadAssignmentSingle = ({ id, data }) => {
           : null,
     }
 
-    // Optimistic local update (your existing helper)
+    if (!move.from_plan_unit_id && move.to_plan_unit_id) {
+      move.stop_sequence = getNextStopSequenceForUnit(move.to_plan_unit_id)
+    } else if (
+      move.from_plan_unit_id &&
+      move.to_plan_unit_id &&
+      move.from_plan_unit_id !== move.to_plan_unit_id
+    ) {
+      move.stop_sequence = getNextStopSequenceForUnit(move.to_plan_unit_id)
+    }
+
     handleOptimisticMove(move)
 
-    // Track change locally (optional – keep if you still show “undo”)
-    setChanges((prev) => [...prev /* your existing op mapping */])
+    setChanges((prev) => [...prev])
 
-    // 🔴 NEW: immediately persist this single change via manually-assign / unassign
-    // plan.id is already in component state
-    commitImmediateMove(plan?.id, move, fetchData)
+    const planId = plan?.id || data?.plan?.id
+    if (!planId) {
+      toast({ title: 'Error', description: 'Plan ID not found' })
+      return
+    }
+
+    commitImmediateMove(planId, move, fetchData, setAssignmentPreview)
       .then(() => {
         toast({ title: 'Saved', description: 'Change committed.' })
       })
       .catch((err) => {
         handleAPIError(err, toast)
-        // optional rollback: pop undo & restore snapshot
         if (undoStack.length) handleUndo()
       })
-
-    // Keep your toast about local update if you like, or rely on the "Saved" toast above.
   }
 
   const handleOptimisticMove = async (payload) => {
-    const { item_id, order_id, from_plan_unit_id, to_plan_unit_id } = payload
+    const {
+      item_id,
+      order_id,
+      from_plan_unit_id,
+      to_plan_unit_id,
+      stop_sequence,
+    } = payload
 
-    // Strip "order-" prefix for local state updates
     const cleanOrderId = (order_id || item_id || '').replace(/^order-/, '')
 
     if (!from_plan_unit_id && to_plan_unit_id) {
       handleAssignItem(cleanOrderId, to_plan_unit_id)
-    } else if (from_plan_unit_id && !to_plan_unit_id) {
+      return
+    }
+
+    if (from_plan_unit_id && !to_plan_unit_id) {
       handleUnassignItem(cleanOrderId)
-    } else if (
+      return
+    }
+
+    if (
       from_plan_unit_id &&
       to_plan_unit_id &&
       from_plan_unit_id !== to_plan_unit_id
     ) {
-      handleUnassignItem(cleanOrderId)
-      handleAssignItem(cleanOrderId, to_plan_unit_id)
+      setAssignedUnits((prev) => {
+        const next = prev.map((u) => ({
+          ...u,
+          orders: [...(u.orders || [])],
+        }))
+
+        const fromUnit = next.find(
+          (u) => String(u.planned_unit_id) === String(from_plan_unit_id)
+        )
+        const toUnit = next.find(
+          (u) => String(u.planned_unit_id) === String(to_plan_unit_id)
+        )
+
+        if (!fromUnit || !toUnit) {
+          console.warn('Unit→Unit move: unit not found', {
+            from_plan_unit_id,
+            to_plan_unit_id,
+          })
+          return prev
+        }
+
+        const idx = (fromUnit.orders || []).findIndex(
+          (o) => String(o.order_id) === String(cleanOrderId)
+        )
+        if (idx === -1) {
+          console.warn(
+            'Unit→Unit move: order not found in source unit',
+            cleanOrderId
+          )
+          return prev
+        }
+
+        const [order] = fromUnit.orders.splice(idx, 1)
+
+        const wt = Number(order.total_weight || 0)
+        fromUnit.used_capacity_kg = Math.max(
+          0,
+          Number(fromUnit.used_capacity_kg || 0) - wt
+        )
+        toUnit.used_capacity_kg = Number(toUnit.used_capacity_kg || 0) + wt
+
+        order.stop_sequence =
+          stop_sequence || getNextStopSequenceForUnit(to_plan_unit_id)
+        toUnit.orders.push(order)
+
+        return next
+      })
+
+      return
     }
   }
 
   const handleAssignItem = (itemId, vehicleId) => {
-    // console.log(
-    //   '🔵 ASSIGN - Looking for itemId:',
-    //   itemId,
-    //   'in vehicleId:',
-    //   vehicleId
-    // )
     const meta = unassigned.find((x) => String(x.order_id) === String(itemId))
-    //  console.log('🔵 ASSIGN - Found meta:', meta)
-    if (!meta) {
-      console.log('🔴 ASSIGN - No meta found for itemId:', itemId)
-      return
-    }
+    if (!meta) return
 
-    // Transform the unassigned order to match the structure expected by VehicleCard
+    const linesFromMeta = (meta.order_lines || []).map((line) => ({
+      order_line_id: line.order_line_id,
+      description:
+        line.description ||
+        `${meta.sales_order_number || meta.order_number || ''} - ${
+          meta.customer_name || ''
+        }`,
+      weight: Number(
+        line.weight ?? line.weight_left ?? line.assigned_weight_kg ?? 0
+      ),
+    }))
+
+    const totalFromLines =
+      linesFromMeta.length > 0
+        ? linesFromMeta.reduce((sum, l) => sum + (Number(l.weight) || 0), 0)
+        : Number(meta.total_weight || 0)
+
     const transformedOrder = {
+      ...meta,
       order_id: meta.order_id,
       sales_order_number: meta.sales_order_number,
-      customer_name: meta.customer_name,
       route_name: meta.route_name,
       suburb_name: meta.suburb_name,
-      total_weight: meta.total_weight || 0,
-      // Create lines array that hydrateUnitFromPlanPayload expects
-      lines: [
-        {
-          order_line_id: `${meta.order_id}-line-1`,
-          description: `${meta.sales_order_number} - ${meta.customer_name}`,
-          weight: meta.total_weight || 0,
-        },
-      ],
-      ...meta, // Include all original properties
+      total_weight: totalFromLines,
+      stop_sequence: getNextStopSequenceForUnit(vehicleId),
+      lines:
+        linesFromMeta.length > 0
+          ? linesFromMeta
+          : [
+              {
+                order_line_id: `${meta.order_id}-line-1`,
+                description: `${meta.sales_order_number} - ${meta.customer_name}`,
+                weight: totalFromLines,
+              },
+            ],
     }
-    // console.log('🔵 ASSIGN - Transformed order:', transformedOrder)
 
-    // remove from unassigned
-    setUnassigned((prev) => {
-      const filtered = prev.filter((x) => String(x.order_id) !== String(itemId))
-      // console.log(
-      //   '🔵 ASSIGN - Removing from unassigned. Before:',
-      //   prev.length,
-      //   'After:',
-      //   filtered.length
-      // )
-      return filtered
-    })
+    setUnassigned((prev) =>
+      prev.filter((x) => String(x.order_id) !== String(itemId))
+    )
 
-    // add into the destination unit with transformed structure
     setAssignedUnits((prev) =>
       prev.map((u) => {
         if (String(u.planned_unit_id) !== String(vehicleId)) return u
-        // console.log(
-        //   '🔵 ASSIGN - Adding to unit:',
-        //   vehicleId,
-        //   'Current orders:',
-        //   u.orders?.length || 0
-        // )
-        const updated = {
+        const alreadyExists = (u.orders || []).some(
+          (o) => String(o.order_id) === String(itemId)
+        )
+        if (alreadyExists) return u
+        return {
           ...u,
           orders: [...(u.orders || []), transformedOrder],
           used_capacity_kg:
-            Number(u.used_capacity_kg || 0) + Number(meta.total_weight || 0),
+            Number(u.used_capacity_kg || 0) + Number(totalFromLines || 0),
         }
-        // console.log(
-        //   '🔵 ASSIGN - Updated unit orders:',
-        //   updated.orders?.length || 0
-        // )
-        return updated
       })
     )
   }
 
+  // const handleAssignItem = (itemId, vehicleId) => {
+  //   const meta = unassigned.find((x) => String(x.order_id) === String(itemId))
+  //   if (!meta) return
+
+  //   const transformedOrder = {
+  //     order_id: meta.order_id,
+  //     sales_order_number: meta.sales_order_number,
+  //     customer_name: meta.customer_name,
+  //     route_name: meta.route_name,
+  //     suburb_name: meta.suburb_name,
+  //     total_weight: meta.total_weight || 0,
+  //     stop_sequence: getNextStopSequenceForUnit(vehicleId),
+  //     lines: [
+  //       {
+  //         order_line_id: `${meta.order_id}-line-1`,
+  //         description: `${meta.sales_order_number} - ${meta.customer_name}`,
+  //         weight: meta.total_weight || 0,
+  //       },
+  //     ],
+  //     ...meta,
+  //   }
+
+  //   setUnassigned((prev) =>
+  //     prev.filter((x) => String(x.order_id) !== String(itemId))
+  //   )
+
+  //   setAssignedUnits((prev) =>
+  //     prev.map((u) => {
+  //       if (String(u.planned_unit_id) !== String(vehicleId)) return u
+  //       return {
+  //         ...u,
+  //         orders: [...(u.orders || []), transformedOrder],
+  //         used_capacity_kg:
+  //           Number(u.used_capacity_kg || 0) + Number(meta.total_weight || 0),
+  //       }
+  //     })
+  //   )
+  // }
+
   const handleUnassignItem = (itemId) => {
-    //  console.log('🟡 UNASSIGN - Looking for itemId:', itemId)
     let removedOrder = null
 
     setAssignedUnits((prev) =>
@@ -757,11 +1201,6 @@ const LoadAssignmentSingle = ({ id, data }) => {
         if (orderIndex === -1) return u
 
         removedOrder = u.orders[orderIndex]
-        // console.log('🟡 UNASSIGN - Found order to remove:', removedOrder)
-        // console.log(
-        //   '🟡 UNASSIGN - Unit before removal orders:',
-        //   u.orders?.length || 0
-        // )
         const updated = {
           ...u,
           orders: u.orders.filter((_, index) => index !== orderIndex),
@@ -771,34 +1210,20 @@ const LoadAssignmentSingle = ({ id, data }) => {
               Number(removedOrder.total_weight || 0)
           ),
         }
-        // console.log(
-        //   '🟡 UNASSIGN - Unit after removal orders:',
-        //   updated.orders?.length || 0
-        // )
         return updated
       })
     )
 
     if (removedOrder) {
-      //  console.log('🟡 UNASSIGN - Adding back to unassigned:', removedOrder)
-
-      // Transform back to original unassigned structure (remove the 'lines' property we added)
       const { lines, ...originalOrder } = removedOrder
-      //  console.log('🟡 UNASSIGN - Transformed back to original:', originalOrder)
 
       setUnassigned((prev) => {
-        const updated = [
-          ...prev.filter((x) => String(x.order_id) !== String(itemId)),
-          originalOrder,
-        ]
-        // console.log(
-        //   '🟡 UNASSIGN - Unassigned count after adding back:',
-        //   updated.length
-        // )
-        return updated
+        const alreadyExists = prev.some(
+          (x) => String(x.order_id) === String(itemId)
+        )
+        if (alreadyExists) return prev
+        return [...prev, originalOrder]
       })
-    } else {
-      console.log('🔴 UNASSIGN - No order found to remove for itemId:', itemId)
     }
   }
 
@@ -816,7 +1241,7 @@ const LoadAssignmentSingle = ({ id, data }) => {
       description: 'Last action has been undone',
     })
   }
-  // console.log('planned_unit :>> ', planned_unit)
+
   return (
     <DndContext
       sensors={sensors}
@@ -844,10 +1269,10 @@ const LoadAssignmentSingle = ({ id, data }) => {
           }
         />
 
-        <div className="grid gap-6  ">
-          <div className="grid gap-6  md:grid-cols-12">
+        <div className="grid gap-6">
+          <div className="grid gap-6 md:grid-cols-12">
             <div className="md:col-span-7">
-              <div className="">
+              <div>
                 {planned_unit && (
                   <VehicleCard
                     key={planned_unit.planned_unit_id}

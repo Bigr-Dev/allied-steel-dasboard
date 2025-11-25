@@ -46,10 +46,11 @@ export const UnassignedList = memo(function UnassignedList({
   // Handle both individual items (backward compatibility) and complete orders
   const orderGroups = useMemo(() => {
     // Check if items are already complete orders (new structure)
-    const isOrderStructure = items.length > 0 && items[0].order_id && items[0].sales_order_number
-    
+    const isOrderStructure =
+      items.length > 0 && items[0].order_id && items[0].sales_order_number
+
     let ordersToProcess = []
-    
+
     if (isOrderStructure) {
       // New structure: items are complete orders
       ordersToProcess = items.filter((order) => {
@@ -70,18 +71,24 @@ export const UnassignedList = memo(function UnassignedList({
         }
 
         // Suburb filter
-        if (selectedSuburbs.size > 0 && !selectedSuburbs.has(order.suburb_name)) {
+        if (
+          selectedSuburbs.size > 0 &&
+          !selectedSuburbs.has(order.suburb_name)
+        ) {
           return false
         }
 
         // Customer filter
-        if (selectedCustomers.size > 0 && !selectedCustomers.has(order.customer_name)) {
+        if (
+          selectedCustomers.size > 0 &&
+          !selectedCustomers.has(order.customer_name)
+        ) {
           return false
         }
 
         return true
       })
-      
+
       return ordersToProcess.map((order) => ({
         id: `order-${order.order_id}`,
         order_number: order.sales_order_number,
@@ -95,7 +102,9 @@ export const UnassignedList = memo(function UnassignedList({
         suburb_name: order.suburb_name || '',
         weight_left: order.total_weight || 0,
         volume_left: 0,
-        description: `${order.sales_order_number} - ${order.customer_name} (${order.total_line_items || 0} items)`,
+        description: `${order.sales_order_number} - ${order.customer_name} (${
+          order.total_line_items || 0
+        } items)`,
         isOrderGroup: true,
         ...order, // Include all order fields for drag payload
       }))
@@ -117,11 +126,17 @@ export const UnassignedList = memo(function UnassignedList({
           return false
         }
 
-        if (selectedSuburbs.size > 0 && !selectedSuburbs.has(item.suburb_name)) {
+        if (
+          selectedSuburbs.size > 0 &&
+          !selectedSuburbs.has(item.suburb_name)
+        ) {
           return false
         }
 
-        if (selectedCustomers.size > 0 && !selectedCustomers.has(item.customer_name)) {
+        if (
+          selectedCustomers.size > 0 &&
+          !selectedCustomers.has(item.customer_name)
+        ) {
           return false
         }
 
@@ -138,8 +153,14 @@ export const UnassignedList = memo(function UnassignedList({
       })
 
       return Array.from(groups.entries()).map(([orderNumber, orderItems]) => {
-        const totalWeight = orderItems.reduce((sum, item) => sum + (item.weight_left || 0), 0)
-        const totalVolume = orderItems.reduce((sum, item) => sum + (item.volume_left || 0), 0)
+        const totalWeight = orderItems.reduce(
+          (sum, item) => sum + (item.weight_left || 0),
+          0
+        )
+        const totalVolume = orderItems.reduce(
+          (sum, item) => sum + (item.volume_left || 0),
+          0
+        )
 
         return {
           id: `order-${orderNumber}`,
