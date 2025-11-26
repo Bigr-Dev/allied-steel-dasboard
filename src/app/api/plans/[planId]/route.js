@@ -45,9 +45,9 @@ export async function DELETE(req, { params }) {
   try {
     const response = await fetchServerData(`${url}/${planId}`, 'DELETE')
     console.log('response :plans/planId>> ', response)
-    return NextResponse.json(response?.data?.plan_id, { status: 200 })
+    return NextResponse.json(response, { status: 200 })
   } catch (error) {
-    console.error('Error fetching data:', error)
+    console.error('Error deleting plan:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

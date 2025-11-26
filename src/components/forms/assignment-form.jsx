@@ -129,8 +129,10 @@ const AssignmentForm = ({ id, onCancel }) => {
         },
         ...(unassignedVehicles?.map((v) => ({
           value: v.vehicle_assignment_id,
-          label: `${v.vehicle.plate} - ${v?.vehicle?.fleet_number}${
-            v.trailer?.fleet_number ? ` & ${v.trailer?.fleet_number}` : ''
+          label: `${v.vehicle.plate} - ${
+            v.branch_id === 'dd6bc80f-d3ef-408d-9992-ee0da9b04355'
+              ? 'Alrode'
+              : 'ASSM'
           } - ${`${v.capacity_kg}Kg`}`,
         })) || []),
       ],

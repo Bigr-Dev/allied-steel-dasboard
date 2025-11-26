@@ -66,15 +66,14 @@ export async function fetchServerData(url, method, data) {
     }
 
     // If not a login request, check if the response is okay
-    // if (!response.ok) {
-    //   console.log('response :>> ', response)
-    //   const errorData = (await response.json()) || response.status // Get the error details from the response
-    //   throw new Error(
-    //     `Error: ${response.status || response.statusText || '404'} - ${
-    //       errorData?.message || 'Unknown error'
-    //     }`
-    //   )
-    // }
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(
+        `Error: ${response.statusText} - ${
+          errorData?.message || 'Unknown error'
+        }`
+      )
+    }
 
     // Return the parsed response body for other requests
     return response.json()
