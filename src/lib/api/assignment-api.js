@@ -51,3 +51,32 @@ export const unassignAll = (planId, plannedUnitId, orderIds) => {
     body: { plan_id: planId, planned_unit_id: plannedUnitId, order_ids: orderIds },
   })
 }
+
+export const unassignAllItems = (planId, plannedUnitId, orderIds) => {
+  return unassignAll(planId, plannedUnitId, orderIds)
+}
+
+export const getPlan = (params = {}) => {
+  const searchParams = new URLSearchParams()
+  if (params.commit !== undefined) searchParams.set('commit', params.commit)
+  const query = searchParams.toString()
+  return apiRequest(`plans${query ? `?${query}` : ''}`)
+}
+
+export const assignItem = (payload) => {
+  return apiRequest('plans/assign', {
+    method: 'POST',
+    body: payload,
+  })
+}
+
+export const moveItem = (payload) => {
+  return moveAssignment(payload)
+}
+
+export const commitPlan = (changes) => {
+  return apiRequest('plans/commit', {
+    method: 'POST',
+    body: { changes },
+  })
+}
